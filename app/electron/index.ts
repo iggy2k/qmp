@@ -3,8 +3,9 @@ import { join } from 'path';
 import { BrowserWindow, app, ipcMain, IpcMainEvent } from 'electron';
 import isDev from 'electron-is-dev';
 
-const WIN_HEIGHT = 600;
-const WIN_WIDTH = 600;
+const WIN_HEIGHT = 450;
+const WIN_WIDTH = 400;
+var resized = false;
 
 function createWindow() {
     const window = new BrowserWindow({
@@ -27,6 +28,17 @@ function createWindow() {
     } else {
         window?.loadFile(url);
     }
+
+    ipcMain.on('resize', () => {
+
+        if (resized) {
+            window?.setSize(200, 200, true);
+        } else {
+            window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
+        }
+        resized = !resized;
+
+    });
 }
 
 app.whenReady().then(() => {
@@ -43,3 +55,4 @@ app.on('window-all-closed', () => {
 ipcMain.on('message', (event: IpcMainEvent, message: any) => {
     setTimeout(() => event.sender.send('message', `electron received ${message}`), 500);
 });
+

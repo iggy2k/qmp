@@ -13,6 +13,12 @@ function App() {
     }
   };
 
+  const collapse = () => {
+    if (window.Main) {
+      window.Main.Resize();
+    }
+  };
+
   useEffect(() => {
     if (isSent && window.Main)
       window.Main.on('message', (message: string) => {
@@ -26,10 +32,16 @@ function App() {
       <div className='bg-blue-300'>
         <button
           onClick={sendToElectron}
-          className="bg-blue-300"
         >
           Send
         </button>
+        <div className="bg-red-300">
+          <button
+            onClick={collapse}
+          >
+            Toggle Collapse
+          </button>
+        </div>
       </div>
     </div >
   );

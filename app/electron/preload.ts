@@ -13,7 +13,10 @@ const api = {
     },
     on: (channel: string, callback: (data: any) => void) => {
         ipcRenderer.on(channel, (_, data) => callback(data));
-    }
+    },
+    Resize: () => {
+        ipcRenderer.send('resize');
+    },
 };
 
 contextBridge.exposeInMainWorld('Main', api);
