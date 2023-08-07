@@ -17,6 +17,9 @@ const api = {
     Resize: () => {
         ipcRenderer.send('resize');
     },
+    AlwaysOnTop: () => {
+        ipcRenderer.send('always-on-top');
+    },
 };
 
 contextBridge.exposeInMainWorld('Main', api);

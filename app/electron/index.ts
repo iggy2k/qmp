@@ -6,6 +6,7 @@ import isDev from 'electron-is-dev';
 const WIN_HEIGHT = 450;
 const WIN_WIDTH = 400;
 var resized = false;
+var onTop = false;
 
 function createWindow() {
     const window = new BrowserWindow({
@@ -16,6 +17,7 @@ function createWindow() {
         resizable: true,
         fullscreenable: true,
         webPreferences: {
+            webSecurity: false,
             preload: join(__dirname, 'preload.js')
         }
     });
@@ -37,6 +39,17 @@ function createWindow() {
             window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
         }
         resized = !resized;
+
+    });
+
+    ipcMain.on('always-on-top', () => {
+
+        if (onTop) {
+            window?.setAlwaysOnTop(false);
+        } else {
+            window?.setAlwaysOnTop(true);
+        }
+        onTop = !onTop;
 
     });
 }

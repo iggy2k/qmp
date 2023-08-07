@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import ReactHowler from 'react-howler';
 
 function App() {
   console.log(window.ipcRenderer);
+  const player = useRef(null as any);
 
   const [isSent, setSent] = useState(false);
   const [fromMain, setFromMain] = useState<string | null>(null);
+  const [play, setPlay] = useState(false);
+  const [currTime, setCurrTime] = useState(0);
+  const SEEK_SECONDS = 5;
 
   const sendToElectron = () => {
     if (window.Main) {
@@ -19,12 +24,40 @@ function App() {
     }
   };
 
+  const alwaysOnTop = () => {
+    if (window.Main) {
+      window.Main.AlwaysOnTop();
+    }
+  };
+
+  const getSeek = () => {
+    return player.current.seek();
+  }
+
+  const setSeek = (forward: boolean) => {
+    player.current.seek(getSeek() + (forward ? SEEK_SECONDS : -SEEK_SECONDS));
+  }
+
+  const getDuration = () => {
+    return player.current.duration();
+  }
+
+  function updateProgress() {
+    if (play) {
+      setCurrTime(Math.round(getSeek() / getDuration() * 100));
+    }
+  }
+
   useEffect(() => {
     if (isSent && window.Main)
       window.Main.on('message', (message: string) => {
         setFromMain(message);
       });
   }, [fromMain, isSent]);
+
+  setInterval(() => {
+    updateProgress();
+  }, 500);
 
   return (
     <div>
@@ -42,7 +75,40 @@ function App() {
             Toggle Collapse
           </button>
         </div>
+        <div className="bg-purple-300">
+          <button
+            onClick={alwaysOnTop}
+          >
+            Always on Top
+          </button>
+        </div>
+        <div className="bg-yellow-300">
+          <button
+            onClick={() => setPlay(!play)}
+          >
+            {play ? 'Pause' : 'Play'}
+          </button>
+        </div>
+        <div className="bg-sky-300">
+          <button
+            onClick={() => setSeek(true)}
+          >
+            Seek +5
+          </button>
+          <p>{'#'.repeat(currTime)}</p>
+          <button
+            onClick={() => setSeek(false)}
+          >
+            Seek -5
+          </button>
+        </div>
       </div>
+      <ReactHowler
+        src={"file:///Users/iggy/Music/Test/1.flac"}
+        playing={play}
+        html5={true}
+        ref={player}
+      />
     </div >
   );
 }
