@@ -31,15 +31,21 @@ function App() {
   };
 
   const getSeek = () => {
-    return player.current.seek();
+    if (play) {
+      return player.current.seek();
+    }
   }
 
   const setSeek = (forward: boolean) => {
-    player.current.seek(getSeek() + (forward ? SEEK_SECONDS : -SEEK_SECONDS));
+    if (play) {
+      player.current.seek(getSeek() + (forward ? SEEK_SECONDS : -SEEK_SECONDS));
+    }
   }
 
   const getDuration = () => {
-    return player.current.duration();
+    if (play) {
+      return player.current.duration();
+    }
   }
 
   function updateProgress() {

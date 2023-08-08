@@ -1,6 +1,6 @@
 import { join } from 'path';
 
-import { BrowserWindow, app, ipcMain, IpcMainEvent } from 'electron';
+import { BrowserWindow, app, ipcMain, IpcMainEvent, screen } from 'electron';
 import isDev from 'electron-is-dev';
 
 const WIN_HEIGHT = 450;
@@ -10,10 +10,10 @@ var onTop = false;
 
 function createWindow() {
     const window = new BrowserWindow({
-        height: WIN_HEIGHT,
-        width: WIN_WIDTH,
+        height: 1,
+        width: 1,
         frame: true,
-        show: true,
+        show: false,
         resizable: true,
         fullscreenable: true,
         webPreferences: {
@@ -22,14 +22,34 @@ function createWindow() {
         }
     });
 
+    var splash = new BrowserWindow({
+        width: 200,
+        height: 200,
+        transparent: true,
+        frame: false,
+        alwaysOnTop: true
+    });
+
     const port = process.env.PORT || 3000;
-    const url = isDev ? `http://localhost:${port}` : join(__dirname, '../src/out/index.html');
+    const url = isDev ? `http://localhost:${port}?viewA` : join(__dirname, '../src/out/index.html');
 
     if (isDev) {
         window?.loadURL(url);
     } else {
         window?.loadFile(url);
     }
+
+    splash?.loadURL(`file://${__dirname}/../src/splash.html`);
+
+    setTimeout(function () {
+        splash.close();
+        window.show();
+        let bounds = screen.getPrimaryDisplay().bounds;
+        let x = bounds.x + ((bounds.width - WIN_WIDTH) / 2);
+        let y = bounds.y + ((bounds.height - WIN_HEIGHT) / 2);
+        window.setPosition(x, y);
+        window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
+    }, 2000);
 
     ipcMain.on('resize', () => {
 
