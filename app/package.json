@@ -18,12 +18,15 @@
     "lint:fix": "eslint . --ext js,jsx,ts,tsx --fix"
   },
   "dependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "concurrently": "^8.2.0",
     "electron": "^25.4.0",
     "electron-is-dev": "^2.0.0",
+    "music-metadata": "7.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-howler": "^5.2.0",
+    "util": "^0.12.5",
     "wait-on": "^7.0.1"
   },
   "devDependencies": {
@@ -37,9 +40,9 @@
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
+    "music-metadata-browser": "^2.5.10",
     "postcss": "^8.4.27",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "typescript": "^5.0.2"
   }
 }

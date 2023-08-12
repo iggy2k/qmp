@@ -10,6 +10,18 @@ function App() {
   const [play, setPlay] = useState(false);
   const [currTime, setCurrTime] = useState(0);
   const SEEK_SECONDS = 5;
+  const cover = 10;
+  const [metadata, setMetadata] = useState(null as any);
+
+  const openFile = () => {
+
+    window.Main.send("toMain", "trigger");
+    window.Main.receive("fromMain", (data: any) => {
+      console.log(`Received ${data.length} ${data} from main process`);
+      console.log("date: " + data)
+      setMetadata(data);
+    });
+  };
 
   const sendToElectron = () => {
     if (window.Main) {
@@ -109,6 +121,14 @@ function App() {
           </button>
         </div>
       </div>
+      <div className="bg-yellow-300">
+        <button
+          onClick={openFile}
+        >
+          Load Image
+        </button>
+      </div>
+      <img src={metadata !== undefined && metadata !== null ? `data:${metadata};base64,${metadata.toString('base64')}` : ''} alt="" />
       <ReactHowler
         src={"file:///Users/iggy/Music/Test/1.flac"}
         playing={play}
