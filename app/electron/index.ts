@@ -6,7 +6,7 @@ import * as mm from 'music-metadata';
 
 const WIN_HEIGHT = 450;
 const WIN_WIDTH = 400;
-var resized = false;
+var resized = true;
 var onTop = false;
 
 async function openFile() {
@@ -57,13 +57,13 @@ function createWindow() {
         let y = bounds.y + ((bounds.height - WIN_HEIGHT) / 2);
         window.setPosition(x, y);
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 2000);
 
     ipcMain.on('resize', () => {
 
         if (resized) {
-            window?.setSize(200, 200, true);
+            window?.setSize(WIN_WIDTH, 125, true);
         } else {
             window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
         }

@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactHowler from 'react-howler';
+import {
+  PauseIcon, PlayIcon, ForwardIcon, BackwardIcon,
+  AdjustmentsVerticalIcon, SpeakerWaveIcon, ArrowPathRoundedSquareIcon,
+  CogIcon, Bars3Icon, DocumentArrowDownIcon, DocumentArrowUpIcon
+} from '@heroicons/react/24/solid'
 
 function App() {
   console.log(window.ipcRenderer);
@@ -8,6 +13,7 @@ function App() {
   const [isSent, setSent] = useState(false);
   const [fromMain, setFromMain] = useState<string | null>(null);
   const [play, setPlay] = useState(false);
+  const [onTop, setOnTop] = useState(false);
   const [currTime, setCurrTime] = useState(0);
   const SEEK_SECONDS = 5;
   const cover = 10;
@@ -38,6 +44,7 @@ function App() {
 
   const alwaysOnTop = () => {
     if (window.Main) {
+      setOnTop(!onTop);
       window.Main.AlwaysOnTop();
     }
   };
@@ -78,7 +85,39 @@ function App() {
   }, 500);
 
   return (
-    <div>
+    <div className='bg-slate-400'>
+      <div className='grid grid-flow-col auto-cols-max'>
+        <img className='w-[64px] h-[64px]' src={metadata !== undefined && metadata !== null ? `data:${metadata};base64,${metadata.toString('base64')}` : ''} alt="" />
+        <div className='ml-1 mt-1'>
+          <p>Track Name</p>
+          <div className='grid grid-flow-col auto-cols-max'>
+            <p>Author</p>
+            <p> - </p>
+            <p>Album</p>
+          </div>
+        </div>
+      </div>
+      <div className='grid grid-flow-col auto-cols-max'>
+        <Bars3Icon
+          className="h-6 text-black"
+          onClick={collapse}
+        />
+        <AdjustmentsVerticalIcon className="h-6 text-black" />
+        <BackwardIcon className="h-6 text-black" />
+        {
+          play ? <PauseIcon className="h-6 text-black" onClick={() => setPlay(!play)} />
+            : <PlayIcon className="h-6 text-black" onClick={() => setPlay(!play)} />
+        }
+        <ForwardIcon className="h-6 text-black" />
+        <SpeakerWaveIcon className="h-6 text-black" />
+        <input className='accent-slate-600 bg-inherit w-[100px]' type="range" min="1" max="100"></input>
+        <ArrowPathRoundedSquareIcon className="h-6 text-black" />
+        <CogIcon className="h-6 text-black" />
+        {
+          onTop ? <DocumentArrowDownIcon className="h-6 text-black" onClick={alwaysOnTop} />
+            : <DocumentArrowUpIcon className="h-6 text-black" onClick={alwaysOnTop} />
+        }
+      </div>
       <h1 className="bg-green-300">Response: {fromMain}</h1>
       <div className='bg-blue-300'>
         <button
@@ -86,27 +125,6 @@ function App() {
         >
           Send
         </button>
-        <div className="bg-red-300">
-          <button
-            onClick={collapse}
-          >
-            Toggle Collapse
-          </button>
-        </div>
-        <div className="bg-purple-300">
-          <button
-            onClick={alwaysOnTop}
-          >
-            Always on Top
-          </button>
-        </div>
-        <div className="bg-yellow-300">
-          <button
-            onClick={() => setPlay(!play)}
-          >
-            {play ? 'Pause' : 'Play'}
-          </button>
-        </div>
         <div className="bg-sky-300">
           <button
             onClick={() => setSeek(true)}
@@ -128,7 +146,6 @@ function App() {
           Load Image
         </button>
       </div>
-      <img src={metadata !== undefined && metadata !== null ? `data:${metadata};base64,${metadata.toString('base64')}` : ''} alt="" />
       <ReactHowler
         src={"file:///Users/iggy/Music/Test/1.flac"}
         playing={play}
