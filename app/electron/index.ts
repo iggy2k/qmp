@@ -19,10 +19,12 @@ function createWindow() {
     const window = new BrowserWindow({
         height: 1,
         width: 1,
-        frame: true,
+        frame: false,
         show: false,
         resizable: true,
         fullscreenable: true,
+        //opacity: 0.5,
+        vibrancy: 'dark',
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true,
@@ -63,7 +65,7 @@ function createWindow() {
     ipcMain.on('resize', () => {
 
         if (resized) {
-            window?.setSize(WIN_WIDTH, 125, true);
+            window?.setSize(WIN_WIDTH, 90, true);
         } else {
             window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
         }
@@ -86,9 +88,9 @@ function createWindow() {
         let prom = openFile();
         prom.then(cover => {
             if (cover !== undefined) {
-                console.log("Cover: " + cover);
+                // console.log("Cover: " + cover);
                 const resultStr = cover.toString('base64');
-                console.log("Cover: " + resultStr);
+                // console.log("Cover: " + resultStr);
                 window.webContents.send("fromMain", resultStr);
             }
         });

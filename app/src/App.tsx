@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactHowler from 'react-howler';
+
 import {
   PauseIcon, PlayIcon, ForwardIcon, BackwardIcon,
   AdjustmentsVerticalIcon, SpeakerWaveIcon, ArrowPathRoundedSquareIcon,
-  CogIcon, Bars3Icon, DocumentArrowDownIcon, DocumentArrowUpIcon
+  CogIcon, Bars3Icon, DocumentArrowDownIcon, DocumentArrowUpIcon,
+  HandRaisedIcon
 } from '@heroicons/react/24/solid'
 
 function App() {
@@ -85,38 +87,39 @@ function App() {
   }, 500);
 
   return (
-    <div className='bg-slate-400'>
+    <div className='bg-[#333333]'>
       <div className='grid grid-flow-col auto-cols-max'>
-        <img className='w-[64px] h-[64px]' src={metadata !== undefined && metadata !== null ? `data:${metadata};base64,${metadata.toString('base64')}` : ''} alt="" />
+        <img className='w-[64px] h-[64px] rounded-lg' src={metadata !== undefined && metadata !== null ? `data:${metadata};base64,${metadata.toString('base64')}` : ''} alt="" />
         <div className='ml-1 mt-1'>
-          <p>Track Name</p>
-          <div className='grid grid-flow-col auto-cols-max'>
+          <p className='text-[#a1918c]'>Track Name</p>
+          <div className='text-[#6e635f] grid grid-flow-col auto-cols-max'>
             <p>Author</p>
-            <p> - </p>
+            <p>&nbsp;-&nbsp;</p>
             <p>Album</p>
           </div>
         </div>
       </div>
       <div className='grid grid-flow-col auto-cols-max'>
         <Bars3Icon
-          className="h-6 text-black"
+          className="h-6 text-[#a1918c]"
           onClick={collapse}
         />
-        <AdjustmentsVerticalIcon className="h-6 text-black" />
-        <BackwardIcon className="h-6 text-black" />
+        <AdjustmentsVerticalIcon className="h-6 text-[#a1918c]" />
+        <BackwardIcon className="h-6 text-[#a1918c]" />
         {
-          play ? <PauseIcon className="h-6 text-black" onClick={() => setPlay(!play)} />
-            : <PlayIcon className="h-6 text-black" onClick={() => setPlay(!play)} />
+          play ? <PauseIcon className="h-6 text-[#a1918c]" onClick={() => setPlay(!play)} />
+            : <PlayIcon className="h-6 text-[#a1918c]" onClick={() => setPlay(!play)} />
         }
-        <ForwardIcon className="h-6 text-black" />
-        <SpeakerWaveIcon className="h-6 text-black" />
-        <input className='accent-slate-600 bg-inherit w-[100px]' type="range" min="1" max="100"></input>
-        <ArrowPathRoundedSquareIcon className="h-6 text-black" />
-        <CogIcon className="h-6 text-black" />
+        <ForwardIcon className="h-6 text-[#a1918c]" />
+        <SpeakerWaveIcon className="h-6 text-[#a1918c]" />
+        <input className='accent-[#a1918c] bg-inherit w-[100px]' type="range" min="1" max="100"></input>
+        <ArrowPathRoundedSquareIcon className="h-6 text-[#a1918c]" />
+        <CogIcon className="h-6 text-[#a1918c]" />
         {
-          onTop ? <DocumentArrowDownIcon className="h-6 text-black" onClick={alwaysOnTop} />
-            : <DocumentArrowUpIcon className="h-6 text-black" onClick={alwaysOnTop} />
+          onTop ? <DocumentArrowDownIcon className="h-6 text-[#a1918c]" onClick={alwaysOnTop} />
+            : <DocumentArrowUpIcon className="h-6 text-[#a1918c]" onClick={alwaysOnTop} />
         }
+        <HandRaisedIcon className="h-6 text-[#a1918c] drag" />
       </div>
       <h1 className="bg-green-300">Response: {fromMain}</h1>
       <div className='bg-blue-300'>
@@ -152,6 +155,7 @@ function App() {
         html5={true}
         ref={player}
       />
+      <div className='bg-transparent'></div>
     </div >
   );
 }
