@@ -12,7 +12,7 @@ var onTop = false;
 async function openFile() {
     const metadata = await mm.parseFile("/Users/iggy/Music/Test/1.flac");
     console.log(metadata);
-    return mm.selectCover(metadata.common.picture)?.data; // pick the cover image
+    return [metadata, mm.selectCover(metadata.common.picture)?.data.toString('base64')]; // pick the cover image
 }
 
 function createWindow() {
@@ -65,7 +65,7 @@ function createWindow() {
     ipcMain.on('resize', () => {
 
         if (resized) {
-            window?.setSize(WIN_WIDTH, 90, true);
+            window?.setSize(WIN_WIDTH, 120, true);
         } else {
             window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
         }
@@ -86,12 +86,12 @@ function createWindow() {
 
     ipcMain.on("toMain", () => {
         let prom = openFile();
-        prom.then(cover => {
-            if (cover !== undefined) {
+        prom.then(data => {
+            if (data !== undefined) {
                 // console.log("Cover: " + cover);
-                const resultStr = cover.toString('base64');
+                // const resultStr = cover.toString('base64');
                 // console.log("Cover: " + resultStr);
-                window.webContents.send("fromMain", resultStr);
+                window.webContents.send("fromMain", data);
             }
         });
     });

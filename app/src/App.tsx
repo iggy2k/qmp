@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/solid'
 
 function App() {
-  console.log(window.ipcRenderer);
+  // console.log(window.ipcRenderer);
   const player = useRef(null as any);
 
   const [isSent, setSent] = useState(false);
@@ -18,16 +18,22 @@ function App() {
   const [onTop, setOnTop] = useState(false);
   const [currTime, setCurrTime] = useState(0);
   const SEEK_SECONDS = 5;
-  const cover = 10;
-  const [metadata, setMetadata] = useState(null as any);
+  const [cover, setCover] = useState(null as any);
+
+  const [title, setTitle] = useState("Title");
+  const [artist, setArtist] = useState("Artist");
+  const [album, setAlbum] = useState("Album");
 
   const openFile = () => {
 
     window.Main.send("toMain", "trigger");
     window.Main.receive("fromMain", (data: any) => {
-      console.log(`Received ${data.length} ${data} from main process`);
-      console.log("date: " + data)
-      setMetadata(data);
+      //console.log(`Received ${data.length} ${data} from main process`);
+      //console.log("date: " + data)
+      setCover(data[1]);
+      setTitle(data[0].common['title']);
+      setArtist(data[0].common['artist']);
+      setAlbum(data[0].common['album']);
     });
   };
 
@@ -89,17 +95,45 @@ function App() {
   return (
     <div className='bg-[#333333]'>
       <div className='grid grid-flow-col auto-cols-max'>
-        <img className='w-[64px] h-[64px] rounded-lg' src={metadata !== undefined && metadata !== null ? `data:${metadata};base64,${metadata.toString('base64')}` : ''} alt="" />
+        <img className='w-[64px] h-[64px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
         <div className='ml-1 mt-1'>
-          <p className='text-[#a1918c]'>Track Name</p>
+          <p className='text-[#a1918c] mt-1'>{title}</p>
           <div className='text-[#6e635f] grid grid-flow-col auto-cols-max'>
-            <p>Author</p>
+            <p>{artist}</p>
             <p>&nbsp;-&nbsp;</p>
-            <p>Album</p>
+            <p>{album}</p>
           </div>
+          <svg width="150" height="18" viewBox="0 0 800 80" clip='rect(10px, 20px, 30px, 40px)'
+            className='clip1'
+            style={{ clipPath: `inset(0 ${100 - currTime}% 0 0)` }}
+          >
+            {play ?
+              <defs>
+                <path stroke="#c1b7b4" fill="none" id="sign-wave" d="
+             M0 50
+             C 40 10, 60 10, 100 50 C 140 90, 160 90, 200 50
+             C 240 10, 260 10, 300 50 C 340 90, 360 90, 400 50
+             C 440 10, 460 10, 500 50 C 540 90, 560 90, 600 50
+             C 640 10, 660 10, 700 50 C 740 90, 760 90, 800 50
+             C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
+             C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
+             " stroke-width="8" />
+              </defs>
+              :
+              <defs>
+                <path stroke="#c1b7b4" fill="none" id="sign-wave" d="
+             M0 50
+             L 1200 50
+             " stroke-width="8" />
+              </defs>
+            }
+            <use href="#sign-wave" x="0" y="0">
+              <animate attributeName="x" from="0" to="-200" dur="3s" repeatCount="indefinite" />
+            </use>
+          </svg>
         </div>
       </div>
-      <div className='grid grid-flow-col auto-cols-max'>
+      <div className='grid grid-flow-col auto-cols-max m-2'>
         <Bars3Icon
           className="h-6 text-[#a1918c]"
           onClick={collapse}
