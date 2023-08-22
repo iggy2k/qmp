@@ -5,7 +5,7 @@ import isDev from 'electron-is-dev';
 import * as mm from 'music-metadata';
 
 const WIN_HEIGHT = 450;
-const WIN_WIDTH = 400;
+const WIN_WIDTH = 450;
 var resized = true;
 var onTop = false;
 
