@@ -1,18 +1,36 @@
 import { join } from 'path';
-
 import { BrowserWindow, app, ipcMain, IpcMainEvent, screen } from 'electron';
 import isDev from 'electron-is-dev';
 import * as mm from 'music-metadata';
+import * as fs from 'fs';
+import path from 'path';
 
 const WIN_HEIGHT = 450;
 const WIN_WIDTH = 450;
+const HTML5_AUDIO = ['wav', 'mp3', 'mp4', 'flac', 'webm', 'ogg']; // Incomplete
 var resized = true;
 var onTop = false;
 
-async function openFile() {
-    const metadata = await mm.parseFile("/Users/iggy/Music/Test/1.flac");
-    console.log(metadata);
+async function openFile(file: string) {
+    const metadata = await mm.parseFile(file);
+    //console.log(metadata);
     return [metadata, mm.selectCover(metadata.common.picture)?.data.toString('base64')]; // pick the cover image
+}
+
+async function openDir(dir: string) {
+    let paths: string[] = [];
+
+
+    const fileNames = await fs.promises.readdir(dir);
+    for (let file of fileNames) {
+        if (!HTML5_AUDIO.includes(file.split('.').pop()!)) { // Assume never undefined
+            continue;
+        }
+        const absolutePath = path.join(dir, file);
+        paths.push(absolutePath);
+        // const data = await fs.promises.readFile(absolutePath);
+    }
+    return paths;
 }
 
 function createWindow() {
@@ -60,7 +78,7 @@ function createWindow() {
         window.setPosition(x, y);
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
         // window?.webContents.openDevTools()
-    }, 2000);
+    }, 1000);
 
     ipcMain.on('resize', () => {
 
@@ -84,14 +102,26 @@ function createWindow() {
 
     });
 
-    ipcMain.on("toMain", () => {
-        let prom = openFile();
+    ipcMain.on("toMain", (_, file: string) => {
+        let prom = openFile(file);
         prom.then(data => {
             if (data !== undefined) {
                 // console.log("Cover: " + cover);
                 // const resultStr = cover.toString('base64');
                 // console.log("Cover: " + resultStr);
                 window.webContents.send("fromMain", data);
+            }
+        });
+    });
+
+    ipcMain.on("get-files-to-main", () => {
+        let lsdir = openDir("/Users/iggy/Music/Test/");
+        lsdir.then(data => {
+            if (data !== undefined) {
+                // console.log("Cover: " + cover);
+                // const resultStr = cover.toString('base64');
+                // console.log("Cover: " + resultStr);
+                window.webContents.send("get-files-from-main", data);
             }
         });
     });

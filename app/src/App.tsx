@@ -26,9 +26,11 @@ function App() {
 
   const [repeat, setRepeat] = useState(false);
 
+  const [files, setFiles] = useState([]);
+
   const openFile = () => {
 
-    window.Main.send("toMain", "trigger");
+    window.Main.send("toMain", "/Users/iggy/Music/Test/Dorisburg - Cirkla.flac");
     window.Main.receive("fromMain", (data: any) => {
       //console.log(`Received ${data.length} ${data} from main process`);
       //console.log("date: " + data)
@@ -36,6 +38,16 @@ function App() {
       setTitle(data[0].common['title']);
       setArtist(data[0].common['artist']);
       setAlbum(data[0].common['album']);
+    });
+    openDir();
+  };
+
+  const openDir = () => {
+
+    window.Main.send("get-files-to-main", "trigger");
+    window.Main.receive("get-files-from-main", (data: any) => {
+      setFiles(data);
+      console.log(data);
     });
   };
 
@@ -92,6 +104,10 @@ function App() {
   }
 
   useEffect(() => {
+    openFile();
+  }, []);
+
+  useEffect(() => {
     if (isSent && window.Main)
       window.Main.on('message', (message: string) => {
         setFromMain(message);
@@ -104,26 +120,27 @@ function App() {
 
   return (
     <div className='bg-[#333333]'>
-      <div className='grid grid-flow-col auto-cols-max'>
-        <img className='w-[64px] h-[64px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
-        <div className='ml-1 mt-2'>
-          <p className='text-[#a1918c]'>{title}</p>
-          <div className='text-[#6e635f] grid grid-flow-col auto-cols-max'>
-            <p>{artist}</p>
-            <p>&nbsp;-&nbsp;</p>
-            <p>{album}</p>
-          </div>
-          <div
-            onClick={(e) => { relativeCoords(e) }}
-          >
-            <svg width="150" height="20" viewBox="0 0 800 80"
-              className='clip1 absolute'
-              style={{ clipPath: `inset(0 ${100 - currTime}% 0 0)` }}
+      <div className='sticky top-0 bg-[#333333] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] '>
+        <div className='grid grid-flow-col auto-cols-max '>
+          <img className='w-[64px] h-[64px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
+          <div className='ml-1 mt-2'>
+            <p className='text-[#a1918c]'>{title}</p>
+            <div className='text-[#6e635f] grid grid-flow-col auto-cols-max'>
+              <p>{artist}</p>
+              <p>&nbsp;-&nbsp;</p>
+              <p>{album}</p>
+            </div>
+            <div
+              onClick={(e) => { relativeCoords(e) }}
             >
-              {play ?
+              <svg width="150" height="20" viewBox="0 0 800 80"
+                className='clip1 absolute'
+                style={{ clipPath: `inset(0 ${100 - currTime}% 0 0)` }}
+              >
+                {play ?
 
-                <defs>
-                  <path stroke="#c1b7b4" fill="none" id="sign-wave" d="
+                  <defs>
+                    <path stroke="#c1b7b4" fill="none" id="sign-wave" d="
              M0 50
              C 40 10, 60 10, 100 50 C 140 90, 160 90, 200 50
              C 240 10, 260 10, 300 50 C 340 90, 360 90, 400 50
@@ -132,90 +149,77 @@ function App() {
              C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
              C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
              " stroke-width="12" />
-                </defs>
-                :
+                  </defs>
+                  :
+                  <defs>
+                    <path stroke="#c1b7b4" fill="none" id="sign-wave" d="
+             M0 50
+             L 1200 50
+             " stroke-width="12" />
+                  </defs>
+                }
+                <use href="#sign-wave" x="0" y="0">
+                  <animate attributeName="x" from="0" to="-200" dur="6s" repeatCount="indefinite" />
+                </use>
+              </svg>
+              <svg width="150" height="20" viewBox="0 0 800 80"
+                className='clip1 absolute'
+                style={{ clipPath: `inset(0 0 0 ${currTime}%)` }}
+              >
                 <defs>
-                  <path stroke="#c1b7b4" fill="none" id="sign-wave" d="
+                  <path stroke="#c1b7b4" fill="none" id="sign-wave2" d="
              M0 50
              L 1200 50
              " stroke-width="12" />
                 </defs>
-              }
-              <use href="#sign-wave" x="0" y="0">
-                <animate attributeName="x" from="0" to="-200" dur="6s" repeatCount="indefinite" />
-              </use>
-            </svg>
-            <svg width="150" height="20" viewBox="0 0 800 80"
-              className='clip1 absolute'
-              style={{ clipPath: `inset(0 0 0 ${currTime}%)` }}
-            >
-              <defs>
-                <path stroke="#c1b7b4" fill="none" id="sign-wave2" d="
-             M0 50
-             L 1200 50
-             " stroke-width="12" />
-              </defs>
-              <use href="#sign-wave2" x="0" y="0">
-                <animate attributeName="x" from="0" to="-200" dur="6s" repeatCount="indefinite" />
-              </use>
-            </svg>
-            <svg width="150" height="20" className='clip1 absolute' viewBox="0 0 800 80">
-              <ellipse cx={currTime * 8} cy="50" rx="20" ry="40" fill="#c1b7b4"
-              />
-            </svg>
+                <use href="#sign-wave2" x="0" y="0">
+                  <animate attributeName="x" from="0" to="-200" dur="6s" repeatCount="indefinite" />
+                </use>
+              </svg>
+              <svg width="150" height="20" className='clip1 absolute' viewBox="0 0 800 80">
+                <ellipse cx={currTime * 8} cy="50" rx="20" ry="40" fill="#c1b7b4"
+                />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
-      <div className='grid grid-flow-col auto-cols-max m-2'>
-        <Bars3Icon
-          className="h-6 text-[#a1918c] m-1"
-          onClick={collapse}
-        />
-        <AdjustmentsVerticalIcon className="h-6 text-[#a1918c] m-1" />
-        <BackwardIcon className="h-6 text-[#a1918c] m-1" />
-        {
-          play ? <PauseIcon className="h-6 text-[#a1918c] m-1" onClick={() => setPlay(!play)} />
-            : <PlayIcon className="h-6 text-[#a1918c] m-1" onClick={() => setPlay(!play)} />
-        }
-        <ForwardIcon className="h-6 text-[#a1918c] m-1" />
-        <SpeakerWaveIcon className="h-6 text-[#a1918c] m-1" />
-        <input className='accent-[#a1918c] bg-inherit w-[100px]' type="range" min="1" max="100"></input>
-        <ArrowPathRoundedSquareIcon
-          className={repeat ? "h-6 text-[#a1918c] m-1" : "h-6 text-[#f08665] m-1"}
-          onMouseDown={() => { setRepeat(!repeat) }} />
-        <CogIcon className="h-6 text-[#a1918c] m-1" />
-        {
-          onTop ? <DocumentArrowDownIcon className="h-6 text-[#f08665] m-1" onClick={alwaysOnTop} />
-            : <DocumentArrowUpIcon className="h-6 text-[#a1918c] m-1" onClick={alwaysOnTop} />
-        }
-        <HandRaisedIcon className="h-6 text-[#a1918c] m-1 drag" />
-      </div>
-      <h1 className="bg-green-300">Response: {fromMain}</h1>
-      <div className='bg-blue-300'>
-        <button
-          onClick={sendToElectron}
-        >
-          Send
-        </button>
-        <div className="bg-sky-300">
-          <button
-            onClick={() => setSeek(true)}
-          >
-            Seek +5
-          </button>
-          <button
-            onClick={() => setSeek(false)}
-          >
-            Seek -5
-          </button>
+        <div className='grid grid-flow-col auto-cols-max m-2'>
+          <Bars3Icon
+            className="h-6 text-[#a1918c] m-1"
+            onClick={collapse}
+          />
+          <AdjustmentsVerticalIcon className="h-6 text-[#a1918c] m-1" />
+          <BackwardIcon className="h-6 text-[#a1918c] m-1" />
+          {
+            play ? <PauseIcon className="h-6 text-[#a1918c] m-1" onClick={() => setPlay(!play)} />
+              : <PlayIcon className="h-6 text-[#a1918c] m-1" onClick={() => setPlay(!play)} />
+          }
+          <ForwardIcon className="h-6 text-[#a1918c] m-1" />
+          <SpeakerWaveIcon className="h-6 text-[#a1918c] m-1" />
+          <input className='accent-[#a1918c] bg-inherit w-[100px]' type="range" min="1" max="100"></input>
+          <ArrowPathRoundedSquareIcon
+            className={repeat ? "h-6 text-[#a1918c] m-1" : "h-6 text-[#f08665] m-1"}
+            onMouseDown={() => { setRepeat(!repeat) }} />
+          <CogIcon className="h-6 text-[#a1918c] m-1" />
+          {
+            onTop ? <DocumentArrowDownIcon className="h-6 text-[#f08665] m-1" onClick={alwaysOnTop} />
+              : <DocumentArrowUpIcon className="h-6 text-[#a1918c] m-1" onClick={alwaysOnTop} />
+          }
+          <HandRaisedIcon className="h-6 text-[#a1918c] m-1 drag" />
         </div>
       </div>
-      <div className="bg-yellow-300">
-        <button
-          onClick={openFile}
-        >
-          Load Image
-        </button>
+      <div className='overflow-hidden'>
+        {files.map(function (file: string, index: number) {
+          return (
+            <div className='overflow-auto hover:bg-black/20'>
+              <div className={index == 1 ? 'border-b border-[#f08665] grid grid-flow-col auto-cols-max'
+                : 'border-b border-t border-[#f08665] grid grid-flow-col auto-cols-max'}>
+                <img className='w-[32px] h-[32px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
+                <p className='text-[#a1918c] mt-3'>{file.split('/').reverse()[0]}</p>
+              </div>
+            </div>
+          )
+        })}
       </div>
       <ReactHowler
         src={"file:///Users/iggy/Music/Test/1.flac"}

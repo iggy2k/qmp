@@ -11,6 +11,11 @@
   user-select: none;
 }
 
+/* I could not achieve the same with overflow in a reasonable amount of time */
+::-webkit-scrollbar { 
+  width: 0px;
+}
+
 .drag{
   -webkit-user-select: none;
   -webkit-app-region: drag;
