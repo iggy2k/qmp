@@ -36,9 +36,14 @@ function App() {
 
   const openFile = (path: string, index: number) => {
 
-    if (index < 0 || index > (files.length - 1)) {
-      return;
+    if (index < 0) {
+      index = files.length - 1
     }
+    else if (index > (files.length - 1)) {
+      index = 0
+    }
+
+    console.log(`Loaded: path ${path}, idx ${index}`)
 
     setCurrIdx(index);
     setCurrFile(path);
