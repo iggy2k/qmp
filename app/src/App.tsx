@@ -28,9 +28,22 @@ function App() {
 
   const [files, setFiles] = useState([]);
 
-  const openFile = () => {
+  const [currFile, setCurrFile] = useState('');
 
-    window.Main.send("toMain", "/Users/iggy/Music/Test/Dorisburg - Cirkla.flac");
+  const [currIdx, setCurrIdx] = useState(0);
+
+  const [volume, setVolume] = useState(0.5);
+
+  const openFile = (path: string, index: number) => {
+
+    if (index < 0 || index > (files.length - 1)) {
+      return;
+    }
+
+    setCurrIdx(index);
+    setCurrFile(path);
+
+    window.Main.send("toMain", path);
     window.Main.receive("fromMain", (data: any) => {
       //console.log(`Received ${data.length} ${data} from main process`);
       //console.log("date: " + data)
@@ -104,7 +117,7 @@ function App() {
   }
 
   useEffect(() => {
-    openFile();
+    openFile("/Users/iggy/Music/Test/1.flac", 0);
   }, []);
 
   useEffect(() => {
@@ -167,7 +180,7 @@ function App() {
                 style={{ clipPath: `inset(0 0 0 ${currTime}%)` }}
               >
                 <defs>
-                  <path stroke="#c1b7b4" fill="none" id="sign-wave2" d="
+                  <path stroke="#c1b7b4" opacity={0.5} fill="none" id="sign-wave2" d="
              M0 50
              L 1200 50
              " stroke-width="12" />
@@ -189,14 +202,20 @@ function App() {
             onClick={collapse}
           />
           <AdjustmentsVerticalIcon className="h-6 text-[#a1918c] m-1" />
-          <BackwardIcon className="h-6 text-[#a1918c] m-1" />
+          <BackwardIcon className="h-6 text-[#a1918c] m-1"
+            onClick={() => { openFile(files[currIdx - 1], currIdx - 1) }}
+          />
           {
             play ? <PauseIcon className="h-6 text-[#a1918c] m-1" onClick={() => setPlay(!play)} />
               : <PlayIcon className="h-6 text-[#a1918c] m-1" onClick={() => setPlay(!play)} />
           }
-          <ForwardIcon className="h-6 text-[#a1918c] m-1" />
+          <ForwardIcon className="h-6 text-[#a1918c] m-1"
+            onClick={() => { openFile(files[currIdx + 1], currIdx + 1) }}
+          />
           <SpeakerWaveIcon className="h-6 text-[#a1918c] m-1" />
-          <input className='accent-[#a1918c] bg-inherit w-[100px]' type="range" min="1" max="100"></input>
+          <input className='accent-[#a1918c] bg-inherit w-[100px]' type="range" min="0" max="100"
+            onChange={e => setVolume(parseFloat(e.target.value) / 100)}
+          ></input>
           <ArrowPathRoundedSquareIcon
             className={repeat ? "h-6 text-[#a1918c] m-1" : "h-6 text-[#f08665] m-1"}
             onMouseDown={() => { setRepeat(!repeat) }} />
@@ -211,9 +230,12 @@ function App() {
       <div className='overflow-hidden'>
         {files.map(function (file: string, index: number) {
           return (
-            <div className='overflow-auto hover:bg-black/20'>
+            <div className={`overflow-auto hover:bg-black/20 ${index == currIdx ?
+              "bg-[#f08665]/20" : ''}`}>
               <div className={index == 1 ? 'border-b border-[#f08665] grid grid-flow-col auto-cols-max'
-                : 'border-b border-t border-[#f08665] grid grid-flow-col auto-cols-max'}>
+                : 'border-b border-t border-[#f08665] grid grid-flow-col auto-cols-max'}
+                onClick={() => { openFile(file, index) }}
+              >
                 <img className='w-[32px] h-[32px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
                 <p className='text-[#a1918c] mt-3'>{file.split('/').reverse()[0]}</p>
               </div>
@@ -222,10 +244,11 @@ function App() {
         })}
       </div>
       <ReactHowler
-        src={"file:///Users/iggy/Music/Test/1.flac"}
+        src={`file://${currFile}`}
         playing={play}
         html5={true}
         ref={player}
+        volume={volume}
       />
       <div className='bg-transparent'></div>
     </div >
