@@ -5,7 +5,7 @@ import {
   PauseIcon, PlayIcon, ForwardIcon, BackwardIcon,
   AdjustmentsVerticalIcon, SpeakerWaveIcon, ArrowPathRoundedSquareIcon,
   CogIcon, Bars3Icon, DocumentArrowDownIcon, DocumentArrowUpIcon,
-  HandRaisedIcon
+  HandRaisedIcon, ChevronDoubleUpIcon, FolderPlusIcon
 } from '@heroicons/react/24/solid'
 
 function App() {
@@ -34,6 +34,12 @@ function App() {
 
   const [volume, setVolume] = useState(0.5);
 
+  const [resized, setResized] = useState(false);
+
+  const [progress, setProgress] = useState(0);
+
+  const [currDir, setCurrDir] = useState('');
+
   const openFile = (path: string, index: number) => {
 
     if (index < 0) {
@@ -57,15 +63,19 @@ function App() {
       setArtist(data[0].common['artist']);
       setAlbum(data[0].common['album']);
     });
-    openDir();
   };
 
   const openDir = () => {
-
-    window.Main.send("get-files-to-main", "trigger");
-    window.Main.receive("get-files-from-main", (data: any) => {
-      setFiles(data);
-      console.log(data);
+    window.Main.send("open-folder-tm", null);
+    window.Main.receive("open-folder-fm", (path: string | undefined) => {
+      if (path !== undefined) {
+        setCurrDir(path);
+        window.Main.send("get-files-to-main", path);
+        window.Main.receive("get-files-from-main", (data: any) => {
+          setFiles(data);
+          console.log(data);
+        });
+      }
     });
   };
 
@@ -79,6 +89,7 @@ function App() {
   const collapse = () => {
     if (window.Main) {
       window.Main.Resize();
+      setResized(!resized);
     }
   };
 
@@ -107,14 +118,16 @@ function App() {
     }
   }
 
-  function updateProgress() {
+  const updateProgress = () => {
     if (play) {
-      setCurrTime(Math.round(getSeek() / getDuration() * 100));
+      let frac = getSeek() / getDuration();
+      setCurrTime(Math.round(frac * 100));
+      setProgress(Math.round(frac * 800));
     }
   }
 
 
-  function relativeCoords(e: any) {
+  const relativeCoords = (e: any) => {
     var bounds = e.target.getBoundingClientRect();
     var x = e.clientX - bounds.left;
     // var y = e.clientY - bounds.top;
@@ -122,8 +135,14 @@ function App() {
   }
 
   useEffect(() => {
-    openFile("/Users/iggy/Music/Test/1.flac", 0);
+    openDir();
   }, []);
+
+  useEffect(() => {
+    if (files.length > 0) {
+      openFile(files[0], 0);
+    }
+  }, [files]);
 
   useEffect(() => {
     if (isSent && window.Main)
@@ -195,17 +214,26 @@ function App() {
                 </use>
               </svg>
               <svg width="150" height="20" className='clip1 absolute' viewBox="0 0 800 80">
-                <ellipse cx={currTime * 8} cy="50" rx="20" ry="40" fill="#c1b7b4"
+                <ellipse cx={progress} cy="50" rx="20" ry="40" fill="#c1b7b4"
                 />
               </svg>
             </div>
           </div>
         </div>
         <div className='grid grid-flow-col auto-cols-max m-2'>
-          <Bars3Icon
-            className="h-6 text-[#a1918c] m-1"
-            onClick={collapse}
-          />
+          {
+            resized ?
+              <Bars3Icon
+                className="h-6 text-[#a1918c] m-1"
+                onClick={collapse}
+              /> :
+              <ChevronDoubleUpIcon
+                className="h-6 text-[#a1918c] m-1"
+                onClick={collapse}
+              />
+          }
+
+
           <AdjustmentsVerticalIcon className="h-6 text-[#a1918c] m-1" />
           <BackwardIcon className="h-6 text-[#a1918c] m-1"
             onClick={() => { openFile(files[currIdx - 1], currIdx - 1) }}
@@ -230,10 +258,13 @@ function App() {
               : <DocumentArrowUpIcon className="h-6 text-[#a1918c] m-1" onClick={alwaysOnTop} />
           }
           <HandRaisedIcon className="h-6 text-[#a1918c] m-1 drag" />
+          <FolderPlusIcon className="h-6 text-[#a1918c] m-1"
+            onClick={openDir}
+          />
         </div>
       </div>
       <div className='overflow-hidden'>
-        {files.map(function (file: string, index: number) {
+        {files.map((file: string, index: number) => {
           return (
             <div className={`overflow-auto hover:bg-black/20 ${index == currIdx ?
               "bg-[#f08665]/20" : ''}`}>

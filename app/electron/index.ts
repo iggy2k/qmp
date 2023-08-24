@@ -1,20 +1,23 @@
 import { join } from 'path';
-import { BrowserWindow, app, ipcMain, IpcMainEvent, screen } from 'electron';
+import { BrowserWindow, app, ipcMain, IpcMainEvent, screen, dialog } from 'electron';
 import isDev from 'electron-is-dev';
 import * as mm from 'music-metadata';
 import * as fs from 'fs';
 import path from 'path';
 
 const WIN_HEIGHT = 450;
-const WIN_WIDTH = 450;
+const WIN_WIDTH = 470;
 const HTML5_AUDIO = ['wav', 'mp3', 'mp4', 'flac', 'webm', 'ogg']; // Incomplete
 var resized = true;
 var onTop = false;
 
 async function openFile(file: string) {
-    const metadata = await mm.parseFile(file);
+    const metadata = await mm.parseFile(file).catch(e => { console.log(e) });
     //console.log(metadata);
-    return [metadata, mm.selectCover(metadata.common.picture)?.data.toString('base64')]; // pick the cover image
+    if (metadata == undefined) {
+        return undefined;
+    }
+    return [metadata, mm.selectCover(metadata!.common.picture)?.data.toString('base64')];
 }
 
 async function openDir(dir: string) {
@@ -112,10 +115,13 @@ function createWindow() {
                 window.webContents.send("fromMain", data);
             }
         });
+        prom.catch(err => {
+            console.log(err);
+        });
     });
 
-    ipcMain.on("get-files-to-main", () => {
-        let lsdir = openDir("/Users/iggy/Music/Test/");
+    ipcMain.on("get-files-to-main", (_, path: string) => {
+        let lsdir = openDir(path);
         lsdir.then(data => {
             if (data !== undefined) {
                 // console.log("Cover: " + cover);
@@ -124,6 +130,16 @@ function createWindow() {
                 window.webContents.send("get-files-from-main", data);
             }
         });
+        lsdir.catch(err => {
+            console.log(err);
+        });
+    });
+
+    ipcMain.on("open-folder-tm", (_) => {
+        let dirpath = dialog.showOpenDialogSync(window, {
+            properties: ['openDirectory']
+        })
+        window.webContents.send("open-folder-fm", dirpath?.pop());
     });
 }
 
