@@ -40,6 +40,8 @@ function App() {
 
   const [currDir, setCurrDir] = useState('');
 
+  const [covers, setCovers] = useState<any[]>([]);
+
   const openFile = (path: string, index: number) => {
 
     if (index < 0) {
@@ -54,18 +56,19 @@ function App() {
     setCurrIdx(index);
     setCurrFile(path);
 
-    window.Main.send("toMain", path);
+    window.Main.send("toMain", [path]);
     window.Main.receive("fromMain", (data: any) => {
       //console.log(`Received ${data.length} ${data} from main process`);
       //console.log("date: " + data)
-      setCover(data[1]);
-      setTitle(data[0].common['title']);
-      setArtist(data[0].common['artist']);
-      setAlbum(data[0].common['album']);
+      setCover(data[1][0]);
+      setTitle(data[0][0].common['title']);
+      setArtist(data[0][0].common['artist']);
+      setAlbum(data[0][0].common['album']);
     });
   };
 
   const openDir = () => {
+    var covrs: any[] = [];
     window.Main.send("open-folder-tm", null);
     window.Main.receive("open-folder-fm", (path: string | undefined) => {
       if (path !== undefined) {
@@ -74,6 +77,16 @@ function App() {
         window.Main.receive("get-files-from-main", (data: any) => {
           setFiles(data);
           console.log(data);
+          const paths = Object.values(data);
+          window.Main.send("toMain", paths);
+          window.Main.receive("fromMain", (data2: any) => {
+
+            if (data2[1].length > 1) {
+              console.log("Setting covers!!!")
+              setCovers(data2[1]);
+            }
+
+          });
         });
       }
     });
@@ -134,11 +147,16 @@ function App() {
     player.current.seek(player.current.duration() / 150 * x);
   }
 
-  useEffect(() => {
-    openDir();
-  }, []);
+  // useEffect(() => {
+  //   openDir();
+  // }, []);
 
   useEffect(() => {
+    console.log("Covers len: " + covers.length)
+  }, [covers]);
+
+  useEffect(() => {
+    console.log("files.length: " + files.length);
     if (files.length > 0) {
       openFile(files[0], 0);
     }
@@ -264,16 +282,18 @@ function App() {
         </div>
       </div>
       <div className='overflow-hidden'>
-        {files.map((file: string, index: number) => {
+        {covers.length > 0 && files.map((file: string, index: number) => {
           return (
-            <div className={`overflow-auto hover:bg-black/20 ${index == currIdx ?
-              "bg-[#f08665]/20" : ''}`}>
+            <div
+              key={index}
+              className={`overflow-auto hover:bg-black/20 ${index == currIdx ?
+                "bg-[#f08665]/20" : ''}`}>
               <div className={index == 1 ? 'border-b border-[#f08665] grid grid-flow-col auto-cols-max'
                 : 'border-b border-t border-[#f08665] grid grid-flow-col auto-cols-max'}
                 onClick={() => { openFile(file, index) }}
               >
-                <img className='w-[32px] h-[32px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
-                <p className='text-[#a1918c] mt-3'>{file.split('/').reverse()[0]}</p>
+                <img className='w-[32px] h-[32px] rounded-lg m-2' src={covers[index] !== undefined && covers[index] !== null ? `data:${covers[index]};base64,${covers[index].toString('base64')}` : ''} alt="" />
+                <p className='text-[#a1918c] mt-3'>{file.split('/').reverse()[0].replace(/\.[^/.]+$/, "")}</p>
               </div>
             </div>
           )

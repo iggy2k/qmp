@@ -11,18 +11,24 @@ const HTML5_AUDIO = ['wav', 'mp3', 'mp4', 'flac', 'webm', 'ogg']; // Incomplete
 var resized = true;
 var onTop = false;
 
-async function openFile(file: string) {
-    const metadata = await mm.parseFile(file).catch(e => { console.log(e) });
-    //console.log(metadata);
-    if (metadata == undefined) {
-        return undefined;
+function openFiles(files: string[]) {
+    const promises = [];
+    for (let i = 0; i < files.length; i++) {
+        console.log("file: " + files[i])
+        promises.push(mm.parseFile(files[i]));
     }
-    return [metadata, mm.selectCover(metadata!.common.picture)?.data.toString('base64')];
+    return Promise.all(promises)
+        .then((results) => {
+            const covers = results.map(md => mm.selectCover(md!.common.picture)?.data.toString('base64'))
+            return [results, covers];
+        })
+        .catch((e) => {
+            console.log("openFiles: " + e)
+        });
 }
 
 async function openDir(dir: string) {
     let paths: string[] = [];
-
 
     const fileNames = await fs.promises.readdir(dir);
     for (let file of fileNames) {
@@ -80,7 +86,7 @@ function createWindow() {
         let y = bounds.y + ((bounds.height - WIN_HEIGHT) / 2);
         window.setPosition(x, y);
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
-        // window?.webContents.openDevTools()
+        window?.webContents.openDevTools()
     }, 1000);
 
     ipcMain.on('resize', () => {
@@ -105,18 +111,10 @@ function createWindow() {
 
     });
 
-    ipcMain.on("toMain", (_, file: string) => {
-        let prom = openFile(file);
-        prom.then(data => {
-            if (data !== undefined) {
-                // console.log("Cover: " + cover);
-                // const resultStr = cover.toString('base64');
-                // console.log("Cover: " + resultStr);
-                window.webContents.send("fromMain", data);
-            }
-        });
-        prom.catch(err => {
-            console.log(err);
+    ipcMain.on("toMain", (_, files: string[]) => {
+        openFiles(files).then(data => {
+            // console.log(data);
+            window.webContents.send("fromMain", data);
         });
     });
 
