@@ -42,6 +42,8 @@ function App() {
 
   const [covers, setCovers] = useState<any[]>([]);
 
+  const [mouseDown, setMouseDown] = useState(false);
+
   const openFile = (path: string, index: number) => {
 
     if (index < 0) {
@@ -114,15 +116,15 @@ function App() {
   };
 
   const getSeek = () => {
-    if (play) {
+    if (play && player !== null) {
       return player.current.seek();
     }
   }
 
-  const setSeek = (forward: boolean) => {
-    if (play) {
-      player.current.seek(getSeek() + (forward ? SEEK_SECONDS : -SEEK_SECONDS));
-    }
+  const setSeek = (time: number) => {
+    // if (play) {
+    player.current.seek(time);
+    // }
   }
 
   const getDuration = () => {
@@ -141,10 +143,16 @@ function App() {
 
 
   const relativeCoords = (e: any) => {
-    var bounds = e.target.getBoundingClientRect();
+    e.stopPropagation();
+    let elem = document.getElementById("track");
+    var bounds = elem!.getBoundingClientRect();
     var x = e.clientX - bounds.left;
-    // var y = e.clientY - bounds.top;
-    player.current.seek(player.current.duration() / 150 * x);
+    var relative_pos = player.current.duration() / 150 * x
+    if (mouseDown) {
+      setSeek(relative_pos)
+    }
+    // console.log("bounds.left " + bounds.left)
+    // console.log("e.clientX " + e.clientX)
   }
 
   // useEffect(() => {
@@ -170,7 +178,9 @@ function App() {
   }, [fromMain, isSent]);
 
   setInterval(() => {
-    updateProgress();
+    if (!mouseDown) {
+      updateProgress();
+    }
   }, 100);
 
   return (
@@ -185,8 +195,13 @@ function App() {
               <p>&nbsp;-&nbsp;</p>
               <p>{album}</p>
             </div>
-            <div
-              onClick={(e) => { relativeCoords(e) }}
+            <div id="track"
+              // This id value needed as using e.target can target the child
+              // latter being the track knob which has its own bounds.
+              // This causes unexpected bahaviour
+              onMouseMove={(e) => { relativeCoords(e) }}
+              onMouseDown={() => setMouseDown(true)}
+              onMouseUp={() => setMouseDown(false)}
             >
               <svg width="150" height="20" viewBox="0 0 800 80"
                 className='clip1 absolute'

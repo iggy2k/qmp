@@ -86,7 +86,7 @@ function createWindow() {
         let y = bounds.y + ((bounds.height - WIN_HEIGHT) / 2);
         window.setPosition(x, y);
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 1000);
 
     ipcMain.on('resize', () => {
