@@ -67,8 +67,24 @@ function createWindow() {
         alwaysOnTop: true
     });
 
+    const settings = new BrowserWindow({
+        height: 500,
+        width: 500,
+        frame: true,
+        show: false,
+        resizable: true,
+        fullscreenable: true,
+        //opacity: 0.5,
+        vibrancy: 'dark',
+        webPreferences: {
+            webSecurity: false,
+            nodeIntegration: true,
+            preload: join(__dirname, 'preload.js')
+        }
+    });
+
     const port = process.env.PORT || 3000;
-    const url = isDev ? `http://localhost:${port}?viewA` : join(__dirname, '../src/out/index.html');
+    const url = isDev ? `http://localhost:${port}` : join(__dirname, '../src/out/index.html');
 
     if (isDev) {
         window?.loadURL(url);
@@ -138,6 +154,21 @@ function createWindow() {
             properties: ['openDirectory']
         })
         window.webContents.send("open-folder-fm", dirpath?.pop());
+    });
+
+    ipcMain.on("open-settings-tm", (_) => {
+        console.log("opening settings at " + url + "/settings")
+        if (isDev) {
+            settings?.loadURL(url + "/settings");
+        } else {
+            settings?.loadFile(url + "/settings");
+        }
+        settings?.show();
+    });
+
+    settings?.on('close', function (evt) {
+        evt.preventDefault();
+        settings?.hide();
     });
 }
 

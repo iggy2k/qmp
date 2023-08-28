@@ -27,7 +27,8 @@ const api = {
         // whitelist channels
         let validChannels = ["toMain", "fromMain",
             "get-files-from-main", "get-files-to-main",
-            "open-folder-fm", "open-folder-tm"
+            "open-folder-fm", "open-folder-tm",
+            "open-settings-fm", "open-settings-tm",
         ];
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
@@ -36,7 +37,8 @@ const api = {
     receive: (channel: any, func: any) => {
         let validChannels = ["toMain", "fromMain",
             "get-files-from-main", "get-files-to-main",
-            "open-folder-fm", "open-folder-tm"
+            "open-folder-fm", "open-folder-tm",
+            "open-settings-fm", "open-settings-tm",
         ];
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender` 

@@ -44,6 +44,10 @@ function App() {
 
   const [mouseDown, setMouseDown] = useState(false);
 
+  const openSettings = () => {
+    window.Main.send("open-settings-tm", null);
+  }
+
   const openFile = (path: string, index: number) => {
 
     if (index < 0) {
@@ -247,7 +251,7 @@ function App() {
                 </use>
               </svg>
               <svg width="150" height="20" className='clip1 absolute' viewBox="0 0 800 80">
-                <ellipse cx={progress} cy="50" rx="20" ry="40" fill="#c1b7b4"
+                <ellipse cx={progress} cy="50" rx="20" ry="40" fill={mouseDown ? "#f08665" : "#c1b7b4"}
                 />
               </svg>
             </div>
@@ -285,7 +289,9 @@ function App() {
           <ArrowPathRoundedSquareIcon
             className={repeat ? "h-6 text-[#a1918c] m-1" : "h-6 text-[#f08665] m-1"}
             onMouseDown={() => { setRepeat(!repeat) }} />
-          <CogIcon className="h-6 text-[#a1918c] m-1" />
+          <CogIcon className="h-6 text-[#a1918c] m-1"
+            onClick={() => { openSettings() }}
+          />
           {
             onTop ? <DocumentArrowDownIcon className="h-6 text-[#f08665] m-1" onClick={alwaysOnTop} />
               : <DocumentArrowUpIcon className="h-6 text-[#a1918c] m-1" onClick={alwaysOnTop} />
