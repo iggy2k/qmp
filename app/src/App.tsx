@@ -189,7 +189,7 @@ function App() {
 
   return (
     <div className='bg-[#333333]'>
-      <div className='sticky top-0 bg-[#333333] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] '>
+      <div className='sticky top-0 bg-[#333333] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]'>
         <div className='grid grid-flow-col auto-cols-max '>
           <img className='w-[64px] h-[64px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
           <div className='ml-1 mt-2'>

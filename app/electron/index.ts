@@ -72,9 +72,8 @@ function createWindow() {
         width: 500,
         frame: true,
         show: false,
-        resizable: true,
+        resizable: false,
         fullscreenable: true,
-        //opacity: 0.5,
         vibrancy: 'dark',
         webPreferences: {
             webSecurity: false,
@@ -103,7 +102,7 @@ function createWindow() {
         window.setPosition(x, y);
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true);
         // window?.webContents.openDevTools()
-    }, 1000);
+    }, 500);
 
     ipcMain.on('resize', () => {
 
