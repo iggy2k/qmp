@@ -21,30 +21,30 @@ function Settings() {
 
   return (
     <div className='bg-[#333333] h-[100vh] p-1 overflow-hidden'>
-      <div className='grid grid-cols-3 gap-3 mt-4 bg-black/10 rounded-xl m-3 '>
+      <div className='grid grid-cols-3 gap-3 mt-3 bg-black/10 rounded-md m-2 h-[30px]'>
 
-        <div className={`text-center text-[#bfbfbf] w-full p-2 rounded-md
-         ${tab == 'theme' ? "transition ease-in-out duration-300 border-[#f08665] border-b-[1px] shadow-[inset_0px_-15px_30px_-27px_#f08665]" : " hover:bg-black/10"}`}
+        <div className={`text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
+         ${tab == 'theme' ? "transition ease-in-out duration-300 border-[#f08665] border-x-[1px]  " : " hover:bg-black/10"}`}
           onClick={() => { setTab('theme') }}
         >
           <p>Themes</p>
         </div>
-        <div className={`text-center text-[#bfbfbf] w-full p-2 rounded-md
-         ${tab == 'playlists' ? "transition ease-in-out duration-300 border-[#f08665] border-b-[1px] shadow-[inset_0px_-15px_30px_-27px_#f08665]" : " hover:bg-black/10"}`}
+        <div className={`text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
+         ${tab == 'playlists' ? "transition ease-in-out duration-300 border-[#f08665] border-x-[1px] " : " hover:bg-black/10"}`}
           onClick={() => { setTab('playlists') }}
         >
           <p>Playlists</p>
         </div>
-        <div className={`text-center text-[#bfbfbf] w-full p-2 rounded-md
-         ${tab == 'misc' ? "transition ease-in-out duration-300 border-[#f08665] border-b-[1px] shadow-[inset_0px_-15px_30px_-27px_#f08665]" : " hover:bg-black/10"}`}
+        <div className={`text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
+         ${tab == 'misc' ? "transition ease-in-out duration-300 border-[#f08665] border-x-[1px] " : " hover:bg-black/10"}`}
           onClick={() => { setTab('misc') }}
         >
           <p>Misc.</p>
         </div>
       </div>
-      {tab == 'theme' ? <div className='grid grid-flow-col auto-cols-2 transition-opacity  '>
-        <div className='h-[80vh]'>
-          <div className=' w-[100px] p-[15px] ml-7 mt-5 rounded-lg outline outline-[2px] outline-[black]/20 border-black/20 max-h-[75vh] overflow-y-auto shadow-[inset_0px_-19px_30px_-27px_#000000,inset_2px_19px_30px_-27px_#000000] col-span-1'>
+      {tab == 'theme' ? <div className='grid grid-flow-col auto-cols-2 transition-opacity bg-black/10 m-2 pb-4'>
+        <div className=''>
+          <div className=' w-[100px] p-[15px] ml-7 mt-5 rounded-lg outline outline-[2px] outline-[black]/20 border-black/20 max-h-[350px] overflow-y-auto shadow-[inset_0px_-19px_30px_-27px_#000000,inset_2px_19px_30px_-27px_#000000] col-span-1'>
             <div className='w-[70px] h-[70px] rounded-[30%]
             bg-[#5c5954]/20 mb-3 hover:outline hover:outline-[#f08665]/20'>
               <ThemeCircle
@@ -111,7 +111,7 @@ function Settings() {
           </div>
         </div>
 
-        <div className='ml-14 px-2 col-span-1'>
+        <div className='ml-4 mt-1 px-2 col-span-1 '>
           <div className='mt-5 grid grid-flow-col auto-cols-max'>
             <div className={`w-[30px] h-[30px] rounded-md ${selected == "background" ? "border-black/20 border-[4px]" : ""}`}
               style={{ backgroundColor: `${background}` }}
@@ -157,7 +157,7 @@ function Settings() {
             </div>
           </div>
 
-          <div className='grid grid-flow-col grid-cols-2 mt-2
+          <div className='grid grid-flow-col grid-cols-2 mt-4
           min-w-[500px] min-h-[100px]'>
             <HexColorPicker
               className=' max-h-[100px] max-w-[240px] min-w-[240px]'

@@ -189,9 +189,9 @@ function App() {
 
   return (
     <div className='bg-[#333333]'>
-      <div className='sticky top-0 bg-[#333333] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]'>
+      <div className='bg-[#333333] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]'>
         <div className='grid grid-flow-col auto-cols-max '>
-          <img className='w-[64px] h-[64px] rounded-lg m-2' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
+          <img className='w-[64px] h-[64px] rounded-lg m-3 mb-0' src={cover !== undefined && cover !== null ? `data:${cover};base64,${cover.toString('base64')}` : ''} alt="" />
           <div className='ml-1 mt-2'>
             <p className='text-[#a1918c]'>{title}</p>
             <div className='text-[#6e635f] grid grid-flow-col auto-cols-max'>
@@ -257,7 +257,7 @@ function App() {
             </div>
           </div>
         </div>
-        <div className='grid grid-flow-col auto-cols-max m-2'>
+        <div className='grid grid-flow-col auto-cols-max m-2 mt-0'>
           {
             resized ?
               <Bars3Icon
@@ -302,7 +302,7 @@ function App() {
           />
         </div>
       </div>
-      <div className='overflow-hidden'>
+      <div className='overflow-y-auto max-h-[315px]'>
         {covers.length > 0 && files.map((file: string, index: number) => {
           return (
             <div

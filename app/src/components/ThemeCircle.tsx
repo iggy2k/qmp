@@ -4,10 +4,11 @@ interface IProps {
     bg: string,
     accent: string,
     text: string,
-    textlight: string
+    textlight: string,
+    className?: string
 }
 
-const ThemeCircle = ({ bg, accent, text, textlight }: IProps) => {
+const ThemeCircle = ({ bg, accent, text, textlight, className }: IProps) => {
     return (
         <div className='w-[50px] h-[50px] pl-[10px] pt-[10px]'>
             <div className={`w-[50px] h-[50px] rounded-full `}

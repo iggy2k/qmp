@@ -68,8 +68,8 @@ function createWindow() {
     });
 
     const settings = new BrowserWindow({
-        height: 500,
-        width: 500,
+        height: 480,
+        width: 450,
         frame: true,
         show: false,
         resizable: false,
