@@ -3,31 +3,30 @@
 @tailwind utilities;
 
 * {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 /* I could not achieve the same with overflow in a reasonable amount of time */
-::-webkit-scrollbar { 
-  width: 0px;
+::-webkit-scrollbar {
+    width: 0px;
 }
 
-.drag{
-  -webkit-user-select: none;
-  -webkit-app-region: drag;
+.drag {
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
 }
 
 .clip1 {
-
-  /* clip-path: inset(0 70% 0 0); */
-  animation-duration: 6s;
-  animation-iteration-count: infinite;
-  animation-name: slidein;
-  animation-timing-function: linear;
+    /* clip-path: inset(0 70% 0 0); */
+    animation-duration: 6s;
+    animation-iteration-count: infinite;
+    animation-name: slidein;
+    animation-timing-function: linear;
 }
 /* 
 @keyframes slidein {
