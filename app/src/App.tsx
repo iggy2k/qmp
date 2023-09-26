@@ -27,7 +27,7 @@ function App() {
     const [play, setPlay] = useState(false)
     const [onTop, setOnTop] = useState(false)
     const [currTime, setCurrTime] = useState(0)
-    const SEEK_SECONDS = 5
+
     const [cover, setCover] = useState(null as any)
 
     const [title, setTitle] = useState('Title')
@@ -81,9 +81,9 @@ function App() {
         })
     }
 
-    const openDir = () => {
+    const openDir = (openDefault: boolean) => {
         var covrs: any[] = []
-        window.Main.send('open-folder-tm', null)
+        window.Main.send('open-folder-tm', openDefault)
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
             if (path !== undefined) {
                 setCurrDir(path)
@@ -164,9 +164,9 @@ function App() {
         // console.log("e.clientX " + e.clientX)
     }
 
-    // useEffect(() => {
-    //   openDir();
-    // }, []);
+    useEffect(() => {
+        openDir(true)
+    }, [])
 
     useEffect(() => {
         console.log('Covers len: ' + covers.length)
@@ -402,7 +402,9 @@ function App() {
                     <HandRaisedIcon className="h-6 text-[#a1918c] m-1 drag" />
                     <FolderPlusIcon
                         className="h-6 text-[#a1918c] m-1"
-                        onClick={openDir}
+                        onClick={() => {
+                            openDir(false)
+                        }}
                     />
                 </div>
             </div>

@@ -11,12 +11,14 @@ import isDev from 'electron-is-dev'
 import * as mm from 'music-metadata'
 import * as fs from 'fs'
 import path from 'path'
+import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
 const WIN_WIDTH = 470
 const HTML5_AUDIO = ['wav', 'mp3', 'mp4', 'flac', 'webm', 'ogg'] // Incomplete
 var resized = true
 var onTop = false
+const store = new Store()
 
 function openFiles(files: string[]) {
     const promises = []
@@ -157,11 +159,20 @@ function createWindow() {
         })
     })
 
-    ipcMain.on('open-folder-tm', (_) => {
-        let dirpath = dialog.showOpenDialogSync(window, {
-            properties: ['openDirectory'],
-        })
-        window.webContents.send('open-folder-fm', dirpath?.pop())
+    ipcMain.on('open-folder-tm', (_, openDefault: boolean) => {
+        if (openDefault) {
+            let dir = store.get('last_open_dir')
+            window.webContents.send('open-folder-fm', dir)
+            store.set('last_open_dir', dir)
+        } else {
+            let dirpath = dialog.showOpenDialogSync(window, {
+                properties: ['openDirectory'],
+            })
+            let dir = dirpath?.pop()
+            window.webContents.send('open-folder-fm', dir)
+            store.set('last_open_dir', dir)
+            console.log(store.get('last_open_dir'))
+        }
     })
 
     ipcMain.on('open-settings-tm', (_) => {
