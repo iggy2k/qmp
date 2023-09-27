@@ -19,6 +19,7 @@ const HTML5_AUDIO = ['wav', 'mp3', 'mp4', 'flac', 'webm', 'ogg'] // Incomplete
 var resized = true
 var onTop = false
 const store = new Store()
+console.log('Userdata: ' + app.getPath('userData'))
 
 function openFiles(files: string[]) {
     const promises = []
@@ -126,6 +127,15 @@ function createWindow() {
             window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
         }
         resized = !resized
+    })
+
+    ipcMain.on('minimize', () => {
+        window?.minimize()
+    })
+
+    ipcMain.on('close', () => {
+        window?.close()
+        app?.exit()
     })
 
     ipcMain.on('always-on-top', () => {

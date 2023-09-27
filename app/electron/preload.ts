@@ -17,6 +17,12 @@ const api = {
     Resize: () => {
         ipcRenderer.send('resize')
     },
+    Minimize: () => {
+        ipcRenderer.send('minimize')
+    },
+    Close: () => {
+        ipcRenderer.send('close')
+    },
     AlwaysOnTop: () => {
         ipcRenderer.send('always-on-top')
     },

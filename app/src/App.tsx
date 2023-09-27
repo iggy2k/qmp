@@ -194,6 +194,21 @@ function App() {
 
     return (
         <div className="bg-[#333333]">
+            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full min-h-[20px]">
+                <div
+                    className="min-h-[12px] min-w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
+                    onClick={() => {
+                        window.Main.Close()
+                    }}
+                ></div>
+                <div
+                    className="min-h-[12px] min-w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
+                    onClick={() => {
+                        window.Main.Minimize()
+                    }}
+                ></div>
+                {/* <div className="min-h-[12px] min-w-[12px] bg-green-500 hover:bg-[#2d9624] rounded-full"></div> */}
+            </div>
             <div className="bg-[#333333]">
                 <div className="grid grid-flow-col auto-cols-max ">
                     <img
