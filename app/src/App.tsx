@@ -19,8 +19,36 @@ import {
 } from '@heroicons/react/24/solid'
 
 function App() {
-    // console.log(window.ipcRenderer);
-    const player = useRef(null as any)
+    const audioRef = useRef(null as any)
+    const AudioContext = window.AudioContext
+    const audioContext = new AudioContext()
+    const gain = audioContext.createGain()
+
+    const [volume, setVolume] = useState(0.5)
+
+    useEffect(() => {
+        if (audioRef != null) {
+            const track = audioContext.createMediaElementSource(
+                audioRef.current
+            )
+            track.connect(audioContext.destination)
+            gain.connect(audioContext.destination)
+        }
+    }, [audioRef])
+
+    useEffect(() => {
+        // gain.disconnect(audioContext.destination)
+        gain.gain.value = volume
+        console.log('volume = ', volume)
+        // gain.connect(audioContext.destination)
+    }, [volume])
+
+    const onLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration)
+            console.log('duration = ' + duration)
+        }
+    }
 
     const [isSent, setSent] = useState(false)
     const [fromMain, setFromMain] = useState<string | null>(null)
@@ -42,11 +70,11 @@ function App() {
 
     const [currIdx, setCurrIdx] = useState(0)
 
-    const [volume, setVolume] = useState(0.5)
-
     const [resized, setResized] = useState(false)
 
     const [progress, setProgress] = useState(0)
+
+    const [duration, setDuration] = useState(0)
 
     const [currDir, setCurrDir] = useState('')
 
@@ -56,6 +84,23 @@ function App() {
 
     const openSettings = () => {
         window.Main.send('open-settings-tm', null)
+    }
+
+    useEffect(() => {
+        console.log('progress = ', progress)
+    }, [progress])
+
+    const togglePlay = () => {
+        // if (audioContext.state === 'suspended') {
+        //     audioContext.resume()
+        // }
+        if (!play) {
+            setPlay(true)
+            audioRef.current.play()
+        } else {
+            setPlay(false)
+            audioRef.current.pause()
+        }
     }
 
     const openFile = (path: string, index: number) => {
@@ -104,13 +149,6 @@ function App() {
         })
     }
 
-    const sendToElectron = () => {
-        if (window.Main) {
-            window.Main.sendMessage('Message from react')
-            setSent(true)
-        }
-    }
-
     const collapse = () => {
         if (window.Main) {
             window.Main.Resize()
@@ -125,30 +163,17 @@ function App() {
         }
     }
 
-    const getSeek = () => {
-        if (play && player !== null) {
-            return player.current.seek()
-        }
-    }
-
     const setSeek = (time: number) => {
-        // if (play) {
-        player.current.seek(time)
-        // }
-    }
-
-    const getDuration = () => {
-        if (play) {
-            return player.current.duration()
-        }
+        audioRef.current.currentTime = time
+        // audioRef.current.play()
     }
 
     const updateProgress = () => {
-        if (play) {
-            let frac = getSeek() / getDuration()
-            setCurrTime(Math.round(frac * 100))
-            setProgress(Math.round(frac * 800))
-        }
+        let frac = audioRef.current.currentTime / duration
+        setCurrTime(Math.round(frac * 100))
+        setProgress(Math.round(frac * 800))
+        // console.log('audioContext.currentTime  = ' + audioContext.currentTime)
+        // console.log('duration = ' + duration)
     }
 
     const relativeCoords = (e: any) => {
@@ -156,7 +181,7 @@ function App() {
         let elem = document.getElementById('track')
         var bounds = elem!.getBoundingClientRect()
         var x = e.clientX - bounds.left
-        var relative_pos = (player.current.duration() / 150) * x
+        var relative_pos = (duration / 150) * x
         if (mouseDown) {
             setSeek(relative_pos)
         }
@@ -194,7 +219,7 @@ function App() {
 
     return (
         <div className="bg-[#333333]">
-            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full min-h-[20px]">
+            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full min-h-[20px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
                     className="min-h-[12px] min-w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
                     onClick={() => {
@@ -363,12 +388,12 @@ function App() {
                     {play ? (
                         <PauseIcon
                             className="h-6 text-[#a1918c] m-1"
-                            onClick={() => setPlay(!play)}
+                            onClick={() => togglePlay()}
                         />
                     ) : (
                         <PlayIcon
                             className="h-6 text-[#a1918c] m-1"
-                            onClick={() => setPlay(!play)}
+                            onClick={() => togglePlay()}
                         />
                     )}
                     <ForwardIcon
@@ -469,13 +494,19 @@ function App() {
                         )
                     })}
             </div>
-            <ReactHowler
+            {/* <ReactHowler
                 src={`file://${currFile}`}
                 playing={play}
                 html5={true}
                 ref={player}
                 volume={volume}
-            />
+            /> */}
+            <audio
+                onLoadedMetadata={onLoadedMetadata}
+                ref={audioRef}
+                src={`file://${currFile}`}
+                // onPlay={handleAudioPlay}
+            ></audio>
             <div className="bg-transparent"></div>
         </div>
     )
