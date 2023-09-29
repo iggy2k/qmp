@@ -18,35 +18,36 @@ import {
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
 
-function App() {
-    const audioRef = useRef(null as any)
-    const AudioContext = window.AudioContext
-    const audioContext = new AudioContext()
-    const gain = audioContext.createGain()
+const AudioContext = window.AudioContext
+const audioContext = new AudioContext()
+const gain = audioContext.createGain()
+let duration = 0
 
-    const [volume, setVolume] = useState(0.5)
+function App() {
+    const [volume, setVolume] = useState(0.1)
+    const audioRef = useRef(null as any)
 
     useEffect(() => {
         if (audioRef != null) {
             const track = audioContext.createMediaElementSource(
                 audioRef.current
             )
-            track.connect(audioContext.destination)
-            gain.connect(audioContext.destination)
+            console.log('created media element')
+            track.connect(gain).connect(audioContext.destination)
         }
     }, [audioRef])
 
     useEffect(() => {
         // gain.disconnect(audioContext.destination)
         gain.gain.value = volume
-        console.log('volume = ', volume)
+        // console.log('volume = ', volume)
         // gain.connect(audioContext.destination)
     }, [volume])
 
     const onLoadedMetadata = () => {
         if (audioRef.current) {
-            setDuration(audioRef.current.duration)
-            console.log('duration = ' + duration)
+            duration = audioRef.current.duration
+            // console.log('duration = ' + duration)
         }
     }
 
@@ -74,8 +75,6 @@ function App() {
 
     const [progress, setProgress] = useState(0)
 
-    const [duration, setDuration] = useState(0)
-
     const [currDir, setCurrDir] = useState('')
 
     const [covers, setCovers] = useState<any[]>([])
@@ -86,20 +85,18 @@ function App() {
         window.Main.send('open-settings-tm', null)
     }
 
-    useEffect(() => {
-        console.log('progress = ', progress)
-    }, [progress])
-
     const togglePlay = () => {
         // if (audioContext.state === 'suspended') {
         //     audioContext.resume()
         // }
-        if (!play) {
-            setPlay(true)
-            audioRef.current.play()
-        } else {
-            setPlay(false)
-            audioRef.current.pause()
+        if (audioRef.current) {
+            if (audioRef.current.paused) {
+                setPlay(true)
+                audioRef.current.play()
+            } else {
+                setPlay(false)
+                audioRef.current.pause()
+            }
         }
     }
 
@@ -120,9 +117,14 @@ function App() {
             //console.log(`Received ${data.length} ${data} from main process`);
             //console.log("date: " + data)
             setCover(data[1][0])
+            console.log(data[0][0])
             setTitle(data[0][0].common['title'])
             setArtist(data[0][0].common['artist'])
             setAlbum(data[0][0].common['album'])
+            if (audioRef.current && !Number.isNaN(audioRef.current.duration)) {
+                duration = audioRef.current.duration
+                // console.log('duration = ' + duration)
+            }
         })
     }
 
@@ -164,16 +166,25 @@ function App() {
     }
 
     const setSeek = (time: number) => {
-        audioRef.current.currentTime = time
+        if (audioRef.current) {
+            audioRef.current.currentTime = time
+        }
         // audioRef.current.play()
     }
 
     const updateProgress = () => {
-        let frac = audioRef.current.currentTime / duration
-        setCurrTime(Math.round(frac * 100))
-        setProgress(Math.round(frac * 800))
-        // console.log('audioContext.currentTime  = ' + audioContext.currentTime)
-        // console.log('duration = ' + duration)
+        if (audioRef.current) {
+            let frac =
+                Math.trunc(audioRef.current.currentTime) / Math.trunc(duration)
+            if (frac !== Infinity) {
+                let new_progress = Math.trunc(frac * 800)
+                let new_time = Math.trunc(frac * 100)
+                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
+                    setProgress(new_progress)
+                    setCurrTime(new_time)
+                }
+            }
+        }
     }
 
     const relativeCoords = (e: any) => {
@@ -236,17 +247,19 @@ function App() {
             </div>
             <div className="bg-[#333333]">
                 <div className="grid grid-flow-col auto-cols-max ">
-                    <img
-                        className="w-[64px] h-[64px] rounded-lg m-3 mb-0"
-                        src={
-                            cover !== undefined && cover !== null
-                                ? `data:${cover};base64,${cover.toString(
-                                      'base64'
-                                  )}`
-                                : ''
-                        }
-                        alt=""
-                    />
+                    <div className="w-[64px] h-[64px]  m-3 mb-0">
+                        <img
+                            className="rounded-lg hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-transform"
+                            src={
+                                cover !== undefined && cover !== null
+                                    ? `data:${cover};base64,${cover.toString(
+                                          'base64'
+                                      )}`
+                                    : ''
+                            }
+                            alt=""
+                        />
+                    </div>
                     <div className="ml-1 mt-2">
                         <p className="text-[#a1918c]">{title}</p>
                         <div className="text-[#6e635f] grid grid-flow-col auto-cols-max">
@@ -263,6 +276,7 @@ function App() {
                                 relativeCoords(e)
                             }}
                             onMouseDown={() => setMouseDown(true)}
+                            onMouseLeave={() => setMouseDown(false)}
                             onMouseUp={() => setMouseDown(false)}
                         >
                             <svg
@@ -289,7 +303,7 @@ function App() {
              C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
              C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
              "
-                                            stroke-width="12"
+                                            strokeWidth="12"
                                         />
                                     </defs>
                                 ) : (
@@ -302,7 +316,7 @@ function App() {
              M0 50
              L 1200 50
              "
-                                            stroke-width="12"
+                                            strokeWidth="12"
                                         />
                                     </defs>
                                 )}
@@ -335,7 +349,7 @@ function App() {
              M0 50
              L 1200 50
              "
-                                        stroke-width="12"
+                                        strokeWidth="12"
                                     />
                                 </defs>
                                 <use href="#sign-wave2" x="0" y="0">
@@ -407,10 +421,10 @@ function App() {
                         className="accent-[#a1918c] bg-inherit w-[100px]"
                         type="range"
                         min="0"
-                        max="100"
-                        onChange={(e) =>
-                            setVolume(parseFloat(e.target.value) / 100)
-                        }
+                        value={volume}
+                        step="0.01"
+                        max="2"
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
                     ></input>
                     <ArrowPathRoundedSquareIcon
                         className={
@@ -455,22 +469,25 @@ function App() {
                         return (
                             <div
                                 key={index}
-                                className={`overflow-auto hover:bg-black/20 ${
-                                    index == currIdx ? 'bg-[#f08665]/20' : ''
-                                }`}
+                                className={`p-1 overflow-auto hover:bg-black/20`}
                             >
                                 <div
-                                    className={
-                                        index == 1
-                                            ? 'border-b border-[#f08665] grid grid-flow-col auto-cols-max'
-                                            : 'border-b border-t border-[#f08665] grid grid-flow-col auto-cols-max'
+                                    className={`${
+                                        index == 0
+                                            ? 'border-b-[1px]'
+                                            : 'border-b-[1px]'
+                                    }  ${
+                                        index == currIdx
+                                            ? 'bg-[#f08665]/20'
+                                            : ''
                                     }
+                                        border-[#f08665] grid grid-flow-col auto-cols-max p-1 text-center rounded-md`}
                                     onClick={() => {
                                         openFile(file, index)
                                     }}
                                 >
                                     <img
-                                        className="w-[32px] h-[32px] rounded-lg m-2"
+                                        className="w-[24px] h-[24px] rounded-lg m-1"
                                         src={
                                             covers[index] !== undefined &&
                                             covers[index] !== null
@@ -483,7 +500,7 @@ function App() {
                                         }
                                         alt=""
                                     />
-                                    <p className="text-[#a1918c] mt-3">
+                                    <p className="text-[#a1918c] mt-2 text-sm pl-2">
                                         {file
                                             .split('/')
                                             .reverse()[0]
@@ -494,18 +511,10 @@ function App() {
                         )
                     })}
             </div>
-            {/* <ReactHowler
-                src={`file://${currFile}`}
-                playing={play}
-                html5={true}
-                ref={player}
-                volume={volume}
-            /> */}
             <audio
                 onLoadedMetadata={onLoadedMetadata}
                 ref={audioRef}
-                src={`file://${currFile}`}
-                // onPlay={handleAudioPlay}
+                src={currFile ? `file://${currFile}` : undefined}
             ></audio>
             <div className="bg-transparent"></div>
         </div>
