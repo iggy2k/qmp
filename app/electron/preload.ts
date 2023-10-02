@@ -29,6 +29,9 @@ const api = {
     ReadInBlob: (path: string) => {
         ipcRenderer.send('read-in-blob', path)
     },
+    SaveCover: (data: any) => {
+        ipcRenderer.send('save-cover', data)
+    },
     send: (channel: any, data: any) => {
         // whitelist channels
         let validChannels = [

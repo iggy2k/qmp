@@ -117,7 +117,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        // window?.webContents.openDevTools()
+        window?.webContents.openDevTools()
     }, 500)
 
     ipcMain.on('resize', () => {
@@ -193,6 +193,17 @@ function createWindow() {
             settings?.loadFile(url + '/settings')
         }
         settings?.show()
+    })
+
+    ipcMain.on('save-cover', (_, data: any) => {
+        console.log('saving cover ' + data)
+        let file = dialog.showSaveDialogSync(window, {
+            defaultPath: 'cover.jpg',
+        })
+        file &&
+            fs.writeFileSync(file, data, {
+                encoding: 'base64',
+            })
     })
 
     settings?.on('close', function (evt) {

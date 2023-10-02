@@ -27,12 +27,19 @@ function App() {
     const [volume, setVolume] = useState(0.1)
     const audioRef = useRef(null as any)
 
+    const downloadCover = (b64data: any) => {
+        if (b64data !== undefined) {
+            // console.log('downloading cover ' + b64data)
+            window.Main.SaveCover(b64data.toString('base64'))
+        }
+    }
+
     useEffect(() => {
-        if (audioRef != null) {
+        if (audioRef != null && audioContext.state !== 'running') {
             const track = audioContext.createMediaElementSource(
                 audioRef.current
             )
-            console.log('created media element')
+            // console.log('created media element!')
             track.connect(gain).connect(audioContext.destination)
         }
     }, [audioRef])
@@ -51,8 +58,6 @@ function App() {
         }
     }
 
-    const [isSent, setSent] = useState(false)
-    const [fromMain, setFromMain] = useState<string | null>(null)
     const [play, setPlay] = useState(false)
     const [onTop, setOnTop] = useState(false)
     const [currTime, setCurrTime] = useState(0)
@@ -78,6 +83,8 @@ function App() {
     const [currDir, setCurrDir] = useState('')
 
     const [covers, setCovers] = useState<any[]>([])
+
+    const [formats, setFormats] = useState<any[]>([])
 
     const [mouseDown, setMouseDown] = useState(false)
 
@@ -136,14 +143,25 @@ function App() {
                 setCurrDir(path)
                 window.Main.send('get-files-to-main', path)
                 window.Main.receive('get-files-from-main', (data: any) => {
+                    if (data.length > 0) {
+                        openFile(data[0], 0)
+                    }
                     setFiles(data)
-                    console.log(data)
+                    // console.log(data)
                     const paths = Object.values(data)
                     window.Main.send('toMain', paths)
                     window.Main.receive('fromMain', (data2: any) => {
+                        // console.log(data2[0])
                         if (data2[1].length > 1) {
-                            console.log('Setting covers!!!')
+                            console.log('Setting covers')
                             setCovers(data2[1])
+                            setFormats(
+                                data2[0].map(
+                                    (trackData: {
+                                        [x: string]: { [x: string]: any }
+                                    }) => trackData['format']['container']
+                                )
+                            )
                         }
                     })
                 })
@@ -174,11 +192,13 @@ function App() {
 
     const updateProgress = () => {
         if (audioRef.current) {
-            let frac =
-                Math.trunc(audioRef.current.currentTime) / Math.trunc(duration)
+            let frac = audioRef.current.currentTime / duration
             if (frac !== Infinity) {
                 let new_progress = Math.trunc(frac * 800)
                 let new_time = Math.trunc(frac * 100)
+                // console.log('currTime = ' + audioRef.current.currentTime)
+                // console.log('duration = ' + duration)
+                console.log('frac = ' + frac)
                 if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
                     setProgress(new_progress)
                     setCurrTime(new_time)
@@ -201,32 +221,23 @@ function App() {
     }
 
     useEffect(() => {
-        openDir(true)
+        if (currDir === '') {
+            // Prevent hot-reaload infinite-loop
+            openDir(true)
+        }
     }, [])
 
     useEffect(() => {
-        console.log('Covers len: ' + covers.length)
-    }, [covers])
-
-    useEffect(() => {
-        console.log('files.length: ' + files.length)
-        if (files.length > 0) {
-            openFile(files[0], 0)
-        }
-    }, [files])
-
-    useEffect(() => {
-        if (isSent && window.Main)
-            window.Main.on('message', (message: string) => {
-                setFromMain(message)
-            })
-    }, [fromMain, isSent])
-
-    setInterval(() => {
-        if (!mouseDown) {
-            updateProgress()
-        }
-    }, 100)
+        // Just using setinterval causes the exponential stacking, need useeffect to prevent
+        // create a interval and get the id
+        const myInterval = setInterval(() => {
+            if (!mouseDown) {
+                updateProgress()
+            }
+        }, 200)
+        // clear out the interval using the id when unmounting the component
+        return () => clearInterval(myInterval)
+    }, [])
 
     return (
         <div className="bg-[#333333]">
@@ -247,7 +258,7 @@ function App() {
             </div>
             <div className="bg-[#333333]">
                 <div className="grid grid-flow-col auto-cols-max ">
-                    <div className="w-[64px] h-[64px]  m-3 mb-0">
+                    <div className="w-[64px] h-[64px] m-3 mb-0">
                         <img
                             className="rounded-lg hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-transform"
                             src={
@@ -257,7 +268,11 @@ function App() {
                                       )}`
                                     : ''
                             }
+                            onClick={() => {
+                                downloadCover(cover)
+                            }}
                             alt=""
+                            title="Click to download the cover art"
                         />
                     </div>
                     <div className="ml-1 mt-2">
@@ -467,10 +482,7 @@ function App() {
                 {covers.length > 0 &&
                     files.map((file: string, index: number) => {
                         return (
-                            <div
-                                key={index}
-                                className={`p-1 overflow-auto hover:bg-black/20`}
-                            >
+                            <div key={index} className={`p-1 overflow-auto`}>
                                 <div
                                     className={`${
                                         index == 0
@@ -481,7 +493,7 @@ function App() {
                                             ? 'bg-[#f08665]/20'
                                             : ''
                                     }
-                                        border-[#f08665] grid grid-flow-col auto-cols-max p-1 text-center rounded-md`}
+                                        border-[#f08665] hover:bg-black/20 grid grid-flow-col auto-cols-max p-1 text-center rounded-md`}
                                     onClick={() => {
                                         openFile(file, index)
                                     }}
@@ -500,12 +512,25 @@ function App() {
                                         }
                                         alt=""
                                     />
-                                    <p className="text-[#a1918c] mt-2 text-sm pl-2">
-                                        {file
-                                            .split('/')
-                                            .reverse()[0]
-                                            .replace(/\.[^/.]+$/, '')}
-                                    </p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-[#a1918c] mt-2 text-sm pl-2 col-start-1">
+                                                {file
+                                                    .split('/')
+                                                    .reverse()[0]
+                                                    .replace(/\.[^/.]+$/, '')}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <p className="text-[#a1918c] mt-2 text-sm pl-2 col-end-1">
+                                                {covers[index] !== undefined &&
+                                                covers[index] !== null
+                                                    ? formats[index]
+                                                    : ''}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )
