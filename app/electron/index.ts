@@ -148,6 +148,9 @@ function createWindow() {
     })
 
     ipcMain.on('toMain', (_, files: string[]) => {
+        if (files[0] == undefined) {
+            return
+        }
         openFiles(files).then((data) => {
             // console.log(data);
             window.webContents.send('fromMain', data)

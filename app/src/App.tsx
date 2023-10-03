@@ -22,6 +22,7 @@ const AudioContext = window.AudioContext
 const audioContext = new AudioContext()
 const gain = audioContext.createGain()
 let duration = 0
+let track: any = null
 
 function App() {
     const [volume, setVolume] = useState(0.1)
@@ -35,10 +36,9 @@ function App() {
     }
 
     useEffect(() => {
+        console.log(`audioRef=${audioRef}`)
         if (audioRef != null && audioContext.state !== 'running') {
-            const track = audioContext.createMediaElementSource(
-                audioRef.current
-            )
+            track = audioContext.createMediaElementSource(audioRef.current)
             // console.log('created media element!')
             track.connect(gain).connect(audioContext.destination)
         }
@@ -47,8 +47,8 @@ function App() {
     useEffect(() => {
         // gain.disconnect(audioContext.destination)
         gain.gain.value = volume
-        // console.log('volume = ', volume)
-        // gain.connect(audioContext.destination)
+        gain.gain.setValueAtTime(volume, audioContext.currentTime + 1)
+        console.log('volume = ', volume)
     }, [volume])
 
     const onLoadedMetadata = () => {
@@ -92,34 +92,65 @@ function App() {
         window.Main.send('open-settings-tm', null)
     }
 
+    useEffect(() => {
+        console.log(`play = ${play}`)
+    }, [play])
+
     const togglePlay = () => {
-        // if (audioContext.state === 'suspended') {
-        //     audioContext.resume()
-        // }
+        console.log(`Toggle play -> paused=${audioRef.current.paused}`)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume()
+        }
         if (audioRef.current) {
             if (audioRef.current.paused) {
-                setPlay(true)
-                audioRef.current.play()
+                var playPromise = audioRef.current.play()
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then((_: any) => {
+                            console.log('Play start success')
+                            setPlay(true)
+                        })
+                        .catch((_: any) => {
+                            console.log('Play start error')
+                        })
+                } else {
+                    setPlay(true)
+                    console.log(`playPromise=${pausePromise}`)
+                }
             } else {
-                setPlay(false)
-                audioRef.current.pause()
+                var pausePromise = audioRef.current.pause()
+                if (pausePromise !== undefined) {
+                    pausePromise
+                        .then((_: any) => {
+                            console.log('Pause success')
+                            setPlay(false)
+                        })
+                        .catch((_: any) => {
+                            console.log('Pause error')
+                        })
+                } else {
+                    setPlay(false)
+                    console.log(`pausePromise=${pausePromise}`)
+                }
             }
+        } else {
+            console.log(`audioRef.current=${audioRef.current}`)
         }
     }
 
-    const openFile = (path: string, index: number) => {
+    const openFile = (index: number) => {
         if (index < 0) {
             index = files.length - 1
         } else if (index > files.length - 1) {
             index = 0
         }
 
-        console.log(`Loaded: path ${path}, idx ${index}`)
+        console.log(`Loaded: path ${files[index]}, idx ${index}`)
 
         setCurrIdx(index)
-        setCurrFile(path)
+        setCurrFile(files[index])
 
-        window.Main.send('toMain', [path])
+        window.Main.send('toMain', [files[index]])
         window.Main.receive('fromMain', (data: any) => {
             //console.log(`Received ${data.length} ${data} from main process`);
             //console.log("date: " + data)
@@ -144,26 +175,23 @@ function App() {
                 window.Main.send('get-files-to-main', path)
                 window.Main.receive('get-files-from-main', (data: any) => {
                     if (data.length > 0) {
-                        openFile(data[0], 0)
-                    }
-                    setFiles(data)
-                    // console.log(data)
-                    const paths = Object.values(data)
-                    window.Main.send('toMain', paths)
-                    window.Main.receive('fromMain', (data2: any) => {
-                        // console.log(data2[0])
-                        if (data2[1].length > 1) {
-                            console.log('Setting covers')
-                            setCovers(data2[1])
-                            setFormats(
-                                data2[0].map(
-                                    (trackData: {
-                                        [x: string]: { [x: string]: any }
-                                    }) => trackData['format']['container']
+                        setFiles(data)
+                        const paths = Object.values(data)
+                        window.Main.send('toMain', paths)
+                        window.Main.receive('fromMain', (data2: any) => {
+                            if (data2[1].length > 1) {
+                                console.log('Setting covers')
+                                setCovers(data2[1])
+                                setFormats(
+                                    data2[0].map(
+                                        (trackData: {
+                                            [x: string]: { [x: string]: any }
+                                        }) => trackData['format']['container']
+                                    )
                                 )
-                            )
-                        }
-                    })
+                            }
+                        })
+                    }
                 })
             }
         })
@@ -198,10 +226,14 @@ function App() {
                 let new_time = Math.trunc(frac * 100)
                 // console.log('currTime = ' + audioRef.current.currentTime)
                 // console.log('duration = ' + duration)
-                console.log('frac = ' + frac)
+                // console.log('frac = ' + frac)
                 if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
+                    // console.log('new_progress = ' + new_progress)
                     setProgress(new_progress)
                     setCurrTime(new_time)
+                }
+                if (frac == 1 && play) {
+                    togglePlay()
                 }
             }
         }
@@ -228,13 +260,25 @@ function App() {
     }, [])
 
     useEffect(() => {
+        if (files.length > 0) {
+            openFile(0)
+        }
+    }, [files])
+
+    useEffect(() => {
+        if (progress === 800) {
+            openFile(currIdx + 1)
+        }
+    }, [progress])
+
+    useEffect(() => {
         // Just using setinterval causes the exponential stacking, need useeffect to prevent
         // create a interval and get the id
         const myInterval = setInterval(() => {
             if (!mouseDown) {
                 updateProgress()
             }
-        }, 200)
+        }, 10)
         // clear out the interval using the id when unmounting the component
         return () => clearInterval(myInterval)
     }, [])
@@ -411,7 +455,7 @@ function App() {
                     <BackwardIcon
                         className="h-6 text-[#a1918c] m-1"
                         onClick={() => {
-                            openFile(files[currIdx - 1], currIdx - 1)
+                            openFile(currIdx - 1)
                         }}
                     />
                     {play ? (
@@ -428,7 +472,7 @@ function App() {
                     <ForwardIcon
                         className="h-6 text-[#a1918c] m-1"
                         onClick={() => {
-                            openFile(files[currIdx + 1], currIdx + 1)
+                            openFile(currIdx + 1)
                         }}
                     />
                     <SpeakerWaveIcon className="h-6 text-[#a1918c] m-1" />
@@ -495,7 +539,7 @@ function App() {
                                     }
                                         border-[#f08665] hover:bg-black/20 grid grid-flow-col auto-cols-max p-1 text-center rounded-md`}
                                     onClick={() => {
-                                        openFile(file, index)
+                                        openFile(index)
                                     }}
                                 >
                                     <img
@@ -524,8 +568,8 @@ function App() {
 
                                         <div>
                                             <p className="text-[#a1918c] mt-2 text-sm pl-2 col-end-1">
-                                                {covers[index] !== undefined &&
-                                                covers[index] !== null
+                                                {formats[index] !== undefined &&
+                                                formats[index] !== null
                                                     ? formats[index]
                                                     : ''}
                                             </p>
