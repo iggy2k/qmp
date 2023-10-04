@@ -118,7 +118,7 @@ function createWindow() {
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
         window?.webContents.openDevTools()
-    }, 500)
+    }, 100)
 
     ipcMain.on('resize', () => {
         if (resized) {

@@ -19,14 +19,14 @@ import {
 } from '@heroicons/react/24/solid'
 
 const AudioContext = window.AudioContext
-const audioContext = new AudioContext()
-const gain = audioContext.createGain()
+var audioContext: any = null
 let duration = 0
 let track: any = null
+let gain: any = null
+const audio = new Audio()
 
 function App() {
-    const [volume, setVolume] = useState(0.1)
-    const audioRef = useRef(null as any)
+    const [volume, setVolume] = useState(0.5)
 
     const downloadCover = (b64data: any) => {
         if (b64data !== undefined) {
@@ -35,26 +35,25 @@ function App() {
         }
     }
 
-    useEffect(() => {
-        console.log(`audioRef=${audioRef}`)
-        if (audioRef != null && audioContext.state !== 'running') {
-            track = audioContext.createMediaElementSource(audioRef.current)
-            // console.log('created media element!')
-            track.connect(gain).connect(audioContext.destination)
-        }
-    }, [audioRef])
+    // useEffect(() => {
+    //     audioContext = new AudioContext()
+    //     track = audioContext.createMediaElementSource(audio)
+    //     gain = audioContext.createGain()
+    //     track.connect(gain).connect(audioContext.destination)
+    // }, [])
 
-    useEffect(() => {
-        // gain.disconnect(audioContext.destination)
-        gain.gain.value = volume
-        gain.gain.setValueAtTime(volume, audioContext.currentTime + 1)
-        console.log('volume = ', volume)
-    }, [volume])
+    // useEffect(() => {
+    //     // gain.disconnect(audioContext.destination)
+    //     if (gain) {
+    //         gain.gain.value = volume
+    //         gain.gain.setValueAtTime(volume, audioContext.currentTime + 1)
+    //         console.log('volume = ', volume)
+    //     }
+    // }, [volume])
 
     const onLoadedMetadata = () => {
-        if (audioRef.current) {
-            duration = audioRef.current.duration
-            // console.log('duration = ' + duration)
+        if (audio) {
+            duration = audio.duration
         }
     }
 
@@ -86,55 +85,66 @@ function App() {
 
     const [formats, setFormats] = useState<any[]>([])
 
+    const [sampleRates, setSampleRates] = useState<any[]>([])
+
     const [mouseDown, setMouseDown] = useState(false)
+
+    const updateProgress = () => {
+        if (audio) {
+            let frac = audio.currentTime / duration
+            if (frac !== Infinity) {
+                let new_progress = Math.trunc(frac * 800)
+                let new_time = Math.trunc(frac * 100)
+                // console.log('currTime = ' + audio.currentTime)
+                // console.log('duration = ' + duration)
+                // console.log('frac = ' + frac)
+                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
+                    // console.log('new_progress = ' + new_progress)
+                    setProgress(new_progress)
+                    setCurrTime(new_time)
+                }
+                if (frac == 1 && play) {
+                    togglePlay()
+                }
+            }
+        }
+    }
+
+    audio.onloadedmetadata = onLoadedMetadata
+    audio.ontimeupdate = updateProgress
 
     const openSettings = () => {
         window.Main.send('open-settings-tm', null)
     }
 
     useEffect(() => {
+        audio.src = currFile ? `file://${currFile}` : ''
+    }, [currFile])
+
+    useEffect(() => {
+        audio.loop = repeat
+        audio.volume = volume
+    }, [repeat, volume])
+
+    useEffect(() => {
         console.log(`play = ${play}`)
     }, [play])
 
     const togglePlay = () => {
-        console.log(`Toggle play -> paused=${audioRef.current.paused}`)
-        if (audioContext.state === 'suspended') {
-            audioContext.resume()
-        }
-        if (audioRef.current) {
-            if (audioRef.current.paused) {
-                var playPromise = audioRef.current.play()
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then((_: any) => {
-                            console.log('Play start success')
-                            setPlay(true)
-                        })
-                        .catch((_: any) => {
-                            console.log('Play start error')
-                        })
-                } else {
-                    setPlay(true)
-                    console.log(`playPromise=${pausePromise}`)
-                }
+        console.log(`Toggle play -> paused=${audio.paused}`)
+        // if (audioContext.state === 'suspended') {
+        //     audioContext.resume()
+        // }
+        if (audio) {
+            if (audio.paused) {
+                audio.play()
+                setPlay(true)
             } else {
-                var pausePromise = audioRef.current.pause()
-                if (pausePromise !== undefined) {
-                    pausePromise
-                        .then((_: any) => {
-                            console.log('Pause success')
-                            setPlay(false)
-                        })
-                        .catch((_: any) => {
-                            console.log('Pause error')
-                        })
-                } else {
-                    setPlay(false)
-                    console.log(`pausePromise=${pausePromise}`)
-                }
+                audio.pause()
+                setPlay(false)
             }
         } else {
-            console.log(`audioRef.current=${audioRef.current}`)
+            console.log(`audio=${audio}`)
         }
     }
 
@@ -159,8 +169,8 @@ function App() {
             setTitle(data[0][0].common['title'])
             setArtist(data[0][0].common['artist'])
             setAlbum(data[0][0].common['album'])
-            if (audioRef.current && !Number.isNaN(audioRef.current.duration)) {
-                duration = audioRef.current.duration
+            if (audio && !Number.isNaN(audio.duration)) {
+                duration = audio.duration
                 // console.log('duration = ' + duration)
             }
         })
@@ -189,6 +199,13 @@ function App() {
                                         }) => trackData['format']['container']
                                     )
                                 )
+                                setSampleRates(
+                                    data2[0].map(
+                                        (trackData: {
+                                            [x: string]: { [x: string]: any }
+                                        }) => trackData['format']['sampleRate']
+                                    )
+                                )
                             }
                         })
                     }
@@ -212,31 +229,10 @@ function App() {
     }
 
     const setSeek = (time: number) => {
-        if (audioRef.current) {
-            audioRef.current.currentTime = time
+        if (audio) {
+            audio.currentTime = time
         }
-        // audioRef.current.play()
-    }
-
-    const updateProgress = () => {
-        if (audioRef.current) {
-            let frac = audioRef.current.currentTime / duration
-            if (frac !== Infinity) {
-                let new_progress = Math.trunc(frac * 800)
-                let new_time = Math.trunc(frac * 100)
-                // console.log('currTime = ' + audioRef.current.currentTime)
-                // console.log('duration = ' + duration)
-                // console.log('frac = ' + frac)
-                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
-                    // console.log('new_progress = ' + new_progress)
-                    setProgress(new_progress)
-                    setCurrTime(new_time)
-                }
-                if (frac == 1 && play) {
-                    togglePlay()
-                }
-            }
-        }
+        // audio.play()
     }
 
     const relativeCoords = (e: any) => {
@@ -253,35 +249,32 @@ function App() {
     }
 
     useEffect(() => {
+        console.log('audio.paused = ' + audio.paused)
         if (currDir === '') {
             // Prevent hot-reaload infinite-loop
             openDir(true)
         }
+        if (audio) {
+            audio.pause()
+            setPlay(false)
+        }
+        return () => {
+            audio.pause()
+            console.log('in cleanup')
+        }
     }, [])
 
     useEffect(() => {
-        if (files.length > 0) {
-            openFile(0)
+        if (files.length > currIdx) {
+            openFile(currIdx)
         }
     }, [files])
 
     useEffect(() => {
-        if (progress === 800) {
+        if (progress === 800 && !repeat) {
             openFile(currIdx + 1)
         }
     }, [progress])
-
-    useEffect(() => {
-        // Just using setinterval causes the exponential stacking, need useeffect to prevent
-        // create a interval and get the id
-        const myInterval = setInterval(() => {
-            if (!mouseDown) {
-                updateProgress()
-            }
-        }, 10)
-        // clear out the interval using the id when unmounting the component
-        return () => clearInterval(myInterval)
-    }, [])
 
     return (
         <div className="bg-[#333333]">
@@ -302,9 +295,9 @@ function App() {
             </div>
             <div className="bg-[#333333]">
                 <div className="grid grid-flow-col auto-cols-max ">
-                    <div className="w-[64px] h-[64px] m-3 mb-0">
+                    <div className="w-[64px] h-[64px] m-3 ml-4 mb-2">
                         <img
-                            className="rounded-lg hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-transform"
+                            className="mt-1 rounded-lg duration-300 hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-transform"
                             src={
                                 cover !== undefined && cover !== null
                                     ? `data:${cover};base64,${cover.toString(
@@ -319,9 +312,11 @@ function App() {
                             title="Click to download the cover art"
                         />
                     </div>
-                    <div className="ml-1 mt-2">
-                        <p className="text-[#a1918c]">{title}</p>
-                        <div className="text-[#6e635f] grid grid-flow-col auto-cols-max">
+                    <div className="ml-1 mt-3">
+                        <p className="text-[#a1918c] transition-colors duration-1000 hover:text-transparent animate-shine">
+                            {title}
+                        </p>
+                        <div className="text-[#6e635f] grid grid-flow-col auto-cols-max transition-colors duration-1000 hover:text-transparent animate-shine">
                             <p>{artist}</p>
                             <p>&nbsp;-&nbsp;</p>
                             <p>{album}</p>
@@ -342,7 +337,7 @@ function App() {
                                 width="150"
                                 height="20"
                                 viewBox="0 0 800 80"
-                                className="clip1 absolute"
+                                className="clip1 absolute bg-black/30  rounded-md"
                                 style={{
                                     clipPath: `inset(0 ${100 - currTime}% 0 0)`,
                                 }}
@@ -393,7 +388,7 @@ function App() {
                                 width="150"
                                 height="20"
                                 viewBox="0 0 800 80"
-                                className="clip1 absolute"
+                                className="clip1 absolute bg-black/30 rounded-md"
                                 style={{
                                     clipPath: `inset(0 0 0 ${currTime}%)`,
                                 }}
@@ -438,7 +433,7 @@ function App() {
                         </div>
                     </div>
                 </div>
-                <div className="grid grid-flow-col auto-cols-max m-2 mt-0">
+                <div className="flex flex-row justify-between mt-1 mx-2">
                     {resized ? (
                         <Bars3Icon
                             className="h-6 text-[#a1918c] m-1"
@@ -482,14 +477,14 @@ function App() {
                         min="0"
                         value={volume}
                         step="0.01"
-                        max="2"
+                        max="1"
                         onChange={(e) => setVolume(parseFloat(e.target.value))}
                     ></input>
                     <ArrowPathRoundedSquareIcon
                         className={
                             repeat
-                                ? 'h-6 text-[#a1918c] m-1'
-                                : 'h-6 text-[#f08665] m-1'
+                                ? 'h-6 text-[#f08665] m-1'
+                                : 'h-6 text-[#a1918c] m-1'
                         }
                         onMouseDown={() => {
                             setRepeat(!repeat)
@@ -526,7 +521,10 @@ function App() {
                 {covers.length > 0 &&
                     files.map((file: string, index: number) => {
                         return (
-                            <div key={index} className={`p-1 overflow-auto`}>
+                            <div
+                                key={index}
+                                className="px-2 py-1 overflow-auto hover:scale-[101%] transition-transform"
+                            >
                                 <div
                                     className={`${
                                         index == 0
@@ -534,16 +532,16 @@ function App() {
                                             : 'border-b-[1px]'
                                     }  ${
                                         index == currIdx
-                                            ? 'bg-[#f08665]/20'
+                                            ? 'bg-[#f08665]/10'
                                             : ''
                                     }
-                                        border-[#f08665] hover:bg-black/20 grid grid-flow-col auto-cols-max p-1 text-center rounded-md`}
+                                        border-[#f08665] hover:bg-black/20 flex flex-row p-1 text-center rounded-md`}
                                     onClick={() => {
                                         openFile(index)
                                     }}
                                 >
                                     <img
-                                        className="w-[24px] h-[24px] rounded-lg m-1"
+                                        className="w-[24px] h-[24px] rounded-lg flex-none"
                                         src={
                                             covers[index] !== undefined &&
                                             covers[index] !== null
@@ -556,21 +554,31 @@ function App() {
                                         }
                                         alt=""
                                     />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-[#a1918c] mt-2 text-sm pl-2 col-start-1">
-                                                {file
-                                                    .split('/')
-                                                    .reverse()[0]
-                                                    .replace(/\.[^/.]+$/, '')}
-                                            </p>
-                                        </div>
+                                    <div className="flex place-items-center ml-2">
+                                        <p className="text-[#a1918c] text-sm">
+                                            {file
+                                                .split('/')
+                                                .reverse()[0]
+                                                .replace(/\.[^/.]+$/, '')}
+                                        </p>
+                                    </div>
 
-                                        <div>
-                                            <p className="text-[#a1918c] mt-2 text-sm pl-2 col-end-1">
+                                    <div className="flex place-items-center ml-auto">
+                                        <div className="bg-slate-400/10 grid grid-flow-col rounded-md text-xs p-1">
+                                            <p className="text-[#a1918c]">
                                                 {formats[index] !== undefined &&
                                                 formats[index] !== null
                                                     ? formats[index]
+                                                    : ''}
+                                            </p>
+                                            <p className="text-[#a1918c]">
+                                                &nbsp;/&nbsp;
+                                            </p>
+                                            <p className="text-[#a1918c]">
+                                                {sampleRates[index] !==
+                                                    undefined &&
+                                                sampleRates[index] !== null
+                                                    ? sampleRates[index]
                                                     : ''}
                                             </p>
                                         </div>
@@ -580,11 +588,6 @@ function App() {
                         )
                     })}
             </div>
-            <audio
-                onLoadedMetadata={onLoadedMetadata}
-                ref={audioRef}
-                src={currFile ? `file://${currFile}` : undefined}
-            ></audio>
             <div className="bg-transparent"></div>
         </div>
     )
