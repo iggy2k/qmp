@@ -277,7 +277,7 @@ function App() {
     }, [progress])
 
     return (
-        <div className="bg-[#333333]">
+        <div className="bg-[#333333] h-[100vh] flex flex-col">
             <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full min-h-[20px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
                     className="min-h-[12px] min-w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
@@ -291,7 +291,6 @@ function App() {
                         window.Main.Minimize()
                     }}
                 ></div>
-                {/* <div className="min-h-[12px] min-w-[12px] bg-green-500 hover:bg-[#2d9624] rounded-full"></div> */}
             </div>
             <div className="bg-[#333333]">
                 <div className="grid grid-flow-col auto-cols-max ">
@@ -517,7 +516,7 @@ function App() {
                 </div>
             </div>
 
-            <div className="overflow-y-auto max-h-[315px]">
+            <div className="overflow-y-auto flex-1 flex-grow bg-black/30">
                 {covers.length > 0 &&
                     files.map((file: string, index: number) => {
                         return (
@@ -588,7 +587,11 @@ function App() {
                         )
                     })}
             </div>
-            <div className="bg-transparent"></div>
+            <div className="bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
+                <p className="text-left text-sm ml-1 text-white">{`Track: ${
+                    currIdx + 1
+                } / ${files.length}`}</p>
+            </div>
         </div>
     )
 }

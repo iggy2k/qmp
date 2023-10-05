@@ -14,6 +14,7 @@ import path from 'path'
 import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
+const WIN_HEIGHT_MIN = 120
 const WIN_WIDTH = 470
 const HTML5_AUDIO = ['wav', 'mp3', 'mp4', 'flac', 'webm', 'ogg'] // Incomplete
 var resized = true
@@ -64,6 +65,8 @@ function createWindow() {
         show: false,
         resizable: true,
         fullscreenable: true,
+        minWidth: WIN_WIDTH,
+        minHeight: WIN_HEIGHT_MIN,
         //opacity: 0.5,
         vibrancy: 'dark',
         webPreferences: {
@@ -117,12 +120,12 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
         if (resized) {
-            window?.setSize(WIN_WIDTH, 120, true)
+            window?.setSize(WIN_WIDTH, WIN_HEIGHT_MIN, true)
         } else {
             window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
         }
