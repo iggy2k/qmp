@@ -65,7 +65,8 @@ function createWindow() {
         show: false,
         resizable: true,
         fullscreenable: true,
-        minWidth: WIN_WIDTH,
+        title: 'qmp',
+        // minWidth: WIN_WIDTH,
         minHeight: WIN_HEIGHT_MIN,
         //opacity: 0.5,
         vibrancy: 'dark',
@@ -125,9 +126,9 @@ function createWindow() {
 
     ipcMain.on('resize', () => {
         if (resized) {
-            window?.setSize(WIN_WIDTH, WIN_HEIGHT_MIN, true)
+            window?.setSize(window?.getSize()[0], WIN_HEIGHT_MIN, true)
         } else {
-            window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
+            window?.setSize(window?.getSize()[0], WIN_HEIGHT, true)
         }
         resized = !resized
     })

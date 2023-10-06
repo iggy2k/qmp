@@ -13,12 +13,15 @@
 
 /* I could not achieve the same with overflow in a reasonable amount of time */
 ::-webkit-scrollbar {
-    width: 0px;
+    display: none;
 }
 
 .drag {
-    -webkit-user-select: none;
     -webkit-app-region: drag;
+}
+
+.no-drag {
+    -webkit-app-region: no-drag;
 }
 
 .clip1 {
@@ -37,6 +40,10 @@
     clip-path: inset(0 0% 0 0);
   }
 } */
+
+.rtl-grid {
+    direction: rtl;
+}
 
 .animate-shine {
     background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);

@@ -278,49 +278,56 @@ function App() {
 
     return (
         <div className="bg-[#333333] h-[100vh] flex flex-col">
-            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full min-h-[20px] shadow-[inset_2px_25px_25px_-26px_#000000]">
+            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
-                    className="min-h-[12px] min-w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
+                    className="h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
                     onClick={() => {
                         window.Main.Close()
                     }}
                 ></div>
                 <div
-                    className="min-h-[12px] min-w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
+                    className="h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
                     onClick={() => {
                         window.Main.Minimize()
                     }}
                 ></div>
             </div>
-            <div className="bg-[#333333]">
-                <div className="grid grid-flow-col auto-cols-max ">
-                    <div className="w-[64px] h-[64px] m-3 ml-4 mb-2">
-                        <img
-                            className="mt-1 rounded-lg duration-300 hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-transform"
-                            src={
-                                cover !== undefined && cover !== null
-                                    ? `data:${cover};base64,${cover.toString(
-                                          'base64'
-                                      )}`
-                                    : ''
-                            }
-                            onClick={() => {
-                                downloadCover(cover)
-                            }}
-                            alt=""
-                            title="Click to download the cover art"
-                        />
+            <div className="bg-[#333333] drag">
+                <div className="flex">
+                    <div className="no-drag p-3 pl-4 pb-2 ">
+                        <div className="flex-none w-[64px] h-[64px]">
+                            <img
+                                className="no-drag mt-1 rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
+                                transition-property: transform, shadow, opacity;
+                                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                                transition-duration: 150ms;] 
+                                "
+                                src={
+                                    cover !== undefined && cover !== null
+                                        ? `data:${cover};base64,${cover.toString(
+                                              'base64'
+                                          )}`
+                                        : ''
+                                }
+                                onClick={() => {
+                                    downloadCover(cover)
+                                }}
+                                alt=""
+                                title="Click to download the cover art"
+                            />
+                        </div>
                     </div>
-                    <div className="ml-1 mt-3">
-                        <p className="text-[#a1918c] transition-colors duration-1000 hover:text-transparent animate-shine">
+                    <div className="ml-1 mt-3 flex-1">
+                        <p className="no-drag text-[#a1918c] transition-colors duration-1000 hover:text-transparent animate-shine">
                             {title}
                         </p>
-                        <div className="text-[#6e635f] grid grid-flow-col auto-cols-max transition-colors duration-1000 hover:text-transparent animate-shine">
+                        <div className="no-drag text-[#6e635f] grid grid-flow-col auto-cols-max transition-colors duration-1000 hover:text-transparent animate-shine">
                             <p>{artist}</p>
                             <p>&nbsp;-&nbsp;</p>
                             <p>{album}</p>
                         </div>
                         <div
+                            className="no-drag"
                             id="track"
                             // This id value needed as using e.target can target the child
                             // latter being the track knob which has its own bounds.
@@ -336,7 +343,7 @@ function App() {
                                 width="150"
                                 height="20"
                                 viewBox="0 0 800 80"
-                                className="clip1 absolute bg-black/30  rounded-md"
+                                className="no-drag clip1 absolute bg-black/30  rounded-md"
                                 style={{
                                     clipPath: `inset(0 ${100 - currTime}% 0 0)`,
                                 }}
@@ -433,86 +440,104 @@ function App() {
                     </div>
                 </div>
                 <div className="flex flex-row justify-between mt-1 mx-2">
-                    {resized ? (
-                        <Bars3Icon
-                            className="h-6 text-[#a1918c] m-1"
-                            onClick={collapse}
-                        />
-                    ) : (
-                        <ChevronDoubleUpIcon
-                            className="h-6 text-[#a1918c] m-1"
-                            onClick={collapse}
-                        />
-                    )}
+                    <div className="flex">
+                        {resized ? (
+                            <Bars3Icon
+                                className="no-drag h-6 text-[#a1918c] m-1"
+                                onClick={collapse}
+                            />
+                        ) : (
+                            <ChevronDoubleUpIcon
+                                className="no-drag h-6 text-[#a1918c] m-1"
+                                onClick={collapse}
+                            />
+                        )}
 
-                    <AdjustmentsVerticalIcon className="h-6 text-[#a1918c] m-1" />
-                    <BackwardIcon
-                        className="h-6 text-[#a1918c] m-1"
-                        onClick={() => {
-                            openFile(currIdx - 1)
-                        }}
-                    />
-                    {play ? (
-                        <PauseIcon
-                            className="h-6 text-[#a1918c] m-1"
-                            onClick={() => togglePlay()}
+                        <AdjustmentsVerticalIcon className="no-drag h-6 text-[#a1918c] m-1" />
+                    </div>
+                    <div className="flex">
+                        <BackwardIcon
+                            className="no-drag h-6 text-[#a1918c] m-1"
+                            onClick={() => {
+                                openFile(currIdx - 1)
+                            }}
                         />
-                    ) : (
-                        <PlayIcon
-                            className="h-6 text-[#a1918c] m-1"
-                            onClick={() => togglePlay()}
+                        {play ? (
+                            <PauseIcon
+                                className="no-drag h-6 text-[#a1918c] m-1"
+                                onClick={() => togglePlay()}
+                            />
+                        ) : (
+                            <PlayIcon
+                                className="no-drag h-6 text-[#a1918c] m-1"
+                                onClick={() => togglePlay()}
+                            />
+                        )}
+                        <ForwardIcon
+                            className="no-drag h-6 text-[#a1918c] m-1"
+                            onClick={() => {
+                                openFile(currIdx + 1)
+                            }}
                         />
-                    )}
-                    <ForwardIcon
-                        className="h-6 text-[#a1918c] m-1"
-                        onClick={() => {
-                            openFile(currIdx + 1)
-                        }}
-                    />
-                    <SpeakerWaveIcon className="h-6 text-[#a1918c] m-1" />
-                    <input
-                        className="accent-[#a1918c] bg-inherit w-[100px]"
-                        type="range"
-                        min="0"
-                        value={volume}
-                        step="0.01"
-                        max="1"
-                        onChange={(e) => setVolume(parseFloat(e.target.value))}
-                    ></input>
-                    <ArrowPathRoundedSquareIcon
-                        className={
-                            repeat
-                                ? 'h-6 text-[#f08665] m-1'
-                                : 'h-6 text-[#a1918c] m-1'
-                        }
-                        onMouseDown={() => {
-                            setRepeat(!repeat)
-                        }}
-                    />
-                    <CogIcon
-                        className="h-6 text-[#a1918c] m-1"
-                        onClick={() => {
-                            openSettings()
-                        }}
-                    />
-                    {onTop ? (
-                        <DocumentArrowDownIcon
-                            className="h-6 text-[#f08665] m-1"
-                            onClick={alwaysOnTop}
+                        <SpeakerWaveIcon className="no-drag h-6 text-[#a1918c] m-1" />
+                        <input
+                            className="no-drag accent-[#a1918c] bg-inherit w-[100px]"
+                            type="range"
+                            min="0"
+                            value={volume}
+                            step="0.01"
+                            max="1"
+                            onChange={(e) =>
+                                setVolume(parseFloat(e.target.value))
+                            }
+                        ></input>
+                    </div>
+                    <div className="flex">
+                        <ArrowPathRoundedSquareIcon
+                            className={
+                                repeat
+                                    ? 'no-drag h-6 text-[#f08665] m-1'
+                                    : 'no-drag h-6 text-[#a1918c] m-1'
+                            }
+                            onMouseDown={() => {
+                                setRepeat(!repeat)
+                            }}
                         />
-                    ) : (
-                        <DocumentArrowUpIcon
-                            className="h-6 text-[#a1918c] m-1"
-                            onClick={alwaysOnTop}
+                        <CogIcon
+                            className="no-drag h-6 text-[#a1918c] m-1"
+                            onClick={() => {
+                                openSettings()
+                            }}
                         />
-                    )}
-                    <HandRaisedIcon className="h-6 text-[#a1918c] m-1 drag" />
-                    <FolderPlusIcon
-                        className="h-6 text-[#a1918c] m-1"
-                        onClick={() => {
-                            openDir(false)
-                        }}
-                    />
+                        {onTop ? (
+                            <DocumentArrowDownIcon
+                                className="no-drag h-6 text-[#f08665] m-1"
+                                onClick={alwaysOnTop}
+                            />
+                        ) : (
+                            <DocumentArrowUpIcon
+                                className="no-drag h-6 text-[#a1918c] m-1"
+                                onClick={alwaysOnTop}
+                            />
+                        )}
+                        <FolderPlusIcon
+                            className="no-drag h-6 text-[#a1918c] m-1"
+                            onClick={() => {
+                                openDir(false)
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1">
+                <div className="flex flex-row">
+                    <div className="text-white text-xs ml-1 mt-1 p-1 rounded-md bg-white/20">
+                        Music
+                    </div>
+                    <div className="text-white w-[24px] text-center text-xs mt-1 p-1 rounded-md bg-white/20 ml-auto mr-1">
+                        +
+                    </div>
                 </div>
             </div>
 
@@ -553,13 +578,11 @@ function App() {
                                         }
                                         alt=""
                                     />
-                                    <div className="flex place-items-center ml-2">
-                                        <p className="text-[#a1918c] text-sm">
-                                            {file
-                                                .split('/')
-                                                .reverse()[0]
-                                                .replace(/\.[^/.]+$/, '')}
-                                        </p>
+                                    <div className="text-[#a1918c] text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                                        {file
+                                            .split('/')
+                                            .reverse()[0]
+                                            .replace(/\.[^/.]+$/, '')}
                                     </div>
 
                                     <div className="flex place-items-center ml-auto">
@@ -587,10 +610,18 @@ function App() {
                         )
                     })}
             </div>
-            <div className="bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
-                <p className="text-left text-sm ml-1 text-white">{`Track: ${
-                    currIdx + 1
-                } / ${files.length}`}</p>
+            <div className="drag bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
+                <div className="flex flex-row">
+                    <p className="text-left text-sm ml-1 w-[50%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">{`Track: ${
+                        currIdx + 1
+                    } / ${files.length}`}</p>
+                    <div className=" mr-1 w-[50%] flex-none inline-block ">
+                        <p
+                            title={currDir}
+                            className="text-sm text-right rtl-grid overflow-hidden whitespace-nowrap text-white  text-ellipsis"
+                        >{`${currDir}`}</p>
+                    </div>
+                </div>
             </div>
         </div>
     )
