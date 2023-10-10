@@ -77,14 +77,6 @@ function createWindow() {
         },
     })
 
-    var splash = new BrowserWindow({
-        width: 200,
-        height: 200,
-        transparent: true,
-        frame: false,
-        alwaysOnTop: true,
-    })
-
     const settings = new BrowserWindow({
         height: 480,
         width: 450,
@@ -111,17 +103,17 @@ function createWindow() {
         window?.loadFile(url)
     }
 
-    splash?.loadURL(`file://${__dirname}/../src/splash.html`)
+    // splash?.loadURL(`file://${__dirname}/../src/splash.html`)
 
     setTimeout(function () {
-        splash.close()
+        // splash.close()
         window.show()
         let bounds = screen.getPrimaryDisplay().bounds
         let x = bounds.x + (bounds.width - WIN_WIDTH) / 2
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        // window?.webContents.openDevTools()
+        window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {

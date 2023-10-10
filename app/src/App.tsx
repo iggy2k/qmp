@@ -1,6 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react'
-import ReactHowler from 'react-howler'
 import { prominent } from 'color.js'
+import {
+    IconArrowsShuffle,
+    IconRepeat,
+    IconRepeatOff,
+    IconArrowsRight,
+    IconPin,
+    IconPinFilled,
+    IconVolume,
+    IconVolume2,
+    IconVolume3,
+} from '@tabler/icons-react'
 
 import {
     PauseIcon,
@@ -9,12 +19,8 @@ import {
     BackwardIcon,
     AdjustmentsVerticalIcon,
     SpeakerWaveIcon,
-    ArrowPathRoundedSquareIcon,
     CogIcon,
     Bars3Icon,
-    DocumentArrowDownIcon,
-    DocumentArrowUpIcon,
-    HandRaisedIcon,
     ChevronDoubleUpIcon,
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
@@ -29,6 +35,16 @@ const audio = new Audio()
 function componentToHex(c: number) {
     var hex = c.toString(16)
     return hex.length == 1 ? '0' + hex : hex
+}
+
+function grayness(hex: string) {
+    if (hex[0] == '#') {
+        hex = hex.slice(1)
+    }
+    let r = parseInt(hex.slice(0, 2), 16)
+    let g = parseInt(hex.slice(2, 4), 16)
+    let b = parseInt(hex.slice(4, 6), 16)
+    return Math.abs(r - g) + Math.abs(r - b) + Math.abs(b - g)
 }
 
 function rgbToHex(r: number, g: number, b: number) {
@@ -71,9 +87,9 @@ function secondsToDhms(seconds: number) {
     var m = Math.floor((seconds % 3600) / 60)
     var s = Math.floor(seconds % 60)
 
-    var dDisplay = d > 0 ? d + (d == 1 ? ' d, ' : ' ds, ') : ''
-    var hDisplay = h > 0 ? h + (h == 1 ? ' h, ' : ' hrs, ') : ''
-    var mDisplay = m > 0 ? m + (m == 1 ? ' min, ' : ' min, ') : ''
+    var dDisplay = d > 0 ? d + (d == 1 ? ' d ' : ' ds ') : ''
+    var hDisplay = h > 0 ? h + (h == 1 ? ' h ' : ' hrs ') : ''
+    var mDisplay = m > 0 ? m + (m == 1 ? ' min ' : ' min ') : ''
     var sDisplay = s > 0 ? s + (s == 1 ? ' sec' : ' sec') : ''
     return dDisplay + hDisplay + mDisplay + sDisplay
 }
@@ -162,6 +178,8 @@ function App() {
     const [sampleRates, setSampleRates] = useState<any[]>([])
 
     const [mouseDown, setMouseDown] = useState(false)
+
+    const [shuffle, setShuffle] = useState(false)
 
     const updateProgress = () => {
         if (audio) {
@@ -304,7 +322,6 @@ function App() {
         if (audio) {
             audio.currentTime = time
         }
-        // audio.play()
     }
 
     const relativeCoords = (e: any) => {
@@ -353,28 +370,35 @@ function App() {
                 })
             }
 
-            console.log(`topColors = ${JSON.stringify(topColors)}`)
-
             let keys = Object.keys(topColors)
 
-            keys.sort((a, b) => topColors[b] - topColors[a])
+            keys.sort(
+                (a, b) =>
+                    grayness(b) - grayness(a) || topColors[b] - topColors[a]
+            )
 
-            console.log(`keys = ${keys}`)
+            keys.forEach((element) => {
+                console.log(`${element} = ${grayness(element)}`)
+            })
 
             setColorOne(keys[1])
-            console.log(keys[1] + ' ' + topColors[keys[1]])
+            // console.log(keys[1] + ' ' + topColors[keys[1]])
             setColorTwo(keys[2])
-            console.log(keys[2] + ' ' + topColors[keys[2]])
-            setColorThree(keys[8])
-            console.log(keys[8] + ' ' + topColors[keys[8]])
+            // console.log(keys[2] + ' ' + topColors[keys[2]])
+            setColorThree(keys[3])
+            // console.log(keys[3] + ' ' + topColors[keys[3]])
             setColorFour(keys[9])
-            console.log(keys[9] + ' ' + topColors[keys[9]])
+            // console.log(keys[4] + ' ' + topColors[keys[4]])
         })
     }, [cover])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {
-            openFile(currIdx + 1)
+            if (shuffle) {
+                openFile(Math.floor(Math.random() * files.length))
+            } else {
+                openFile(currIdx + 1)
+            }
         }
     }, [progress])
 
@@ -511,7 +535,6 @@ function App() {
                                             from="0"
                                             to="-200"
                                             dur="6s"
-                                            // direction="rtl"
                                             repeatCount="indefinite"
                                         />
                                     </use>
@@ -575,45 +598,171 @@ function App() {
                     <div className="flex">
                         {resized ? (
                             <Bars3Icon
-                                className="no-drag h-6 text-[#a1918c] m-1"
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
                                 onClick={collapse}
                             />
                         ) : (
                             <ChevronDoubleUpIcon
-                                className="no-drag h-6 text-[#a1918c] m-1"
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
                                 onClick={collapse}
                             />
                         )}
 
-                        <AdjustmentsVerticalIcon className="no-drag h-6 text-[#a1918c] m-1" />
+                        <AdjustmentsVerticalIcon
+                            style={{
+                                color: LightenDarkenColor(colorThree, 200),
+                            }}
+                            className="no-drag h-6 m-1"
+                        />
+                        {onTop ? (
+                            <IconPinFilled
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                                onClick={alwaysOnTop}
+                            />
+                        ) : (
+                            <IconPin
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                                onClick={alwaysOnTop}
+                            />
+                        )}
+                        <FolderPlusIcon
+                            style={{
+                                color: LightenDarkenColor(colorThree, 200),
+                            }}
+                            className="no-drag h-6 m-1"
+                            onClick={() => {
+                                openDir(false)
+                            }}
+                        />
+                        <CogIcon
+                            style={{
+                                color: LightenDarkenColor(colorThree, 200),
+                            }}
+                            className="no-drag h-6 m-1"
+                            onClick={() => {
+                                openSettings()
+                            }}
+                        />
                     </div>
                     <div className="flex">
+                        {repeat ? (
+                            <IconRepeat
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                                onMouseDown={() => {
+                                    setRepeat(!repeat)
+                                }}
+                            />
+                        ) : (
+                            <IconRepeatOff
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                                onMouseDown={() => {
+                                    setRepeat(!repeat)
+                                }}
+                            />
+                        )}
                         <BackwardIcon
-                            className="no-drag h-6 text-[#a1918c] m-1"
+                            style={{
+                                color: LightenDarkenColor(colorThree, 200),
+                            }}
+                            className="no-drag h-6 m-1"
                             onClick={() => {
                                 openFile(currIdx - 1)
                             }}
                         />
                         {play ? (
                             <PauseIcon
-                                className="no-drag h-6 text-[#a1918c] m-1"
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
                                 onClick={() => togglePlay()}
                             />
                         ) : (
                             <PlayIcon
-                                className="no-drag h-6 text-[#a1918c] m-1"
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
                                 onClick={() => togglePlay()}
                             />
                         )}
                         <ForwardIcon
-                            className="no-drag h-6 text-[#a1918c] m-1"
+                            style={{
+                                color: LightenDarkenColor(colorThree, 200),
+                            }}
+                            className="no-drag h-6 m-1"
                             onClick={() => {
                                 openFile(currIdx + 1)
                             }}
                         />
-                        <SpeakerWaveIcon className="no-drag h-6 text-[#a1918c] m-1" />
+                        {shuffle ? (
+                            <IconArrowsShuffle
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                                onClick={() => setShuffle(false)}
+                            />
+                        ) : (
+                            <IconArrowsRight
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                                onClick={() => setShuffle(true)}
+                            />
+                        )}
+                    </div>
+                    <div className="flex">
+                        {volume == 0 ? (
+                            <IconVolume3
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                            />
+                        ) : volume < 0.5 ? (
+                            <IconVolume2
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                            />
+                        ) : (
+                            <IconVolume
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="no-drag h-6 m-1"
+                            />
+                        )}
+
                         <input
-                            className="no-drag accent-[#a1918c] bg-inherit w-[100px]"
+                            style={{
+                                accentColor: LightenDarkenColor(
+                                    colorThree,
+                                    200
+                                ),
+                            }}
+                            className="no-drag bg-inherit w-[100px]"
                             type="range"
                             min="0"
                             value={volume}
@@ -623,41 +772,6 @@ function App() {
                                 setVolume(parseFloat(e.target.value))
                             }
                         ></input>
-                    </div>
-                    <div className="flex">
-                        <ArrowPathRoundedSquareIcon
-                            className={
-                                repeat
-                                    ? 'no-drag h-6 text-[#f08665] m-1'
-                                    : 'no-drag h-6 text-[#a1918c] m-1'
-                            }
-                            onMouseDown={() => {
-                                setRepeat(!repeat)
-                            }}
-                        />
-                        <CogIcon
-                            className="no-drag h-6 text-[#a1918c] m-1"
-                            onClick={() => {
-                                openSettings()
-                            }}
-                        />
-                        {onTop ? (
-                            <DocumentArrowDownIcon
-                                className="no-drag h-6 text-[#f08665] m-1"
-                                onClick={alwaysOnTop}
-                            />
-                        ) : (
-                            <DocumentArrowUpIcon
-                                className="no-drag h-6 text-[#a1918c] m-1"
-                                onClick={alwaysOnTop}
-                            />
-                        )}
-                        <FolderPlusIcon
-                            className="no-drag h-6 text-[#a1918c] m-1"
-                            onClick={() => {
-                                openDir(false)
-                            }}
-                        />
                     </div>
                 </div>
             </div>
@@ -673,7 +787,12 @@ function App() {
                 </div>
             </div>
 
-            <div className="overflow-y-auto flex-1 flex-grow bg-black/30">
+            <div
+                style={{
+                    backgroundColor: colorOne + '10',
+                }}
+                className="overflow-y-auto flex-1 flex-grow"
+            >
                 {covers.length > 0 &&
                     files.map((file: string, index: number) => {
                         return (
@@ -682,16 +801,18 @@ function App() {
                                 className="px-2 py-1 overflow-auto hover:scale-[101%] transition-transform"
                             >
                                 <div
-                                    className={`${
-                                        index == 0
-                                            ? 'border-b-[1px]'
-                                            : 'border-b-[1px]'
-                                    }  ${
-                                        index == currIdx
-                                            ? 'bg-[#f08665]/10'
-                                            : ''
-                                    }
-                                        border-[#f08665] hover:bg-black/20 flex flex-row p-1 text-center rounded-md`}
+                                    style={{
+                                        borderColor: LightenDarkenColor(
+                                            colorThree,
+                                            200
+                                        ),
+                                        backgroundColor:
+                                            index == currIdx
+                                                ? colorOne + '20'
+                                                : '',
+                                    }}
+                                    className="border-b-[1px]
+                                        hover:bg-black/20 flex flex-row p-1 text-center rounded-md"
                                     onClick={() => {
                                         openFile(index)
                                     }}
@@ -718,7 +839,7 @@ function App() {
                                     </div>
 
                                     <div className="flex place-items-center ml-auto">
-                                        <div className="bg-slate-400/10 grid grid-flow-col rounded-md text-xs p-1">
+                                        <div className="bg-slate-400/10 grid grid-flow-col rounded-md text-xs p-1 font-mono">
                                             <p className="text-[#a1918c]">
                                                 {formats[index] !== undefined &&
                                                 formats[index] !== null
@@ -732,7 +853,10 @@ function App() {
                                                 {sampleRates[index] !==
                                                     undefined &&
                                                 sampleRates[index] !== null
-                                                    ? sampleRates[index]
+                                                    ? Math.trunc(
+                                                          sampleRates[index] /
+                                                              1000
+                                                      ) + 'kHz'
                                                     : ''}
                                             </p>
                                         </div>
