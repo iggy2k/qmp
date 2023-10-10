@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import ReactHowler from 'react-howler'
+import { prominent } from 'color.js'
 
 import {
     PauseIcon,
@@ -25,12 +26,78 @@ let track: any = null
 let gain: any = null
 const audio = new Audio()
 
+function componentToHex(c: number) {
+    var hex = c.toString(16)
+    return hex.length == 1 ? '0' + hex : hex
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+    return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b)
+}
+
+// Author: https://css-tricks.com/snippets/javascript/lighten-darken-color/
+function LightenDarkenColor(col: string, amt: number) {
+    var usePound = false
+
+    if (col[0] == '#') {
+        col = col.slice(1)
+        usePound = true
+    }
+
+    var num = parseInt(col, 16)
+
+    var r = (num >> 16) + amt
+
+    if (r > 255) r = 255
+    else if (r < 0) r = 0
+
+    var b = ((num >> 8) & 0x00ff) + amt
+
+    if (b > 255) b = 255
+    else if (b < 0) b = 0
+
+    var g = (num & 0x0000ff) + amt
+
+    if (g > 255) g = 255
+    else if (g < 0) g = 0
+
+    return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16)
+}
+
+function secondsToDhms(seconds: number) {
+    seconds = Number(seconds)
+    var d = Math.floor(seconds / (3600 * 24))
+    var h = Math.floor((seconds % (3600 * 24)) / 3600)
+    var m = Math.floor((seconds % 3600) / 60)
+    var s = Math.floor(seconds % 60)
+
+    var dDisplay = d > 0 ? d + (d == 1 ? ' d, ' : ' ds, ') : ''
+    var hDisplay = h > 0 ? h + (h == 1 ? ' h, ' : ' hrs, ') : ''
+    var mDisplay = m > 0 ? m + (m == 1 ? ' min, ' : ' min, ') : ''
+    var sDisplay = s > 0 ? s + (s == 1 ? ' sec' : ' sec') : ''
+    return dDisplay + hDisplay + mDisplay + sDisplay
+}
+
+function secondsToDhmsShort(seconds: number) {
+    seconds = Number(seconds)
+    var d = Math.floor(seconds / (3600 * 24))
+    var h = Math.floor((seconds % (3600 * 24)) / 3600)
+    var m = Math.floor((seconds % 3600) / 60)
+    var s = Math.floor(seconds % 60)
+
+    var dDisplay = d > 0 ? (d < 10 ? '0' + d : d) + ' : ' : ''
+    var hDisplay = h > 0 ? (h < 10 ? '0' + h : h) + ' : ' : ''
+    var mDisplay = m > 0 ? (m < 10 ? '0' + m : m) + ' : ' : '00 : '
+    var sDisplay = s > 0 ? (s < 10 ? '0' + s : s) + '' : '00'
+    return dDisplay + hDisplay + mDisplay + sDisplay
+}
+
 function App() {
+    const currCover = useRef(null)
     const [volume, setVolume] = useState(0.5)
 
     const downloadCover = (b64data: any) => {
         if (b64data !== undefined) {
-            // console.log('downloading cover ' + b64data)
             window.Main.SaveCover(b64data.toString('base64'))
         }
     }
@@ -56,6 +123,11 @@ function App() {
             duration = audio.duration
         }
     }
+
+    const [colorOne, setColorOne] = useState('#000000')
+    const [colorTwo, setColorTwo] = useState('#000000')
+    const [colorThree, setColorThree] = useState('#000000')
+    const [colorFour, setColorFour] = useState('#000000')
 
     const [play, setPlay] = useState(false)
     const [onTop, setOnTop] = useState(false)
@@ -85,6 +157,8 @@ function App() {
 
     const [formats, setFormats] = useState<any[]>([])
 
+    const [durations, setDurations] = useState<any[]>([])
+
     const [sampleRates, setSampleRates] = useState<any[]>([])
 
     const [mouseDown, setMouseDown] = useState(false)
@@ -95,11 +169,7 @@ function App() {
             if (frac !== Infinity) {
                 let new_progress = Math.trunc(frac * 800)
                 let new_time = Math.trunc(frac * 100)
-                // console.log('currTime = ' + audio.currentTime)
-                // console.log('duration = ' + duration)
-                // console.log('frac = ' + frac)
                 if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
-                    // console.log('new_progress = ' + new_progress)
                     setProgress(new_progress)
                     setCurrTime(new_time)
                 }
@@ -132,9 +202,6 @@ function App() {
 
     const togglePlay = () => {
         console.log(`Toggle play -> paused=${audio.paused}`)
-        // if (audioContext.state === 'suspended') {
-        //     audioContext.resume()
-        // }
         if (audio) {
             if (audio.paused) {
                 audio.play()
@@ -162,8 +229,6 @@ function App() {
 
         window.Main.send('toMain', [files[index]])
         window.Main.receive('fromMain', (data: any) => {
-            //console.log(`Received ${data.length} ${data} from main process`);
-            //console.log("date: " + data)
             setCover(data[1][0])
             console.log(data[0][0])
             setTitle(data[0][0].common['title'])
@@ -171,7 +236,7 @@ function App() {
             setAlbum(data[0][0].common['album'])
             if (audio && !Number.isNaN(audio.duration)) {
                 duration = audio.duration
-                // console.log('duration = ' + duration)
+                console.log('duration = ' + duration)
             }
         })
     }
@@ -197,6 +262,13 @@ function App() {
                                         (trackData: {
                                             [x: string]: { [x: string]: any }
                                         }) => trackData['format']['container']
+                                    )
+                                )
+                                setDurations(
+                                    data2[0].map(
+                                        (trackData: {
+                                            [x: string]: { [x: string]: any }
+                                        }) => trackData['format']['duration']
                                     )
                                 )
                                 setSampleRates(
@@ -244,8 +316,6 @@ function App() {
         if (mouseDown) {
             setSeek(relative_pos)
         }
-        // console.log("bounds.left " + bounds.left)
-        // console.log("e.clientX " + e.clientX)
     }
 
     useEffect(() => {
@@ -254,7 +324,7 @@ function App() {
             // Prevent hot-reaload infinite-loop
             openDir(true)
         }
-        if (audio) {
+        if (audio && !audio.paused) {
             audio.pause()
             setPlay(false)
         }
@@ -269,6 +339,38 @@ function App() {
             openFile(currIdx)
         }
     }, [files])
+
+    useEffect(() => {
+        prominent(currCover.current!, { amount: 10 }).then((color) => {
+            let topColors: Record<string, number> = {}
+            if (Array.isArray(color)) {
+                color.forEach((element: any) => {
+                    let hex = rgbToHex(element[0], element[1], element[2])
+                    topColors[hex] =
+                        element[0] * 0.299 +
+                        element[1] * 0.587 +
+                        element[2] * 0.114
+                })
+            }
+
+            console.log(`topColors = ${JSON.stringify(topColors)}`)
+
+            let keys = Object.keys(topColors)
+
+            keys.sort((a, b) => topColors[b] - topColors[a])
+
+            console.log(`keys = ${keys}`)
+
+            setColorOne(keys[1])
+            console.log(keys[1] + ' ' + topColors[keys[1]])
+            setColorTwo(keys[2])
+            console.log(keys[2] + ' ' + topColors[keys[2]])
+            setColorThree(keys[8])
+            console.log(keys[8] + ' ' + topColors[keys[8]])
+            setColorFour(keys[9])
+            console.log(keys[9] + ' ' + topColors[keys[9]])
+        })
+    }, [cover])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {
@@ -292,11 +394,21 @@ function App() {
                     }}
                 ></div>
             </div>
-            <div className="bg-[#333333] drag">
+            <div
+                style={{
+                    backgroundImage: `
+                    radial-gradient(ellipse at top left, ${colorOne}30  15%, transparent 100%),
+                    radial-gradient(ellipse at bottom  left, ${colorTwo}30  15% , transparent 100%),
+                    radial-gradient(ellipse at top    right, ${colorThree}30 15% , transparent 100%),
+                    radial-gradient(ellipse at bottom right, ${colorFour}30  15% , transparent 100%)`,
+                }}
+                className="bg-[#333333] drag"
+            >
                 <div className="flex">
-                    <div className="no-drag p-3 pl-4 pb-2 ">
+                    <div className="no-drag p-3 pl-4 pb-0">
                         <div className="flex-none w-[64px] h-[64px]">
                             <img
+                                ref={currCover}
                                 className="no-drag mt-1 rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
                                 transition-property: transform, shadow, opacity;
                                 transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -318,43 +430,56 @@ function App() {
                         </div>
                     </div>
                     <div className="ml-1 mt-3 flex-1">
-                        <p className="no-drag text-[#a1918c] transition-colors duration-1000 hover:text-transparent animate-shine">
-                            {title}
+                        <p
+                            style={{
+                                color: LightenDarkenColor(colorFour, 200),
+                            }}
+                            className="no-drag text-[#a1918c]"
+                        >
+                            {title?.replace('\\', '')}
                         </p>
-                        <div className="no-drag text-[#6e635f] grid grid-flow-col auto-cols-max transition-colors duration-1000 hover:text-transparent animate-shine">
+                        <div
+                            style={{
+                                color: LightenDarkenColor(colorThree, 200),
+                            }}
+                            className="no-drag grid grid-flow-col auto-cols-max"
+                        >
                             <p>{artist}</p>
                             <p>&nbsp;-&nbsp;</p>
                             <p>{album}</p>
                         </div>
-                        <div
-                            className="no-drag"
-                            id="track"
-                            // This id value needed as using e.target can target the child
-                            // latter being the track knob which has its own bounds.
-                            // This causes unexpected bahaviour
-                            onMouseMove={(e) => {
-                                relativeCoords(e)
-                            }}
-                            onMouseDown={() => setMouseDown(true)}
-                            onMouseLeave={() => setMouseDown(false)}
-                            onMouseUp={() => setMouseDown(false)}
-                        >
-                            <svg
-                                width="150"
-                                height="20"
-                                viewBox="0 0 800 80"
-                                className="no-drag clip1 absolute bg-black/30  rounded-md"
-                                style={{
-                                    clipPath: `inset(0 ${100 - currTime}% 0 0)`,
+                        <div className="w-full h-[20px] flex flex-row">
+                            <div
+                                className="no-drag w-[150px] flex-initial"
+                                id="track"
+                                // This id value needed as using e.target can target the child
+                                // latter being the track knob which has its own bounds.
+                                // This causes unexpected bahaviour
+                                onMouseMove={(e) => {
+                                    relativeCoords(e)
                                 }}
+                                onMouseDown={() => setMouseDown(true)}
+                                onMouseLeave={() => setMouseDown(false)}
+                                onMouseUp={() => setMouseDown(false)}
                             >
-                                {play ? (
-                                    <defs>
-                                        <path
-                                            stroke="#c1b7b4"
-                                            fill="none"
-                                            id="sign-wave"
-                                            d="
+                                <svg
+                                    width="150"
+                                    height="20"
+                                    viewBox="0 0 800 80"
+                                    className="no-drag clip1 absolute bg-transparent rounded-md"
+                                    style={{
+                                        clipPath: `inset(0 ${
+                                            100 - currTime
+                                        }% 0 0)`,
+                                    }}
+                                >
+                                    {play ? (
+                                        <defs>
+                                            <path
+                                                stroke="#c1b7b4"
+                                                fill="none"
+                                                id="sign-wave"
+                                                d="
              M0 50
              C 40 10, 60 10, 100 50 C 140 90, 160 90, 200 50
              C 240 10, 260 10, 300 50 C 340 90, 360 90, 400 50
@@ -363,15 +488,49 @@ function App() {
              C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
              C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
              "
-                                            strokeWidth="12"
+                                                strokeWidth="12"
+                                            />
+                                        </defs>
+                                    ) : (
+                                        <defs>
+                                            <path
+                                                stroke="#c1b7b4"
+                                                fill="none"
+                                                id="sign-wave"
+                                                d="
+             M0 50
+             L 1200 50
+             "
+                                                strokeWidth="12"
+                                            />
+                                        </defs>
+                                    )}
+                                    <use href="#sign-wave" x="0" y="0">
+                                        <animate
+                                            attributeName="x"
+                                            from="0"
+                                            to="-200"
+                                            dur="6s"
+                                            // direction="rtl"
+                                            repeatCount="indefinite"
                                         />
-                                    </defs>
-                                ) : (
+                                    </use>
+                                </svg>
+                                <svg
+                                    width="150"
+                                    height="20"
+                                    viewBox="0 0 800 80"
+                                    className="clip1 absolute bg-transparent rounded-md"
+                                    style={{
+                                        clipPath: `inset(0 0 0 ${currTime}%)`,
+                                    }}
+                                >
                                     <defs>
                                         <path
                                             stroke="#c1b7b4"
+                                            opacity={0.5}
                                             fill="none"
-                                            id="sign-wave"
+                                            id="sign-wave2"
                                             d="
              M0 50
              L 1200 50
@@ -379,63 +538,36 @@ function App() {
                                             strokeWidth="12"
                                         />
                                     </defs>
-                                )}
-                                <use href="#sign-wave" x="0" y="0">
-                                    <animate
-                                        attributeName="x"
-                                        from="0"
-                                        to="-200"
-                                        dur="6s"
-                                        repeatCount="indefinite"
+                                    <use href="#sign-wave2" x="0" y="0">
+                                        <animate
+                                            attributeName="x"
+                                            from="0"
+                                            to="-200"
+                                            dur="6s"
+                                            repeatCount="indefinite"
+                                        />
+                                    </use>
+                                </svg>
+                                <svg
+                                    width="150"
+                                    height="20"
+                                    className="clip1 absolute"
+                                    viewBox="0 0 800 80"
+                                >
+                                    <ellipse
+                                        cx={progress}
+                                        cy="50"
+                                        rx="20"
+                                        ry="40"
+                                        fill={mouseDown ? '#f08665' : '#c1b7b4'}
                                     />
-                                </use>
-                            </svg>
-                            <svg
-                                width="150"
-                                height="20"
-                                viewBox="0 0 800 80"
-                                className="clip1 absolute bg-black/30 rounded-md"
-                                style={{
-                                    clipPath: `inset(0 0 0 ${currTime}%)`,
-                                }}
-                            >
-                                <defs>
-                                    <path
-                                        stroke="#c1b7b4"
-                                        opacity={0.5}
-                                        fill="none"
-                                        id="sign-wave2"
-                                        d="
-             M0 50
-             L 1200 50
-             "
-                                        strokeWidth="12"
-                                    />
-                                </defs>
-                                <use href="#sign-wave2" x="0" y="0">
-                                    <animate
-                                        attributeName="x"
-                                        from="0"
-                                        to="-200"
-                                        dur="6s"
-                                        repeatCount="indefinite"
-                                    />
-                                </use>
-                            </svg>
-                            <svg
-                                width="150"
-                                height="20"
-                                className="clip1 absolute"
-                                viewBox="0 0 800 80"
-                            >
-                                <ellipse
-                                    cx={progress}
-                                    cy="50"
-                                    rx="20"
-                                    ry="40"
-                                    fill={mouseDown ? '#f08665' : '#c1b7b4'}
-                                />
-                            </svg>
+                                </svg>
+                            </div>
+                            <div className="text-white text-xs mr-2 flex-1 text-right">
+                                {secondsToDhmsShort(audio.currentTime)}
+                                &nbsp;/&nbsp;
+                                {secondsToDhmsShort(durations[currIdx])}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -612,14 +744,24 @@ function App() {
             </div>
             <div className="drag bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
                 <div className="flex flex-row">
-                    <p className="text-left text-sm ml-1 w-[50%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">{`Track: ${
+                    <p className="text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">{`Track: ${
                         currIdx + 1
                     } / ${files.length}`}</p>
-                    <div className=" mr-1 w-[50%] flex-none inline-block ">
+                    <p className=" text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">
+                        Total:{' '}
+                        {secondsToDhms(
+                            durations.reduce((acc: number, curr: number) => {
+                                return acc + curr
+                            }, 0)
+                        )}
+                    </p>
+                    <div className=" mr-1 w-[30%] flex-none inline-block ">
                         <p
                             title={currDir}
                             className="text-sm text-right rtl-grid overflow-hidden whitespace-nowrap text-white  text-ellipsis"
-                        >{`${currDir}`}</p>
+                        >
+                            Source: {`${currDir}`}
+                        </p>
                     </div>
                 </div>
             </div>
