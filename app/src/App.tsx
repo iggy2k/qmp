@@ -10,6 +10,7 @@ import {
     IconVolume,
     IconVolume2,
     IconVolume3,
+    IconMusic,
 } from '@tabler/icons-react'
 
 import {
@@ -87,10 +88,10 @@ function secondsToDhms(seconds: number) {
     var m = Math.floor((seconds % 3600) / 60)
     var s = Math.floor(seconds % 60)
 
-    var dDisplay = d > 0 ? d + (d == 1 ? ' d ' : ' ds ') : ''
-    var hDisplay = h > 0 ? h + (h == 1 ? ' h ' : ' hrs ') : ''
-    var mDisplay = m > 0 ? m + (m == 1 ? ' min ' : ' min ') : ''
-    var sDisplay = s > 0 ? s + (s == 1 ? ' sec' : ' sec') : ''
+    var dDisplay = d > 0 ? d + (d == 1 ? ' d ' : ' d ') : ''
+    var hDisplay = h > 0 ? h + (h == 1 ? ' h ' : ' h ') : ''
+    var mDisplay = m > 0 ? m + (m == 1 ? ' m ' : ' m ') : ''
+    var sDisplay = s > 0 ? s + (s == 1 ? ' s' : ' s') : ''
     return dDisplay + hDisplay + mDisplay + sDisplay
 }
 
@@ -431,26 +432,43 @@ function App() {
                 <div className="flex">
                     <div className="no-drag p-3 pl-4 pb-0">
                         <div className="flex-none w-[64px] h-[64px]">
-                            <img
-                                ref={currCover}
-                                className="no-drag mt-1 rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
-                                transition-property: transform, shadow, opacity;
-                                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-                                transition-duration: 150ms;] 
-                                "
-                                src={
-                                    cover !== undefined && cover !== null
-                                        ? `data:${cover};base64,${cover.toString(
-                                              'base64'
-                                          )}`
-                                        : ''
-                                }
-                                onClick={() => {
-                                    downloadCover(cover)
-                                }}
-                                alt=""
-                                title="Click to download the cover art"
-                            />
+                            {cover !== undefined && cover !== null ? (
+                                <img
+                                    ref={currCover}
+                                    className="no-drag mt-1 rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
+                                        transition-property: transform, shadow, opacity;
+                                        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                                        transition-duration: 150ms;] 
+                                        "
+                                    src={
+                                        cover !== undefined && cover !== null
+                                            ? `data:${cover};base64,${cover.toString(
+                                                  'base64'
+                                              )}`
+                                            : ''
+                                    }
+                                    onClick={() => {
+                                        downloadCover(cover)
+                                    }}
+                                    alt=""
+                                    title="Click to download the cover art"
+                                />
+                            ) : (
+                                <IconMusic
+                                    style={{
+                                        color: LightenDarkenColor(
+                                            colorThree,
+                                            200
+                                        ),
+                                        borderRadius: '10px',
+                                        border: '2px solid ' + colorOne,
+                                    }}
+                                    className="drag  w-[64px] h-[64px]"
+                                    onClick={() => {
+                                        openFile(currIdx + 1)
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
                     <div className="ml-1 mt-3 flex-1">
@@ -817,20 +835,32 @@ function App() {
                                         openFile(index)
                                     }}
                                 >
-                                    <img
-                                        className="w-[24px] h-[24px] rounded-lg flex-none"
-                                        src={
-                                            covers[index] !== undefined &&
-                                            covers[index] !== null
-                                                ? `data:${
-                                                      covers[index]
-                                                  };base64,${covers[
-                                                      index
-                                                  ].toString('base64')}`
-                                                : ''
-                                        }
-                                        alt=""
-                                    />
+                                    {covers[index] !== undefined &&
+                                    covers[index] !== null ? (
+                                        <img
+                                            className="w-[24px] h-[24px] rounded-lg flex-none"
+                                            src={`data:${
+                                                covers[index]
+                                            };base64,${covers[index].toString(
+                                                'base64'
+                                            )}`}
+                                            alt=""
+                                        />
+                                    ) : (
+                                        <IconMusic
+                                            style={{
+                                                color: LightenDarkenColor(
+                                                    colorThree,
+                                                    200
+                                                ),
+                                            }}
+                                            className="drag w-[24px] h-[24px]"
+                                            onClick={() => {
+                                                openFile(currIdx + 1)
+                                            }}
+                                        />
+                                    )}
+
                                     <div className="text-[#a1918c] text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
                                         {file
                                             .split('/')

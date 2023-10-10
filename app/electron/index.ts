@@ -10,7 +10,7 @@ import {
 import isDev from 'electron-is-dev'
 import * as mm from 'music-metadata'
 import * as fs from 'fs'
-import path from 'path'
+// import path from 'path'
 import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
@@ -21,6 +21,13 @@ var resized = true
 var onTop = false
 const store = new Store()
 console.log('Userdata: ' + app.getPath('userData'))
+
+function checkExension(file: string) {
+    return (
+        HTML5_AUDIO.includes(file.split('.').pop()!) &&
+        fs.statSync(file).isFile()
+    )
+}
 
 function openFiles(files: string[]) {
     const promises = []
@@ -41,20 +48,15 @@ function openFiles(files: string[]) {
         })
 }
 
-async function openDir(dir: string) {
-    let paths: string[] = []
+function rreaddirSync(dir: string, allFiles: string[] = []) {
+    let files = fs.readdirSync(dir).map((f) => join(dir, f))
 
-    const fileNames = await fs.promises.readdir(dir)
-    for (let file of fileNames) {
-        if (!HTML5_AUDIO.includes(file.split('.').pop()!)) {
-            // Assume never undefined
-            continue
-        }
-        const absolutePath = path.join(dir, file)
-        paths.push(absolutePath)
-        // const data = await fs.promises.readFile(absolutePath);
-    }
-    return paths
+    allFiles.push(...files)
+    files.forEach((f) => {
+        f && fs.statSync(f).isDirectory() && rreaddirSync(f, allFiles)
+    })
+
+    return allFiles
 }
 
 function createWindow() {
@@ -154,18 +156,12 @@ function createWindow() {
     })
 
     ipcMain.on('get-files-to-main', (_, path: string) => {
-        let lsdir = openDir(path)
-        lsdir.then((data) => {
-            if (data !== undefined) {
-                // console.log("Cover: " + cover);
-                // const resultStr = cover.toString('base64');
-                // console.log("Cover: " + resultStr);
-                window.webContents.send('get-files-from-main', data)
-            }
-        })
-        lsdir.catch((err) => {
-            console.log(err)
-        })
+        // let lsdir = openDir(path)
+        let lsdir = rreaddirSync(path, [])
+        lsdir = lsdir.filter(checkExension)
+
+        console.log(lsdir)
+        window.webContents.send('get-files-from-main', lsdir)
     })
 
     ipcMain.on('open-folder-tm', (_, openDefault: boolean) => {
