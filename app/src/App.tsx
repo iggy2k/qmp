@@ -25,6 +25,7 @@ import {
     ChevronDoubleUpIcon,
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
+import scrollIntoView from 'scroll-into-view-if-needed'
 
 const AudioContext = window.AudioContext
 var audioContext: any = null
@@ -88,10 +89,10 @@ function secondsToDhms(seconds: number) {
     var m = Math.floor((seconds % 3600) / 60)
     var s = Math.floor(seconds % 60)
 
-    var dDisplay = d > 0 ? d + (d == 1 ? ' d ' : ' d ') : ''
-    var hDisplay = h > 0 ? h + (h == 1 ? ' h ' : ' h ') : ''
-    var mDisplay = m > 0 ? m + (m == 1 ? ' m ' : ' m ') : ''
-    var sDisplay = s > 0 ? s + (s == 1 ? ' s' : ' s') : ''
+    var dDisplay = d + 'd '
+    var hDisplay = h + 'h '
+    var mDisplay = m + 'm '
+    var sDisplay = s + 's '
     return dDisplay + hDisplay + mDisplay + sDisplay
 }
 
@@ -141,6 +142,8 @@ function App() {
         }
     }
 
+    const ref = useRef<null | HTMLDivElement>(null)
+
     const [colorOne, setColorOne] = useState('#000000')
     const [colorTwo, setColorTwo] = useState('#000000')
     const [colorThree, setColorThree] = useState('#000000')
@@ -175,6 +178,12 @@ function App() {
     const [formats, setFormats] = useState<any[]>([])
 
     const [durations, setDurations] = useState<any[]>([])
+
+    const [names, setNames] = useState<any[]>([])
+
+    const [authors, setAuthors] = useState<any[]>([])
+
+    const [albums, setAlbums] = useState<any[]>([])
 
     const [sampleRates, setSampleRates] = useState<any[]>([])
 
@@ -274,7 +283,6 @@ function App() {
                         window.Main.send('toMain', paths)
                         window.Main.receive('fromMain', (data2: any) => {
                             if (data2[1].length > 1) {
-                                console.log('Setting covers')
                                 setCovers(data2[1])
                                 setFormats(
                                     data2[0].map(
@@ -295,6 +303,27 @@ function App() {
                                         (trackData: {
                                             [x: string]: { [x: string]: any }
                                         }) => trackData['format']['sampleRate']
+                                    )
+                                )
+                                setNames(
+                                    data2[0].map(
+                                        (trackData: {
+                                            [x: string]: { [x: string]: any }
+                                        }) => trackData['common']['title']
+                                    )
+                                )
+                                setAlbums(
+                                    data2[0].map(
+                                        (trackData: {
+                                            [x: string]: { [x: string]: any }
+                                        }) => trackData['common']['album']
+                                    )
+                                )
+                                setAuthors(
+                                    data2[0].map(
+                                        (trackData: {
+                                            [x: string]: { [x: string]: any }
+                                        }) => trackData['common']['artist']
                                     )
                                 )
                             }
@@ -403,6 +432,14 @@ function App() {
         }
     }, [progress])
 
+    useEffect(() => {
+        ref.current &&
+            scrollIntoView(ref.current, {
+                behavior: 'smooth',
+                scrollMode: 'if-needed',
+            })
+    }, [currIdx])
+
     return (
         <div className="bg-[#333333] h-[100vh] flex flex-col">
             <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
@@ -461,7 +498,6 @@ function App() {
                                             200
                                         ),
                                         borderRadius: '10px',
-                                        border: '2px solid ' + colorOne,
                                     }}
                                     className="drag  w-[64px] h-[64px]"
                                     onClick={() => {
@@ -604,7 +640,12 @@ function App() {
                                     />
                                 </svg>
                             </div>
-                            <div className="text-white text-xs mr-2 flex-1 text-right">
+                            <div
+                                style={{
+                                    color: LightenDarkenColor(colorThree, 200),
+                                }}
+                                className="text-xs mr-2 flex-1 text-right"
+                            >
                                 {secondsToDhmsShort(audio.currentTime)}
                                 &nbsp;/&nbsp;
                                 {secondsToDhmsShort(durations[currIdx])}
@@ -809,28 +850,33 @@ function App() {
                 style={{
                     backgroundColor: colorOne + '10',
                 }}
-                className="overflow-y-auto flex-1 flex-grow"
+                className="overflow-y-auto flex-1 flex-grow overflow-x-hidden"
             >
                 {covers.length > 0 &&
                     files.map((file: string, index: number) => {
                         return (
                             <div
+                                style={{
+                                    paddingTop: currIdx == 0 ? '5px' : '1px',
+                                    paddingBottom:
+                                        currIdx == files.length - 1
+                                            ? '5px'
+                                            : '',
+                                    paddingLeft: '0.5rem',
+                                    paddingRight: '0.5rem',
+                                }}
                                 key={index}
-                                className="px-2 py-1 overflow-auto hover:scale-[101%] transition-transform"
+                                ref={index == currIdx ? ref : null}
+                                className="overflow-auto hover:scale-[101%] transition-transform"
                             >
                                 <div
                                     style={{
-                                        borderColor: LightenDarkenColor(
-                                            colorThree,
-                                            200
-                                        ),
                                         backgroundColor:
                                             index == currIdx
                                                 ? colorOne + '20'
                                                 : '',
                                     }}
-                                    className="border-b-[1px]
-                                        hover:bg-black/20 flex flex-row p-1 text-center rounded-md"
+                                    className="transition duration-75 hover:bg-black/20  flex flex-row p-1 text-center rounded-md"
                                     onClick={() => {
                                         openFile(index)
                                     }}
@@ -854,18 +900,69 @@ function App() {
                                                     200
                                                 ),
                                             }}
-                                            className="drag w-[24px] h-[24px]"
+                                            className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]"
                                             onClick={() => {
                                                 openFile(currIdx + 1)
                                             }}
                                         />
                                     )}
 
-                                    <div className="text-[#a1918c] text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
-                                        {file
-                                            .split('/')
-                                            .reverse()[0]
-                                            .replace(/\.[^/.]+$/, '')}
+                                    <div
+                                        style={{
+                                            color: LightenDarkenColor(
+                                                colorThree,
+                                                200
+                                            ),
+                                        }}
+                                        className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis"
+                                    >
+                                        {names[index] &&
+                                        authors[index] &&
+                                        albums[index] ? (
+                                            <div className="flex flex-row">
+                                                <p
+                                                    style={{
+                                                        color: LightenDarkenColor(
+                                                            colorFour,
+                                                            200
+                                                        ),
+                                                    }}
+                                                    className="font-semibold"
+                                                >
+                                                    {names[index]}
+                                                </p>
+                                                <p
+                                                    style={{
+                                                        color: LightenDarkenColor(
+                                                            colorFour,
+                                                            150
+                                                        ),
+                                                    }}
+                                                    className="ml-1 font-normal"
+                                                >
+                                                    {authors[index]}
+                                                </p>
+                                                <p
+                                                    style={{
+                                                        color: LightenDarkenColor(
+                                                            colorFour,
+                                                            100
+                                                        ),
+                                                    }}
+                                                    className="ml-1 font-light"
+                                                >
+                                                    {albums[index]}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <p>
+                                                {' '}
+                                                {file
+                                                    .split('/')
+                                                    .reverse()[0]
+                                                    .replace(/\.[^/.]+$/, '')}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="flex place-items-center ml-auto">
@@ -898,11 +995,10 @@ function App() {
             </div>
             <div className="drag bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
                 <div className="flex flex-row">
-                    <p className="text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">{`Track: ${
+                    <p className="text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">{`${
                         currIdx + 1
                     } / ${files.length}`}</p>
                     <p className=" text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">
-                        Total:{' '}
                         {secondsToDhms(
                             durations.reduce((acc: number, curr: number) => {
                                 return acc + curr
@@ -914,7 +1010,7 @@ function App() {
                             title={currDir}
                             className="text-sm text-right rtl-grid overflow-hidden whitespace-nowrap text-white  text-ellipsis"
                         >
-                            Source: {`${currDir}`}
+                            {`${currDir}`}
                         </p>
                     </div>
                 </div>
