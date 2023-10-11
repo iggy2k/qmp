@@ -14,7 +14,7 @@ import * as fs from 'fs'
 import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
-const WIN_HEIGHT_MIN = 120
+const WIN_HEIGHT_MIN = 102
 const WIN_WIDTH = 470
 const HTML5_AUDIO = [
     'wav',
@@ -43,7 +43,7 @@ function checkExension(file: string) {
 function openFiles(files: string[]) {
     const promises = []
     for (let i = 0; i < files.length; i++) {
-        console.log('file: ' + files[i])
+        // console.log('file: ' + files[i])
         promises.push(mm.parseFile(files[i]))
     }
     return Promise.all(promises)
@@ -126,7 +126,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        // window?.webContents.openDevTools()
+        window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
@@ -167,11 +167,9 @@ function createWindow() {
     })
 
     ipcMain.on('get-files-to-main', (_, path: string) => {
-        // let lsdir = openDir(path)
         let lsdir = rreaddirSync(path, [])
         lsdir = lsdir.filter(checkExension)
-
-        console.log(lsdir)
+        // console.log(lsdir)
         window.webContents.send('get-files-from-main', lsdir)
     })
 

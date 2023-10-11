@@ -19,13 +19,21 @@ import {
     ForwardIcon,
     BackwardIcon,
     AdjustmentsVerticalIcon,
-    SpeakerWaveIcon,
     CogIcon,
     Bars3Icon,
     ChevronDoubleUpIcon,
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
 import scrollIntoView from 'scroll-into-view-if-needed'
+
+import {
+    componentToHex,
+    grayness,
+    rgbToHex,
+    LightenDarkenColor,
+    secondsToDhms,
+    secondsToDhmsShort,
+} from './helpers'
 
 const AudioContext = window.AudioContext
 var audioContext: any = null
@@ -34,92 +42,7 @@ let track: any = null
 let gain: any = null
 const audio = new Audio()
 
-function componentToHex(c: number) {
-    var hex = c.toString(16)
-    return hex.length == 1 ? '0' + hex : hex
-}
-
-function grayness(hex: string) {
-    if (hex[0] == '#') {
-        hex = hex.slice(1)
-    }
-    let r = parseInt(hex.slice(0, 2), 16)
-    let g = parseInt(hex.slice(2, 4), 16)
-    let b = parseInt(hex.slice(4, 6), 16)
-    return Math.abs(r - g) + Math.abs(r - b) + Math.abs(b - g)
-}
-
-function rgbToHex(r: number, g: number, b: number) {
-    return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b)
-}
-
-// Author: https://css-tricks.com/snippets/javascript/lighten-darken-color/
-function LightenDarkenColor(col: string, amt: number) {
-    var usePound = false
-
-    if (col[0] == '#') {
-        col = col.slice(1)
-        usePound = true
-    }
-
-    var num = parseInt(col, 16)
-
-    var r = (num >> 16) + amt
-
-    if (r > 255) r = 255
-    else if (r < 0) r = 0
-
-    var b = ((num >> 8) & 0x00ff) + amt
-
-    if (b > 255) b = 255
-    else if (b < 0) b = 0
-
-    var g = (num & 0x0000ff) + amt
-
-    if (g > 255) g = 255
-    else if (g < 0) g = 0
-
-    return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16)
-}
-
-function secondsToDhms(seconds: number) {
-    seconds = Number(seconds)
-    var d = Math.floor(seconds / (3600 * 24))
-    var h = Math.floor((seconds % (3600 * 24)) / 3600)
-    var m = Math.floor((seconds % 3600) / 60)
-    var s = Math.floor(seconds % 60)
-
-    var dDisplay = d + 'd '
-    var hDisplay = h + 'h '
-    var mDisplay = m + 'm '
-    var sDisplay = s + 's '
-    return dDisplay + hDisplay + mDisplay + sDisplay
-}
-
-function secondsToDhmsShort(seconds: number) {
-    seconds = Number(seconds)
-    var d = Math.floor(seconds / (3600 * 24))
-    var h = Math.floor((seconds % (3600 * 24)) / 3600)
-    var m = Math.floor((seconds % 3600) / 60)
-    var s = Math.floor(seconds % 60)
-
-    var dDisplay = d > 0 ? (d < 10 ? '0' + d : d) + ' : ' : ''
-    var hDisplay = h > 0 ? (h < 10 ? '0' + h : h) + ' : ' : ''
-    var mDisplay = m > 0 ? (m < 10 ? '0' + m : m) + ' : ' : '00 : '
-    var sDisplay = s > 0 ? (s < 10 ? '0' + s : s) + '' : '00'
-    return dDisplay + hDisplay + mDisplay + sDisplay
-}
-
 function App() {
-    const currCover = useRef(null)
-    const [volume, setVolume] = useState(0.5)
-
-    const downloadCover = (b64data: any) => {
-        if (b64data !== undefined) {
-            window.Main.SaveCover(b64data.toString('base64'))
-        }
-    }
-
     // useEffect(() => {
     //     audioContext = new AudioContext()
     //     track = audioContext.createMediaElementSource(audio)
@@ -136,60 +59,59 @@ function App() {
     //     }
     // }, [volume])
 
-    const onLoadedMetadata = () => {
-        if (audio) {
-            duration = audio.duration
-        }
-    }
-
-    const ref = useRef<null | HTMLDivElement>(null)
-
+    // Color states
     const [colorOne, setColorOne] = useState('#000000')
     const [colorTwo, setColorTwo] = useState('#000000')
     const [colorThree, setColorThree] = useState('#000000')
     const [colorFour, setColorFour] = useState('#000000')
 
-    const [play, setPlay] = useState(false)
+    // Windows states
     const [onTop, setOnTop] = useState(false)
-    const [currTime, setCurrTime] = useState(0)
+    const [mouseDown, setMouseDown] = useState(false)
+    const [resized, setResized] = useState(false)
 
+    // Current track data states
+    const ref = useRef<null | HTMLDivElement>(null)
+    const currCover = useRef(null)
     const [cover, setCover] = useState(null as any)
-
     const [title, setTitle] = useState('Title')
     const [artist, setArtist] = useState('Artist')
     const [album, setAlbum] = useState('Album')
-
+    const [currFile, setCurrFile] = useState('')
+    const [currIdx, setCurrIdx] = useState(0)
+    const [progress, setProgress] = useState(0)
+    const [currDir, setCurrDir] = useState('')
     const [repeat, setRepeat] = useState(false)
 
+    // Current track control states
+    const [shuffle, setShuffle] = useState(false)
+    const [volume, setVolume] = useState(0.5)
+    const [play, setPlay] = useState(false)
+    const [currTime, setCurrTime] = useState(0)
+
+    // Track list states
     const [files, setFiles] = useState([])
-
-    const [currFile, setCurrFile] = useState('')
-
-    const [currIdx, setCurrIdx] = useState(0)
-
-    const [resized, setResized] = useState(false)
-
-    const [progress, setProgress] = useState(0)
-
-    const [currDir, setCurrDir] = useState('')
-
+    const [durations, setDurations] = useState<any[]>([])
+    const [names, setNames] = useState<any[]>([])
+    const [authors, setAuthors] = useState<any[]>([])
+    const [albums, setAlbums] = useState<any[]>([])
+    const [sampleRates, setSampleRates] = useState<any[]>([])
     const [covers, setCovers] = useState<any[]>([])
-
     const [formats, setFormats] = useState<any[]>([])
 
-    const [durations, setDurations] = useState<any[]>([])
+    const [directories, setDirectories] = useState<string[]>([])
 
-    const [names, setNames] = useState<any[]>([])
+    const downloadCover = (b64data: any) => {
+        if (b64data !== undefined) {
+            window.Main.SaveCover(b64data.toString('base64'))
+        }
+    }
 
-    const [authors, setAuthors] = useState<any[]>([])
-
-    const [albums, setAlbums] = useState<any[]>([])
-
-    const [sampleRates, setSampleRates] = useState<any[]>([])
-
-    const [mouseDown, setMouseDown] = useState(false)
-
-    const [shuffle, setShuffle] = useState(false)
+    const onLoadedMetadata = () => {
+        if (audio) {
+            duration = audio.duration
+        }
+    }
 
     const updateProgress = () => {
         if (audio) {
@@ -215,19 +137,6 @@ function App() {
         window.Main.send('open-settings-tm', null)
     }
 
-    useEffect(() => {
-        audio.src = currFile ? `file://${currFile}` : ''
-    }, [currFile])
-
-    useEffect(() => {
-        audio.loop = repeat
-        audio.volume = volume
-    }, [repeat, volume])
-
-    useEffect(() => {
-        console.log(`play = ${play}`)
-    }, [play])
-
     const togglePlay = () => {
         console.log(`Toggle play -> paused=${audio.paused}`)
         if (audio) {
@@ -243,6 +152,7 @@ function App() {
         }
     }
 
+    // Switch to a new track
     const openFile = (index: number) => {
         if (index < 0) {
             index = files.length - 1
@@ -250,15 +160,13 @@ function App() {
             index = 0
         }
 
-        console.log(`Loaded: path ${files[index]}, idx ${index}`)
-
         setCurrIdx(index)
         setCurrFile(files[index])
 
         window.Main.send('toMain', [files[index]])
         window.Main.receive('fromMain', (data: any) => {
             setCover(data[1][0])
-            console.log(data[0][0])
+            // console.log(data[0][0])
             setTitle(data[0][0].common['title'])
             setArtist(data[0][0].common['artist'])
             setAlbum(data[0][0].common['album'])
@@ -269,12 +177,74 @@ function App() {
         })
     }
 
+    const openCertainDir = (path: string) => {
+        setCurrDir(path)
+        window.Main.send('get-files-to-main', path)
+        window.Main.receive('get-files-from-main', (data: any) => {
+            if (data.length > 0) {
+                setFiles(data)
+                // const paths = Object.values(data)
+                // window.Main.send('toMain', paths)
+                // window.Main.receive('fromMain', (data2: any) => {
+                // if (data2[1].length > 1) {
+                // setCovers(data2[1])
+                // setFormats(
+                //     data2[0].map(
+                //         (trackData: {
+                //             [x: string]: { [x: string]: any }
+                //         }) => trackData['format']['container']
+                //     )
+                // )
+                // setDurations(
+                //     data2[0].map(
+                //         (trackData: {
+                //             [x: string]: { [x: string]: any }
+                //         }) => trackData['format']['duration']
+                //     )
+                // )
+                // setSampleRates(
+                //     data2[0].map(
+                //         (trackData: {
+                //             [x: string]: { [x: string]: any }
+                //         }) => trackData['format']['sampleRate']
+                //     )
+                // )
+                // setNames(
+                //     data2[0].map(
+                //         (trackData: {
+                //             [x: string]: { [x: string]: any }
+                //         }) => trackData['common']['title']
+                //     )
+                // )
+                // setAlbums(
+                //     data2[0].map(
+                //         (trackData: {
+                //             [x: string]: { [x: string]: any }
+                //         }) => trackData['common']['album']
+                //     )
+                // )
+                // setAuthors(
+                //     data2[0].map(
+                //         (trackData: {
+                //             [x: string]: { [x: string]: any }
+                //         }) => trackData['common']['artist']
+                //     )
+                // )
+                // }
+                // })
+            }
+        })
+    }
+
+    // Load all supported audio files from
+    // a directory (recursive)
     const openDir = (openDefault: boolean) => {
-        var covrs: any[] = []
         window.Main.send('open-folder-tm', openDefault)
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
             if (path !== undefined) {
                 setCurrDir(path)
+                !directories.includes(path) &&
+                    setDirectories([...directories, path])
                 window.Main.send('get-files-to-main', path)
                 window.Main.receive('get-files-from-main', (data: any) => {
                     if (data.length > 0) {
@@ -354,6 +324,7 @@ function App() {
         }
     }
 
+    // Get seek time from mouse position on the track
     const relativeCoords = (e: any) => {
         e.stopPropagation()
         let elem = document.getElementById('track')
@@ -365,11 +336,13 @@ function App() {
         }
     }
 
+    // Hot reload audio handling
     useEffect(() => {
         console.log('audio.paused = ' + audio.paused)
         if (currDir === '') {
             // Prevent hot-reaload infinite-loop
             openDir(true)
+            openFile(currIdx)
         }
         if (audio && !audio.paused) {
             audio.pause()
@@ -377,49 +350,46 @@ function App() {
         }
         return () => {
             audio.pause()
-            console.log('in cleanup')
+            console.log('hot reload audio pause')
         }
     }, [])
 
+    // Open a file on new directory load
+    // useEffect(() => {
+    //     if (files.length > currIdx) {
+    //         openFile(currIdx)
+    //     }
+    // }, [files])
+
+    // Get key colors from the cover art:
+    // Gets 3 brightest colors that are the furthest from gray,
+    // also get 1 dark color
     useEffect(() => {
-        if (files.length > currIdx) {
-            openFile(currIdx)
-        }
-    }, [files])
+        currCover.current &&
+            prominent(currCover.current, { amount: 10 }).then((color) => {
+                let topColors: Record<string, number> = {}
+                if (Array.isArray(color)) {
+                    color.forEach((element: any) => {
+                        let hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
+                        topColors[hex] =
+                            element[0] * 0.299 +
+                            element[1] * 0.587 +
+                            element[2] * 0.114
+                    })
+                }
 
-    useEffect(() => {
-        prominent(currCover.current!, { amount: 10 }).then((color) => {
-            let topColors: Record<string, number> = {}
-            if (Array.isArray(color)) {
-                color.forEach((element: any) => {
-                    let hex = rgbToHex(element[0], element[1], element[2])
-                    topColors[hex] =
-                        element[0] * 0.299 +
-                        element[1] * 0.587 +
-                        element[2] * 0.114
-                })
-            }
+                let keys = Object.keys(topColors)
 
-            let keys = Object.keys(topColors)
+                keys.sort(
+                    (a, b) =>
+                        grayness(b) - grayness(a) || topColors[b] - topColors[a]
+                )
 
-            keys.sort(
-                (a, b) =>
-                    grayness(b) - grayness(a) || topColors[b] - topColors[a]
-            )
-
-            keys.forEach((element) => {
-                console.log(`${element} = ${grayness(element)}`)
+                setColorOne(keys[1])
+                setColorTwo(keys[2])
+                setColorThree(keys[3])
+                setColorFour(keys[9]) // Make sure one of the shades is dark
             })
-
-            setColorOne(keys[1])
-            // console.log(keys[1] + ' ' + topColors[keys[1]])
-            setColorTwo(keys[2])
-            // console.log(keys[2] + ' ' + topColors[keys[2]])
-            setColorThree(keys[3])
-            // console.log(keys[3] + ' ' + topColors[keys[3]])
-            setColorFour(keys[9])
-            // console.log(keys[4] + ' ' + topColors[keys[4]])
-        })
     }, [cover])
 
     useEffect(() => {
@@ -434,14 +404,24 @@ function App() {
 
     useEffect(() => {
         ref.current &&
+            !resized &&
             scrollIntoView(ref.current, {
                 behavior: 'smooth',
                 scrollMode: 'if-needed',
             })
     }, [currIdx])
 
+    useEffect(() => {
+        audio.src = currFile ? `file://${currFile}` : ''
+    }, [currFile])
+
+    useEffect(() => {
+        audio.loop = repeat
+        audio.volume = volume
+    }, [repeat, volume])
+
     return (
-        <div className="bg-[#333333] h-[100vh] flex flex-col">
+        <div className="bg-[#333333] h-[100vh] flex flex-col overflow-y-hidden">
             <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
                     className="h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
@@ -467,12 +447,12 @@ function App() {
                 className="bg-[#333333] drag"
             >
                 <div className="flex">
-                    <div className="no-drag p-3 pl-4 pb-0">
+                    <div className="no-drag p-2 pl-2 pb-0">
                         <div className="flex-none w-[64px] h-[64px]">
                             {cover !== undefined && cover !== null ? (
                                 <img
                                     ref={currCover}
-                                    className="no-drag mt-1 rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
+                                    className="no-drag rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
                                         transition-property: transform, shadow, opacity;
                                         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                                         transition-duration: 150ms;] 
@@ -507,12 +487,12 @@ function App() {
                             )}
                         </div>
                     </div>
-                    <div className="ml-1 mt-3 flex-1">
+                    <div className="ml-1 mt-2 flex-1">
                         <p
                             style={{
                                 color: LightenDarkenColor(colorFour, 200),
                             }}
-                            className="no-drag text-[#a1918c]"
+                            className="no-drag text-[#a1918c] text-sm"
                         >
                             {title?.replace('\\', '')}
                         </p>
@@ -520,7 +500,7 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colorThree, 200),
                             }}
-                            className="no-drag grid grid-flow-col auto-cols-max"
+                            className="no-drag grid grid-flow-col auto-cols-max text-sm"
                         >
                             <p>{artist}</p>
                             <p>&nbsp;-&nbsp;</p>
@@ -660,7 +640,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={collapse}
                             />
                         ) : (
@@ -668,7 +648,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={collapse}
                             />
                         )}
@@ -677,14 +657,14 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colorThree, 200),
                             }}
-                            className="no-drag h-6 m-1"
+                            className="no-drag h-[20px] m-1"
                         />
                         {onTop ? (
                             <IconPinFilled
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={alwaysOnTop}
                             />
                         ) : (
@@ -692,24 +672,15 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={alwaysOnTop}
                             />
                         )}
-                        <FolderPlusIcon
-                            style={{
-                                color: LightenDarkenColor(colorThree, 200),
-                            }}
-                            className="no-drag h-6 m-1"
-                            onClick={() => {
-                                openDir(false)
-                            }}
-                        />
                         <CogIcon
                             style={{
                                 color: LightenDarkenColor(colorThree, 200),
                             }}
-                            className="no-drag h-6 m-1"
+                            className="no-drag h-[20px] m-1"
                             onClick={() => {
                                 openSettings()
                             }}
@@ -721,7 +692,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onMouseDown={() => {
                                     setRepeat(!repeat)
                                 }}
@@ -731,7 +702,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onMouseDown={() => {
                                     setRepeat(!repeat)
                                 }}
@@ -741,7 +712,7 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colorThree, 200),
                             }}
-                            className="no-drag h-6 m-1"
+                            className="no-drag h-[20px] m-1"
                             onClick={() => {
                                 openFile(currIdx - 1)
                             }}
@@ -751,7 +722,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={() => togglePlay()}
                             />
                         ) : (
@@ -759,7 +730,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={() => togglePlay()}
                             />
                         )}
@@ -767,7 +738,7 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colorThree, 200),
                             }}
-                            className="no-drag h-6 m-1"
+                            className="no-drag h-[20px] m-1"
                             onClick={() => {
                                 openFile(currIdx + 1)
                             }}
@@ -777,7 +748,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={() => setShuffle(false)}
                             />
                         ) : (
@@ -785,7 +756,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                                 onClick={() => setShuffle(true)}
                             />
                         )}
@@ -796,21 +767,21 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                             />
                         ) : volume < 0.5 ? (
                             <IconVolume2
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                             />
                         ) : (
                             <IconVolume
                                 style={{
                                     color: LightenDarkenColor(colorThree, 200),
                                 }}
-                                className="no-drag h-6 m-1"
+                                className="no-drag h-[20px] m-1"
                             />
                         )}
 
@@ -837,12 +808,33 @@ function App() {
 
             <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1">
                 <div className="flex flex-row">
-                    <div className="text-white text-xs ml-1 mt-1 p-1 rounded-md bg-white/20">
-                        Music
-                    </div>
-                    <div className="text-white w-[24px] text-center text-xs mt-1 p-1 rounded-md bg-white/20 ml-auto mr-1">
-                        +
-                    </div>
+                    {directories.map((dir: string, index: number) => {
+                        return (
+                            <div
+                                style={{
+                                    backgroundColor:
+                                        currDir == dir
+                                            ? '#00000050'
+                                            : '#FFFFFF50',
+                                }}
+                                onClick={() => {
+                                    currDir !== dir && openCertainDir(dir)
+                                }}
+                                className="text-white h-[24px] text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
+                            >
+                                {directories[index].split('/').reverse()[0]}
+                            </div>
+                        )
+                    })}
+                    <FolderPlusIcon
+                        style={{
+                            color: LightenDarkenColor(colorThree, 200),
+                        }}
+                        className="no-drag h-[24px] m-1 ml-auto mr-1"
+                        onClick={() => {
+                            openDir(false)
+                        }}
+                    />
                 </div>
             </div>
 
@@ -854,14 +846,15 @@ function App() {
             >
                 {covers.length > 0 &&
                     files.map((file: string, index: number) => {
+                        console.log(index)
                         return (
                             <div
                                 style={{
-                                    paddingTop: currIdx == 0 ? '5px' : '1px',
+                                    paddingTop: index == 0 ? '5px' : '1px',
                                     paddingBottom:
-                                        currIdx == files.length - 1
+                                        index == files.length - 1
                                             ? '5px'
-                                            : '',
+                                            : '1px',
                                     paddingLeft: '0.5rem',
                                     paddingRight: '0.5rem',
                                 }}
@@ -876,7 +869,7 @@ function App() {
                                                 ? colorOne + '20'
                                                 : '',
                                     }}
-                                    className="transition duration-75 hover:bg-black/20  flex flex-row p-1 text-center rounded-md"
+                                    className="transition duration-75 hover:bg-black/20 flex flex-row p-[1px] text-center rounded-md"
                                     onClick={() => {
                                         openFile(index)
                                     }}
@@ -927,9 +920,12 @@ function App() {
                                                             200
                                                         ),
                                                     }}
-                                                    className="font-semibold"
+                                                    // className="font-semibold"
                                                 >
-                                                    {names[index]}
+                                                    {names[index].replace(
+                                                        '\\',
+                                                        ''
+                                                    )}
                                                 </p>
                                                 <p
                                                     style={{
@@ -938,9 +934,12 @@ function App() {
                                                             150
                                                         ),
                                                     }}
-                                                    className="ml-1 font-normal"
+                                                    className="ml-1"
                                                 >
-                                                    {authors[index]}
+                                                    {authors[index].replace(
+                                                        '\\',
+                                                        ''
+                                                    )}
                                                 </p>
                                                 <p
                                                     style={{
@@ -949,9 +948,12 @@ function App() {
                                                             100
                                                         ),
                                                     }}
-                                                    className="ml-1 font-light"
+                                                    className="ml-1"
                                                 >
-                                                    {albums[index]}
+                                                    {albums[index].replace(
+                                                        '\\',
+                                                        ''
+                                                    )}
                                                 </p>
                                             </div>
                                         ) : (
@@ -966,17 +968,39 @@ function App() {
                                     </div>
 
                                     <div className="flex place-items-center ml-auto">
-                                        <div className="bg-slate-400/10 grid grid-flow-col rounded-md text-xs p-1 font-mono">
-                                            <p className="text-[#a1918c]">
+                                        <div
+                                            style={{
+                                                fontSize: '0.65rem',
+                                                lineHeight: '1.1rem',
+                                                color: LightenDarkenColor(
+                                                    colorFour,
+                                                    200
+                                                ),
+                                                backgroundColor:
+                                                    LightenDarkenColor(
+                                                        colorThree,
+                                                        0
+                                                    ),
+                                            }}
+                                            className="pl-1 grid grid-flow-col text-xs font-mono rounded-md"
+                                        >
+                                            <p>
                                                 {formats[index] !== undefined &&
                                                 formats[index] !== null
                                                     ? formats[index]
                                                     : ''}
                                             </p>
-                                            <p className="text-[#a1918c]">
-                                                &nbsp;/&nbsp;
-                                            </p>
-                                            <p className="text-[#a1918c]">
+                                            <p>&nbsp;</p>
+                                            <p
+                                                className="rounded-md pl-1 pr-1"
+                                                style={{
+                                                    backgroundColor:
+                                                        LightenDarkenColor(
+                                                            colorFour,
+                                                            50
+                                                        ),
+                                                }}
+                                            >
                                                 {sampleRates[index] !==
                                                     undefined &&
                                                 sampleRates[index] !== null
