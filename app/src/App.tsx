@@ -72,6 +72,7 @@ function App() {
     // Current track data states
     const ref = useRef<null | HTMLDivElement>(null)
     const [cover, setCover] = useState(null as any)
+
     const currCover = useCallback(
         // Get key colors from the cover art:
         // Gets 3 brightest colors that are the furthest from gray,
@@ -207,12 +208,14 @@ function App() {
             }
         })
         window.Main.receive('fromMain', (data2: any) => {
-            if (data2[1].length > 1) {
+            if (data2[1].length == 1) {
+                // Case: get current tracks info
                 setCover(data2[1][0])
                 setTitle(data2[0][0].common['title'])
                 setArtist(data2[0][0].common['artist'])
                 setAlbum(data2[0][0].common['album'])
-
+            } else if (data2[1].length > 1) {
+                // Case: get all tracks in the directory
                 setCovers(data2[1])
                 setFormats(
                     data2[0].map(
