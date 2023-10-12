@@ -36,7 +36,7 @@ import {
 } from './helpers'
 
 const AudioContext = window.AudioContext
-var audioContext: any = null
+// var audioContext: AudioContext = null
 let track: any = null
 let gain: any = null
 const audio = new Audio()
@@ -116,7 +116,6 @@ function App() {
     const [title, setTitle] = useState('Title')
     const [artist, setArtist] = useState('Artist')
     const [album, setAlbum] = useState('Album')
-    const [currFile, setCurrFile] = useState('')
     const [currIdx, setCurrIdx] = useState(0)
     const [progress, setProgress] = useState(0)
     const [currDir, setCurrDir] = useState('')
@@ -163,8 +162,6 @@ function App() {
         }
     }
 
-    audio.ontimeupdate = updateProgress
-
     const openSettings = () => {
         window.Main.send('open-settings-tm', null)
     }
@@ -193,13 +190,14 @@ function App() {
         }
 
         setCurrIdx(index)
-        setCurrFile(files[index])
 
         window.Main.send('toMain', [files[index]])
     }
 
     // Normal way of using react with listeners
     useEffect(() => {
+        audio.ontimeupdate = updateProgress
+
         window.Main.receive('get-files-from-main', (data: any) => {
             if (data.length > 0) {
                 setFiles(data)
@@ -323,12 +321,6 @@ function App() {
         }
     }, [])
 
-    useEffect(() => {
-        console.log('new')
-        audio.play()
-        setPlay(true)
-    }, [currFile])
-
     // Open a file on new directory load
     useEffect(() => {
         if (files.length > currIdx) {
@@ -349,17 +341,21 @@ function App() {
     }, [progress])
 
     useEffect(() => {
-        ref.current &&
-            !resized &&
+        if (ref.current && resized) {
             scrollIntoView(ref.current, {
                 behavior: 'smooth',
                 scrollMode: 'if-needed',
             })
+        }
     }, [currIdx])
 
     useEffect(() => {
-        audio.src = currFile ? `file://${currFile}` : ''
-    }, [currFile])
+        if (!audio.paused) {
+            audio.pause()
+            setPlay(false)
+        }
+        audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
+    }, [files[currIdx]])
 
     useEffect(() => {
         audio.loop = repeat
@@ -480,7 +476,13 @@ function App() {
                                     {play ? (
                                         <defs>
                                             <path
-                                                stroke="#c1b7b4"
+                                                style={{
+                                                    stroke: LightenDarkenColor(
+                                                        colorThree,
+                                                        200
+                                                    ),
+                                                }}
+                                                // stroke="#c1b7b4"
                                                 fill="none"
                                                 id="sign-wave"
                                                 d="
@@ -498,7 +500,13 @@ function App() {
                                     ) : (
                                         <defs>
                                             <path
-                                                stroke="#c1b7b4"
+                                                style={{
+                                                    stroke: LightenDarkenColor(
+                                                        colorThree,
+                                                        200
+                                                    ),
+                                                }}
+                                                // stroke="#c1b7b4"
                                                 fill="none"
                                                 id="sign-wave"
                                                 d="
@@ -530,7 +538,13 @@ function App() {
                                 >
                                     <defs>
                                         <path
-                                            stroke="#c1b7b4"
+                                            style={{
+                                                stroke: LightenDarkenColor(
+                                                    colorThree,
+                                                    200
+                                                ),
+                                            }}
+                                            // stroke="#c1b7b4"
                                             opacity={0.5}
                                             fill="none"
                                             id="sign-wave2"
@@ -562,7 +576,18 @@ function App() {
                                         cy="50"
                                         rx="20"
                                         ry="40"
-                                        fill={mouseDown ? '#f08665' : '#c1b7b4'}
+                                        style={{
+                                            fill: mouseDown
+                                                ? LightenDarkenColor(
+                                                      colorThree,
+                                                      200
+                                                  )
+                                                : LightenDarkenColor(
+                                                      colorThree,
+                                                      150
+                                                  ),
+                                        }}
+                                        // fill={mouseDown ? '#f08665' : '#c1b7b4'}
                                     />
                                 </svg>
                             </div>
@@ -790,9 +815,9 @@ function App() {
                 }}
                 className="overflow-y-auto flex-1 flex-grow overflow-x-hidden"
             >
-                {covers.length > 0 &&
+                {files.length > 0 &&
                     files.map((file: string, index: number) => {
-                        console.log(index)
+                        console.log('files map re-rendered')
                         return (
                             <div
                                 style={{
