@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { prominent } from 'color.js'
 import {
     IconArrowsShuffle,
@@ -37,7 +37,6 @@ import {
 
 const AudioContext = window.AudioContext
 var audioContext: any = null
-let duration = 0
 let track: any = null
 let gain: any = null
 const audio = new Audio()
@@ -72,8 +71,47 @@ function App() {
 
     // Current track data states
     const ref = useRef<null | HTMLDivElement>(null)
-    const currCover = useRef(null)
     const [cover, setCover] = useState(null as any)
+    const currCover = useCallback(
+        // Get key colors from the cover art:
+        // Gets 3 brightest colors that are the furthest from gray,
+        // also get 1 dark color
+        (node: any) => {
+            if (node !== null) {
+                prominent(node, { amount: 10 }).then((color) => {
+                    let topColors: Record<string, number> = {}
+                    if (Array.isArray(color)) {
+                        color.forEach((element: any) => {
+                            let hex = rgbToHex(
+                                element[0],
+                                element[1],
+                                element[2]
+                            ) // Get luminance via rbg magic coefficients
+                            topColors[hex] =
+                                element[0] * 0.299 +
+                                element[1] * 0.587 +
+                                element[2] * 0.114
+                        })
+                    }
+
+                    let keys = Object.keys(topColors)
+
+                    keys.sort(
+                        (a, b) =>
+                            grayness(b) - grayness(a) ||
+                            topColors[b] - topColors[a]
+                    )
+
+                    setColorOne(keys[1])
+                    setColorTwo(keys[2])
+                    setColorThree(keys[3])
+                    setColorFour(keys[9]) // Make sure one of the shades is dark
+                })
+            }
+        },
+        [cover]
+    )
+
     const [title, setTitle] = useState('Title')
     const [artist, setArtist] = useState('Artist')
     const [album, setAlbum] = useState('Album')
@@ -107,15 +145,9 @@ function App() {
         }
     }
 
-    const onLoadedMetadata = () => {
-        if (audio) {
-            duration = audio.duration
-        }
-    }
-
     const updateProgress = () => {
         if (audio) {
-            let frac = audio.currentTime / duration
+            let frac = audio.currentTime / audio.duration
             if (frac !== Infinity) {
                 let new_progress = Math.trunc(frac * 800)
                 let new_time = Math.trunc(frac * 100)
@@ -130,7 +162,6 @@ function App() {
         }
     }
 
-    audio.onloadedmetadata = onLoadedMetadata
     audio.ontimeupdate = updateProgress
 
     const openSettings = () => {
@@ -164,76 +195,71 @@ function App() {
         setCurrFile(files[index])
 
         window.Main.send('toMain', [files[index]])
-        window.Main.receive('fromMain', (data: any) => {
-            setCover(data[1][0])
-            // console.log(data[0][0])
-            setTitle(data[0][0].common['title'])
-            setArtist(data[0][0].common['artist'])
-            setAlbum(data[0][0].common['album'])
-            if (audio && !Number.isNaN(audio.duration)) {
-                duration = audio.duration
-                console.log('duration = ' + duration)
+    }
+
+    // Normal way of using react with listeners
+    useEffect(() => {
+        window.Main.receive('get-files-from-main', (data: any) => {
+            if (data.length > 0) {
+                setFiles(data)
+                const paths = Object.values(data)
+                window.Main.send('toMain', paths)
             }
         })
-    }
+        window.Main.receive('fromMain', (data2: any) => {
+            if (data2[1].length > 1) {
+                setCover(data2[1][0])
+                setTitle(data2[0][0].common['title'])
+                setArtist(data2[0][0].common['artist'])
+                setAlbum(data2[0][0].common['album'])
+
+                setCovers(data2[1])
+                setFormats(
+                    data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['format']['container']
+                    )
+                )
+                setDurations(
+                    data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['format']['duration']
+                    )
+                )
+                setSampleRates(
+                    data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['format']['sampleRate']
+                    )
+                )
+                setNames(
+                    data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['common']['title']
+                    )
+                )
+                setAlbums(
+                    data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['common']['album']
+                    )
+                )
+                setAuthors(
+                    data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['common']['artist']
+                    )
+                )
+            }
+        })
+        return () => {
+            console.log('return')
+        }
+    }, [])
 
     const openCertainDir = (path: string) => {
         setCurrDir(path)
         window.Main.send('get-files-to-main', path)
-        window.Main.receive('get-files-from-main', (data: any) => {
-            if (data.length > 0) {
-                setFiles(data)
-                // const paths = Object.values(data)
-                // window.Main.send('toMain', paths)
-                // window.Main.receive('fromMain', (data2: any) => {
-                // if (data2[1].length > 1) {
-                // setCovers(data2[1])
-                // setFormats(
-                //     data2[0].map(
-                //         (trackData: {
-                //             [x: string]: { [x: string]: any }
-                //         }) => trackData['format']['container']
-                //     )
-                // )
-                // setDurations(
-                //     data2[0].map(
-                //         (trackData: {
-                //             [x: string]: { [x: string]: any }
-                //         }) => trackData['format']['duration']
-                //     )
-                // )
-                // setSampleRates(
-                //     data2[0].map(
-                //         (trackData: {
-                //             [x: string]: { [x: string]: any }
-                //         }) => trackData['format']['sampleRate']
-                //     )
-                // )
-                // setNames(
-                //     data2[0].map(
-                //         (trackData: {
-                //             [x: string]: { [x: string]: any }
-                //         }) => trackData['common']['title']
-                //     )
-                // )
-                // setAlbums(
-                //     data2[0].map(
-                //         (trackData: {
-                //             [x: string]: { [x: string]: any }
-                //         }) => trackData['common']['album']
-                //     )
-                // )
-                // setAuthors(
-                //     data2[0].map(
-                //         (trackData: {
-                //             [x: string]: { [x: string]: any }
-                //         }) => trackData['common']['artist']
-                //     )
-                // )
-                // }
-                // })
-            }
-        })
     }
 
     // Load all supported audio files from
@@ -246,60 +272,6 @@ function App() {
                 !directories.includes(path) &&
                     setDirectories([...directories, path])
                 window.Main.send('get-files-to-main', path)
-                window.Main.receive('get-files-from-main', (data: any) => {
-                    if (data.length > 0) {
-                        setFiles(data)
-                        const paths = Object.values(data)
-                        window.Main.send('toMain', paths)
-                        window.Main.receive('fromMain', (data2: any) => {
-                            if (data2[1].length > 1) {
-                                setCovers(data2[1])
-                                setFormats(
-                                    data2[0].map(
-                                        (trackData: {
-                                            [x: string]: { [x: string]: any }
-                                        }) => trackData['format']['container']
-                                    )
-                                )
-                                setDurations(
-                                    data2[0].map(
-                                        (trackData: {
-                                            [x: string]: { [x: string]: any }
-                                        }) => trackData['format']['duration']
-                                    )
-                                )
-                                setSampleRates(
-                                    data2[0].map(
-                                        (trackData: {
-                                            [x: string]: { [x: string]: any }
-                                        }) => trackData['format']['sampleRate']
-                                    )
-                                )
-                                setNames(
-                                    data2[0].map(
-                                        (trackData: {
-                                            [x: string]: { [x: string]: any }
-                                        }) => trackData['common']['title']
-                                    )
-                                )
-                                setAlbums(
-                                    data2[0].map(
-                                        (trackData: {
-                                            [x: string]: { [x: string]: any }
-                                        }) => trackData['common']['album']
-                                    )
-                                )
-                                setAuthors(
-                                    data2[0].map(
-                                        (trackData: {
-                                            [x: string]: { [x: string]: any }
-                                        }) => trackData['common']['artist']
-                                    )
-                                )
-                            }
-                        })
-                    }
-                })
             }
         })
     }
@@ -326,11 +298,14 @@ function App() {
 
     // Get seek time from mouse position on the track
     const relativeCoords = (e: any) => {
+        if (!audio) {
+            return
+        }
         e.stopPropagation()
         let elem = document.getElementById('track')
         var bounds = elem!.getBoundingClientRect()
         var x = e.clientX - bounds.left
-        var relative_pos = (duration / 150) * x
+        var relative_pos = (audio.duration / 150) * x
         if (mouseDown) {
             setSeek(relative_pos)
         }
@@ -338,59 +313,27 @@ function App() {
 
     // Hot reload audio handling
     useEffect(() => {
-        console.log('audio.paused = ' + audio.paused)
-        if (currDir === '') {
-            // Prevent hot-reaload infinite-loop
-            openDir(true)
-            openFile(currIdx)
-        }
-        if (audio && !audio.paused) {
+        openDir(true)
+        return () => {
             audio.pause()
             setPlay(false)
         }
-        return () => {
-            audio.pause()
-            console.log('hot reload audio pause')
-        }
     }, [])
 
-    // Open a file on new directory load
-    // useEffect(() => {
-    //     if (files.length > currIdx) {
-    //         openFile(currIdx)
-    //     }
-    // }, [files])
-
-    // Get key colors from the cover art:
-    // Gets 3 brightest colors that are the furthest from gray,
-    // also get 1 dark color
     useEffect(() => {
-        currCover.current &&
-            prominent(currCover.current, { amount: 10 }).then((color) => {
-                let topColors: Record<string, number> = {}
-                if (Array.isArray(color)) {
-                    color.forEach((element: any) => {
-                        let hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
-                        topColors[hex] =
-                            element[0] * 0.299 +
-                            element[1] * 0.587 +
-                            element[2] * 0.114
-                    })
-                }
+        console.log('new')
+        audio.play()
+        setPlay(true)
+    }, [currFile])
 
-                let keys = Object.keys(topColors)
-
-                keys.sort(
-                    (a, b) =>
-                        grayness(b) - grayness(a) || topColors[b] - topColors[a]
-                )
-
-                setColorOne(keys[1])
-                setColorTwo(keys[2])
-                setColorThree(keys[3])
-                setColorFour(keys[9]) // Make sure one of the shades is dark
-            })
-    }, [cover])
+    // Open a file on new directory load
+    useEffect(() => {
+        if (files.length > currIdx) {
+            openFile(currIdx)
+        } else {
+            openFile(0)
+        }
+    }, [files])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {
