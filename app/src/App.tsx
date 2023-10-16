@@ -66,66 +66,17 @@ function App() {
 
     // Windows states
     const [onTop, setOnTop] = useState(false)
-    const [mouseDown, setMouseDown] = useState(false)
     const [resized, setResized] = useState(false)
 
     // Current track data states
     const ref = useRef<null | HTMLDivElement>(null)
     const [cover, setCover] = useState(null as any)
 
-    const currCover = useCallback(
-        // Get key colors from the cover art:
-        // Gets 3 brightest colors that are the furthest from gray,
-        // also get 1 dark color
-        (node: any) => {
-            if (node !== null) {
-                prominent(node, { amount: 20 }).then((color) => {
-                    let topColors: Record<string, number> = {}
-                    if (Array.isArray(color)) {
-                        color.forEach((element: any) => {
-                            let hex = rgbToHex(
-                                element[0],
-                                element[1],
-                                element[2]
-                            ) // Get luminance via rbg magic coefficients
-                            topColors[hex] =
-                                element[0] * 0.299 +
-                                element[1] * 0.587 +
-                                element[2] * 0.114
-                        })
-                    }
-
-                    let keys = Object.keys(topColors)
-
-                    keys.sort(
-                        (a, b) =>
-                            grayness(b) - grayness(a) ||
-                            Math.abs(topColors[b] - topColors[a])
-                    )
-
-                    setColorOne(keys[0])
-                    setColorTwo(keys[1])
-                    setColorThree(keys[2])
-                    setColorFour(keys[keys.length - 1]) // Make sure one of the shades is dark
-                })
-            }
-        },
-        [cover]
-    )
-
     const [title, setTitle] = useState('Title')
     const [artist, setArtist] = useState('Artist')
     const [album, setAlbum] = useState('Album')
     const [currIdx, setCurrIdx] = useState(0)
-    const [progress, setProgress] = useState(0)
     const [currDir, setCurrDir] = useState('')
-    const [repeat, setRepeat] = useState(false)
-
-    // Current track control states
-    const [shuffle, setShuffle] = useState(false)
-    const [volume, setVolume] = useState(0.5)
-    const [play, setPlay] = useState(false)
-    const [currTime, setCurrTime] = useState(0)
 
     // Track list states
     const [files, setFiles] = useState<any[]>([])
@@ -136,7 +87,6 @@ function App() {
     const [sampleRates, setSampleRates] = useState<any[]>([])
     const [covers, setCovers] = useState<any[]>([])
     const [formats, setFormats] = useState<any[]>([])
-
     const [directories, setDirectories] = useState<string[]>([])
 
     const downloadCover = (b64data: any) => {
@@ -145,40 +95,8 @@ function App() {
         }
     }
 
-    const updateProgress = () => {
-        if (audio) {
-            let frac = audio.currentTime / audio.duration
-            if (frac !== Infinity) {
-                let new_progress = Math.trunc(frac * 800)
-                let new_time = Math.trunc(frac * 100)
-                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
-                    setProgress(new_progress)
-                    setCurrTime(new_time)
-                }
-                if (frac == 1 && play) {
-                    togglePlay()
-                }
-            }
-        }
-    }
-
     const openSettings = () => {
         window.Main.send('open-settings-tm', null)
-    }
-
-    const togglePlay = () => {
-        console.log(`Toggle play -> paused=${audio.paused}`)
-        if (audio) {
-            if (audio.paused) {
-                audio.play()
-                setPlay(true)
-            } else {
-                audio.pause()
-                setPlay(false)
-            }
-        } else {
-            console.log(`audio=${audio}`)
-        }
     }
 
     // Switch to a new track
@@ -196,8 +114,6 @@ function App() {
 
     // Normal way of using react with listeners
     useEffect(() => {
-        audio.ontimeupdate = updateProgress
-
         window.Main.receive('get-files-from-main', (data: any) => {
             if (data.length > 0) {
                 setFiles(data)
@@ -291,33 +207,12 @@ function App() {
         }
     }
 
-    const setSeek = (time: number) => {
-        if (audio) {
-            audio.currentTime = time
-        }
-    }
-
-    // Get seek time from mouse position on the track
-    const relativeCoords = (e: any) => {
-        if (!audio) {
-            return
-        }
-        e.stopPropagation()
-        let elem = document.getElementById('track')
-        var bounds = elem!.getBoundingClientRect()
-        var x = e.clientX - bounds.left
-        var relative_pos = (audio.duration / 150) * x
-        if (mouseDown) {
-            setSeek(relative_pos)
-        }
-    }
-
     // Hot reload audio handling
     useEffect(() => {
         openDir(true)
         return () => {
             audio.pause()
-            setPlay(false)
+            // setPlay(false)
         }
     }, [])
 
@@ -330,61 +225,152 @@ function App() {
         }
     }, [files])
 
-    useEffect(() => {
-        if (progress === 800 && !repeat) {
-            if (shuffle) {
-                openFile(Math.floor(Math.random() * files.length))
+    function PlayerCard() {
+        // Current track control states
+        const [play, setPlay] = useState(false)
+        const [repeat, setRepeat] = useState(false)
+        const [shuffle, setShuffle] = useState(false)
+        const [volume, setVolume] = useState(0.5)
+        const [progress, setProgress] = useState(0)
+        const [currTime, setCurrTime] = useState(0)
+        const [mouseDown, setMouseDown] = useState(false)
+
+        const currCover = useCallback(
+            // Get key colors from the cover art:
+            // Gets 3 brightest colors that are the furthest from gray,
+            // also get 1 dark color
+            (node: any) => {
+                if (node !== null) {
+                    prominent(node, { amount: 20 }).then((color) => {
+                        let topColors: Record<string, number> = {}
+                        if (Array.isArray(color)) {
+                            color.forEach((element: any) => {
+                                let hex = rgbToHex(
+                                    element[0],
+                                    element[1],
+                                    element[2]
+                                ) // Get luminance via rbg magic coefficients
+                                topColors[hex] =
+                                    element[0] * 0.299 +
+                                    element[1] * 0.587 +
+                                    element[2] * 0.114
+                            })
+                        }
+
+                        let keys = Object.keys(topColors)
+
+                        keys.sort(
+                            (a, b) =>
+                                grayness(b) - grayness(a) ||
+                                Math.abs(topColors[b] - topColors[a])
+                        )
+
+                        setColorOne(keys[0])
+                        setColorTwo(keys[1])
+                        setColorThree(keys[2])
+                        setColorFour(keys[keys.length - 1]) // Make sure one of the shades is dark
+                    })
+                }
+            },
+            [cover]
+        )
+
+        useEffect(() => {
+            if (!audio.paused) {
+                audio.pause()
+                setPlay(false)
+            }
+            audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
+        }, [files[currIdx]])
+
+        const togglePlay = () => {
+            console.log(`Toggle play -> paused=${audio.paused}`)
+            if (audio) {
+                if (audio.paused) {
+                    audio.play()
+                    setPlay(true)
+                } else {
+                    audio.pause()
+                    setPlay(false)
+                }
             } else {
-                openFile(currIdx + 1)
+                console.log(`audio=${audio}`)
             }
         }
-    }, [progress])
 
-    useEffect(() => {
-        if (ref.current && resized) {
-            scrollIntoView(ref.current, {
-                behavior: 'smooth',
-                scrollMode: 'if-needed',
-            })
+        const setSeek = (time: number) => {
+            // console.log(`audio.currentTime = ${audio.currentTime}`)
+            if (audio) {
+                audio.currentTime = time
+            }
         }
-    }, [currIdx])
+        useEffect(() => {
+            audio.ontimeupdate = updateProgress
+        }, [])
 
-    useEffect(() => {
-        if (!audio.paused) {
-            audio.pause()
-            setPlay(false)
+        useEffect(() => {
+            if (progress === 800 && !repeat) {
+                if (shuffle) {
+                    openFile(Math.floor(Math.random() * files.length))
+                } else {
+                    openFile(currIdx + 1)
+                }
+            }
+        }, [progress])
+
+        const updateProgress = () => {
+            if (audio) {
+                let frac = audio.currentTime / audio.duration
+                if (frac !== Infinity) {
+                    let new_progress = Math.trunc(frac * 800)
+                    let new_time = Math.trunc(frac * 100)
+                    if (
+                        new_progress !== Infinity &&
+                        !Number.isNaN(new_progress)
+                    ) {
+                        setProgress(new_progress)
+                        setCurrTime(new_time)
+                    }
+                    if (frac == 1 && play) {
+                        togglePlay()
+                    }
+                }
+            }
         }
-        audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
-    }, [files[currIdx]])
-
-    useEffect(() => {
-        audio.loop = repeat
-        audio.volume = volume
-    }, [repeat, volume])
-
-    return (
-        <div className="bg-transparent h-[100vh] flex flex-col overflow-y-hidden">
-            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
-                <div
-                    className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
-                    onClick={() => {
-                        window.Main.Close()
-                    }}
-                ></div>
-                <div
-                    className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
-                    onClick={() => {
-                        window.Main.Minimize()
-                    }}
-                ></div>
-            </div>
+        // Get seek time from mouse position on the track
+        const relativeCoords = (e: any) => {
+            if (!audio) {
+                return
+            }
+            e.stopPropagation()
+            let elem = document.getElementById('track')
+            var bounds = elem!.getBoundingClientRect()
+            var x = e.clientX - bounds.left
+            var relative_pos = (audio.duration / 150) * x
+            if (mouseDown) {
+                setSeek(relative_pos)
+            }
+        }
+        useEffect(() => {
+            if (ref.current && !resized) {
+                scrollIntoView(ref.current, {
+                    behavior: 'smooth',
+                    scrollMode: 'if-needed',
+                })
+            }
+        }, [currIdx])
+        useEffect(() => {
+            audio.loop = repeat
+            audio.volume = volume
+        }, [repeat, volume])
+        return (
             <div
                 style={{
                     backgroundImage: `
-                    radial-gradient(ellipse at top left, ${colorOne}30  15%, transparent 100%),
-                    radial-gradient(ellipse at bottom  left, ${colorTwo}30  15% , transparent 100%),
-                    radial-gradient(ellipse at top    right, ${colorThree}30 15% , transparent 100%),
-                    radial-gradient(ellipse at bottom right, ${colorFour}30  15% , transparent 100%)`,
+                radial-gradient(ellipse at top left, ${colorOne}30  15%, transparent 100%),
+                radial-gradient(ellipse at bottom  left, ${colorTwo}30  15% , transparent 100%),
+                radial-gradient(ellipse at top    right, ${colorThree}30 15% , transparent 100%),
+                radial-gradient(ellipse at bottom right, ${colorFour}30  15% , transparent 100%)`,
                     backgroundColor: 'transparent',
                 }}
                 className="bg-[#333333] drag"
@@ -396,10 +382,10 @@ function App() {
                                 <img
                                     ref={currCover}
                                     className="no-drag rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
-                                        transition-property: transform, shadow, opacity;
-                                        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-                                        transition-duration: 150ms;] 
-                                        "
+                                    transition-property: transform, shadow, opacity;
+                                    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                                    transition-duration: 150ms;] 
+                                    "
                                     src={
                                         cover !== undefined && cover !== null
                                             ? `data:${cover};base64,${cover.toString(
@@ -493,14 +479,14 @@ function App() {
                                                 fill="none"
                                                 id="sign-wave"
                                                 d="
-             M0 50
-             C 40 10, 60 10, 100 50 C 140 90, 160 90, 200 50
-             C 240 10, 260 10, 300 50 C 340 90, 360 90, 400 50
-             C 440 10, 460 10, 500 50 C 540 90, 560 90, 600 50
-             C 640 10, 660 10, 700 50 C 740 90, 760 90, 800 50
-             C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
-             C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
-             "
+         M0 50
+         C 40 10, 60 10, 100 50 C 140 90, 160 90, 200 50
+         C 240 10, 260 10, 300 50 C 340 90, 360 90, 400 50
+         C 440 10, 460 10, 500 50 C 540 90, 560 90, 600 50
+         C 640 10, 660 10, 700 50 C 740 90, 760 90, 800 50
+         C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
+         C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
+         "
                                                 strokeWidth="12"
                                             />
                                         </defs>
@@ -517,9 +503,9 @@ function App() {
                                                 fill="none"
                                                 id="sign-wave"
                                                 d="
-             M0 50
-             L 1200 50
-             "
+         M0 50
+         L 1200 50
+         "
                                                 strokeWidth="12"
                                             />
                                         </defs>
@@ -556,9 +542,9 @@ function App() {
                                             fill="none"
                                             id="sign-wave2"
                                             d="
-             M0 50
-             L 1200 50
-             "
+         M0 50
+         L 1200 50
+         "
                                             strokeWidth="12"
                                         />
                                     </defs>
@@ -783,12 +769,34 @@ function App() {
                     </div>
                 </div>
             </div>
+        )
+    }
+
+    return (
+        <div className="bg-transparent h-[100vh] flex flex-col overflow-y-hidden">
+            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
+                <div
+                    className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
+                    onClick={() => {
+                        window.Main.Close()
+                    }}
+                ></div>
+                <div
+                    className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
+                    onClick={() => {
+                        window.Main.Minimize()
+                    }}
+                ></div>
+            </div>
+
+            <PlayerCard />
 
             <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1 drag">
                 <div className="flex flex-row">
                     {directories.map((dir: string, index: number) => {
                         return (
                             <div
+                                key={index}
                                 style={{
                                     backgroundColor:
                                         currDir == dir

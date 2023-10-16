@@ -15,7 +15,8 @@ import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MIN = 102
-const WIN_WIDTH = 470
+// const WIN_WIDTH = 470
+const WIN_WIDTH = 900
 const HTML5_AUDIO = [
     'wav',
     'mpeg',
@@ -82,9 +83,9 @@ function createWindow() {
         // minWidth: WIN_WIDTH,
         minHeight: WIN_HEIGHT_MIN,
         //opacity: 0.5,
-        transparent: true,
-        vibrancy: 'dark',
-        backgroundMaterial: 'acrylic',
+        // transparent: true,
+        // vibrancy: 'dark',
+        // backgroundMaterial: 'acrylic',
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true,
@@ -127,7 +128,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        // window?.webContents.openDevTools()
+        window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
