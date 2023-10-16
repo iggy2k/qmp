@@ -11,9 +11,16 @@
     user-select: none;
 }
 
-/* I could not achieve the same with overflow in a reasonable amount of time */
 ::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #53535398;
+    border-radius: 8px;
 }
 
 .drag {

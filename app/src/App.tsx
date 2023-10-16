@@ -79,7 +79,7 @@ function App() {
         // also get 1 dark color
         (node: any) => {
             if (node !== null) {
-                prominent(node, { amount: 10 }).then((color) => {
+                prominent(node, { amount: 20 }).then((color) => {
                     let topColors: Record<string, number> = {}
                     if (Array.isArray(color)) {
                         color.forEach((element: any) => {
@@ -100,13 +100,13 @@ function App() {
                     keys.sort(
                         (a, b) =>
                             grayness(b) - grayness(a) ||
-                            topColors[b] - topColors[a]
+                            Math.abs(topColors[b] - topColors[a])
                     )
 
-                    setColorOne(keys[1])
-                    setColorTwo(keys[2])
-                    setColorThree(keys[3])
-                    setColorFour(keys[9]) // Make sure one of the shades is dark
+                    setColorOne(keys[0])
+                    setColorTwo(keys[1])
+                    setColorThree(keys[2])
+                    setColorFour(keys[keys.length - 1]) // Make sure one of the shades is dark
                 })
             }
         },
@@ -128,7 +128,7 @@ function App() {
     const [currTime, setCurrTime] = useState(0)
 
     // Track list states
-    const [files, setFiles] = useState([])
+    const [files, setFiles] = useState<any[]>([])
     const [durations, setDurations] = useState<any[]>([])
     const [names, setNames] = useState<any[]>([])
     const [authors, setAuthors] = useState<any[]>([])
@@ -363,16 +363,16 @@ function App() {
     }, [repeat, volume])
 
     return (
-        <div className="bg-[#333333] h-[100vh] flex flex-col overflow-y-hidden">
+        <div className="bg-transparent h-[100vh] flex flex-col overflow-y-hidden">
             <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
-                    className="h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
+                    className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
                     onClick={() => {
                         window.Main.Close()
                     }}
                 ></div>
                 <div
-                    className="h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
+                    className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
                     onClick={() => {
                         window.Main.Minimize()
                     }}
@@ -385,6 +385,7 @@ function App() {
                     radial-gradient(ellipse at bottom  left, ${colorTwo}30  15% , transparent 100%),
                     radial-gradient(ellipse at top    right, ${colorThree}30 15% , transparent 100%),
                     radial-gradient(ellipse at bottom right, ${colorFour}30  15% , transparent 100%)`,
+                    backgroundColor: 'transparent',
                 }}
                 className="bg-[#333333] drag"
             >
@@ -442,10 +443,16 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colorThree, 200),
                             }}
-                            className="no-drag grid grid-flow-col auto-cols-max text-sm"
+                            className="drag grid grid-flow-col auto-cols-max text-sm"
                         >
-                            <p>{artist}</p>
-                            <p>&nbsp;-&nbsp;</p>
+                            <p>
+                                {artist ||
+                                    files[currIdx]
+                                        .split('/')
+                                        .reverse()[0]
+                                        .replace(/\.[^/.]+$/, '')}
+                            </p>
+                            <p>&nbsp;{!artist || '-'}&nbsp;</p>
                             <p>{album}</p>
                         </div>
                         <div className="w-full h-[20px] flex flex-row">
@@ -777,7 +784,7 @@ function App() {
                 </div>
             </div>
 
-            <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1">
+            <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1 drag">
                 <div className="flex flex-row">
                     {directories.map((dir: string, index: number) => {
                         return (
@@ -791,7 +798,7 @@ function App() {
                                 onClick={() => {
                                     currDir !== dir && openCertainDir(dir)
                                 }}
-                                className="text-white h-[24px] text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
+                                className="text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
                             >
                                 {directories[index].split('/').reverse()[0]}
                             </div>
