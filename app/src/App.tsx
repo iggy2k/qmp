@@ -42,31 +42,11 @@ let gain: any = null
 const audio = new Audio()
 
 function App() {
-    // useEffect(() => {
-    //     audioContext = new AudioContext()
-    //     track = audioContext.createMediaElementSource(audio)
-    //     gain = audioContext.createGain()
-    //     track.connect(gain).connect(audioContext.destination)
-    // }, [])
-
-    // useEffect(() => {
-    //     // gain.disconnect(audioContext.destination)
-    //     if (gain) {
-    //         gain.gain.value = volume
-    //         gain.gain.setValueAtTime(volume, audioContext.currentTime + 1)
-    //         console.log('volume = ', volume)
-    //     }
-    // }, [volume])
-
     // Color states
     const [colorOne, setColorOne] = useState('#000000')
     const [colorTwo, setColorTwo] = useState('#000000')
     const [colorThree, setColorThree] = useState('#000000')
     const [colorFour, setColorFour] = useState('#000000')
-
-    // Windows states
-    const [onTop, setOnTop] = useState(false)
-    const [resized, setResized] = useState(false)
 
     // Current track data states
     const ref = useRef<null | HTMLDivElement>(null)
@@ -106,14 +86,18 @@ function App() {
         } else if (index > files.length - 1) {
             index = 0
         }
-
         setCurrIdx(index)
-
         window.Main.send('toMain', [files[index]])
     }
 
     // Normal way of using react with listeners
     useEffect(() => {
+        window.Main.receive('open-folder-fm', (path: string | undefined) => {
+            if (path !== undefined) {
+                setCurrDir(path)
+                window.Main.send('get-files-to-main', path)
+            }
+        })
         window.Main.receive('get-files-from-main', (data: any) => {
             if (data.length > 0) {
                 setFiles(data)
@@ -169,7 +153,9 @@ function App() {
                 )
             }
         })
+        openDir(true)
         return () => {
+            audio.pause()
             console.log('return')
         }
     }, [])
@@ -183,38 +169,13 @@ function App() {
     // a directory (recursive)
     const openDir = (openDefault: boolean) => {
         window.Main.send('open-folder-tm', openDefault)
-        window.Main.receive('open-folder-fm', (path: string | undefined) => {
-            if (path !== undefined) {
-                setCurrDir(path)
-                !directories.includes(path) &&
-                    setDirectories([...directories, path])
-                window.Main.send('get-files-to-main', path)
-            }
-        })
     }
 
-    const collapse = () => {
-        if (window.Main) {
-            window.Main.Resize()
-            setResized(!resized)
-        }
-    }
-
-    const alwaysOnTop = () => {
-        if (window.Main) {
-            setOnTop(!onTop)
-            window.Main.AlwaysOnTop()
-        }
-    }
-
-    // Hot reload audio handling
     useEffect(() => {
-        openDir(true)
-        return () => {
-            audio.pause()
-            // setPlay(false)
-        }
-    }, [])
+        !directories.includes(currDir) &&
+            currDir &&
+            setDirectories([...directories, currDir])
+    }, [currDir])
 
     // Open a file on new directory load
     useEffect(() => {
@@ -225,6 +186,43 @@ function App() {
         }
     }, [files])
 
+    function DirectoryPanel() {
+        return (
+            <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1 drag">
+                <div className="flex flex-row">
+                    {directories.map((dir: string, index: number) => {
+                        return (
+                            <div
+                                key={index}
+                                style={{
+                                    backgroundColor:
+                                        currDir == dir
+                                            ? '#00000050'
+                                            : '#FFFFFF50',
+                                }}
+                                onClick={() => {
+                                    currDir !== dir && openCertainDir(dir)
+                                }}
+                                className="text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
+                            >
+                                {directories[index].split('/').reverse()[0]}
+                            </div>
+                        )
+                    })}
+                    <FolderPlusIcon
+                        style={{
+                            color: LightenDarkenColor(colorThree, 200),
+                        }}
+                        className="no-drag h-[24px] m-1 ml-auto mr-1"
+                        onClick={() => {
+                            openDir(false)
+                        }}
+                    />
+                </div>
+            </div>
+        )
+    }
+
     function PlayerCard() {
         // Current track control states
         const [play, setPlay] = useState(false)
@@ -234,6 +232,10 @@ function App() {
         const [progress, setProgress] = useState(0)
         const [currTime, setCurrTime] = useState(0)
         const [mouseDown, setMouseDown] = useState(false)
+
+        // Windows states
+        const [onTop, setOnTop] = useState(false)
+        const [resized, setResized] = useState(false)
 
         const currCover = useCallback(
             // Get key colors from the cover art:
@@ -275,14 +277,6 @@ function App() {
             [cover]
         )
 
-        useEffect(() => {
-            if (!audio.paused) {
-                audio.pause()
-                setPlay(false)
-            }
-            audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
-        }, [files[currIdx]])
-
         const togglePlay = () => {
             console.log(`Toggle play -> paused=${audio.paused}`)
             if (audio) {
@@ -295,6 +289,20 @@ function App() {
                 }
             } else {
                 console.log(`audio=${audio}`)
+            }
+        }
+
+        const collapse = () => {
+            if (window.Main) {
+                window.Main.Resize()
+                setResized(!resized)
+            }
+        }
+
+        const alwaysOnTop = () => {
+            if (window.Main) {
+                setOnTop(!onTop)
+                window.Main.AlwaysOnTop()
             }
         }
 
@@ -358,6 +366,11 @@ function App() {
                     scrollMode: 'if-needed',
                 })
             }
+            if (!audio.paused) {
+                audio.pause()
+                setPlay(false)
+            }
+            audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
         }, [currIdx])
         useEffect(() => {
             audio.loop = repeat
@@ -773,7 +786,7 @@ function App() {
     }
 
     return (
-        <div className="bg-transparent h-[100vh] flex flex-col overflow-y-hidden">
+        <div className="bg-[#333333] h-[100vh] flex flex-col overflow-y-hidden">
             <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
                     className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
@@ -791,38 +804,7 @@ function App() {
 
             <PlayerCard />
 
-            <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1 drag">
-                <div className="flex flex-row">
-                    {directories.map((dir: string, index: number) => {
-                        return (
-                            <div
-                                key={index}
-                                style={{
-                                    backgroundColor:
-                                        currDir == dir
-                                            ? '#00000050'
-                                            : '#FFFFFF50',
-                                }}
-                                onClick={() => {
-                                    currDir !== dir && openCertainDir(dir)
-                                }}
-                                className="text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
-                            >
-                                {directories[index].split('/').reverse()[0]}
-                            </div>
-                        )
-                    })}
-                    <FolderPlusIcon
-                        style={{
-                            color: LightenDarkenColor(colorThree, 200),
-                        }}
-                        className="no-drag h-[24px] m-1 ml-auto mr-1"
-                        onClick={() => {
-                            openDir(false)
-                        }}
-                    />
-                </div>
-            </div>
+            <DirectoryPanel />
 
             <div
                 style={{

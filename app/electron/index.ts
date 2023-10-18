@@ -82,10 +82,7 @@ function createWindow() {
         title: 'qmp',
         // minWidth: WIN_WIDTH,
         minHeight: WIN_HEIGHT_MIN,
-        //opacity: 0.5,
-        // transparent: true,
-        // vibrancy: 'dark',
-        // backgroundMaterial: 'acrylic',
+        vibrancy: 'dark',
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true,
