@@ -1,4 +1,11 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
+import React, {
+    useEffect,
+    useState,
+    useRef,
+    useCallback,
+    memo,
+    useMemo,
+} from 'react'
 import { prominent } from 'color.js'
 import {
     IconArrowsShuffle,
@@ -42,19 +49,16 @@ let gain: any = null
 const audio = new Audio()
 
 function App() {
-    // Color states
-    const [colorOne, setColorOne] = useState('#000000')
-    const [colorTwo, setColorTwo] = useState('#000000')
-    const [colorThree, setColorThree] = useState('#000000')
-    const [colorFour, setColorFour] = useState('#000000')
+    const [colors, setColors] = useState([
+        '#000000',
+        '#000000',
+        '#000000',
+        '#000000',
+    ])
 
     // Current track data states
-    const ref = useRef<null | HTMLDivElement>(null)
-    const [cover, setCover] = useState(null as any)
-
-    const [title, setTitle] = useState('Title')
-    const [artist, setArtist] = useState('Artist')
-    const [album, setAlbum] = useState('Album')
+    const trackScrollToRef = useRef<null | HTMLDivElement>(null)
+    const trackCoverRef = useRef<null | HTMLImageElement>(null)
     const [currIdx, setCurrIdx] = useState(0)
     const [currDir, setCurrDir] = useState('')
 
@@ -87,7 +91,6 @@ function App() {
             index = 0
         }
         setCurrIdx(index)
-        window.Main.send('toMain', [files[index]])
     }
 
     // Normal way of using react with listeners
@@ -106,13 +109,7 @@ function App() {
             }
         })
         window.Main.receive('fromMain', (data2: any) => {
-            if (data2[1].length == 1) {
-                // Case: get current tracks info
-                setCover(data2[1][0])
-                setTitle(data2[0][0].common['title'])
-                setArtist(data2[0][0].common['artist'])
-                setAlbum(data2[0][0].common['album'])
-            } else if (data2[1].length > 1) {
+            if (data2[1].length > 1) {
                 // Case: get all tracks in the directory
                 setCovers(data2[1])
                 setFormats(
@@ -186,6 +183,36 @@ function App() {
         }
     }, [files])
 
+    useEffect(() => {
+        trackCoverRef.current &&
+            prominent(trackCoverRef.current, { amount: 20 }).then((color) => {
+                let topColors: Record<string, number> = {}
+                if (Array.isArray(color)) {
+                    color.forEach((element: any) => {
+                        let hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
+                        topColors[hex] =
+                            element[0] * 0.299 +
+                            element[1] * 0.587 +
+                            element[2] * 0.114
+                    })
+                }
+
+                let keys = Object.keys(topColors)
+
+                keys.sort(
+                    (a, b) =>
+                        grayness(b) - grayness(a) ||
+                        Math.abs(topColors[b] - topColors[a])
+                )
+
+                setColors([keys[0], keys[1], keys[2], keys[keys.length - 1]])
+            })
+    }, [currIdx])
+
+    function returnFalse(oldProp: any, newProp: any) {
+        return false
+    }
+
     function DirectoryPanel() {
         return (
             <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1 drag">
@@ -205,13 +232,14 @@ function App() {
                                 }}
                                 className="text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
                             >
-                                {directories[index].split('/').reverse()[0]}
+                                {directories[index] &&
+                                    directories[index].split('/').reverse()[0]}
                             </div>
                         )
                     })}
                     <FolderPlusIcon
                         style={{
-                            color: LightenDarkenColor(colorThree, 200),
+                            color: LightenDarkenColor(colors[2], 200),
                         }}
                         className="no-drag h-[24px] m-1 ml-auto mr-1"
                         onClick={() => {
@@ -236,46 +264,6 @@ function App() {
         // Windows states
         const [onTop, setOnTop] = useState(false)
         const [resized, setResized] = useState(false)
-
-        const currCover = useCallback(
-            // Get key colors from the cover art:
-            // Gets 3 brightest colors that are the furthest from gray,
-            // also get 1 dark color
-            (node: any) => {
-                if (node !== null) {
-                    prominent(node, { amount: 20 }).then((color) => {
-                        let topColors: Record<string, number> = {}
-                        if (Array.isArray(color)) {
-                            color.forEach((element: any) => {
-                                let hex = rgbToHex(
-                                    element[0],
-                                    element[1],
-                                    element[2]
-                                ) // Get luminance via rbg magic coefficients
-                                topColors[hex] =
-                                    element[0] * 0.299 +
-                                    element[1] * 0.587 +
-                                    element[2] * 0.114
-                            })
-                        }
-
-                        let keys = Object.keys(topColors)
-
-                        keys.sort(
-                            (a, b) =>
-                                grayness(b) - grayness(a) ||
-                                Math.abs(topColors[b] - topColors[a])
-                        )
-
-                        setColorOne(keys[0])
-                        setColorTwo(keys[1])
-                        setColorThree(keys[2])
-                        setColorFour(keys[keys.length - 1]) // Make sure one of the shades is dark
-                    })
-                }
-            },
-            [cover]
-        )
 
         const togglePlay = () => {
             console.log(`Toggle play -> paused=${audio.paused}`)
@@ -360,8 +348,8 @@ function App() {
             }
         }
         useEffect(() => {
-            if (ref.current && !resized) {
-                scrollIntoView(ref.current, {
+            if (trackScrollToRef.current && !resized) {
+                scrollIntoView(trackScrollToRef.current, {
                     behavior: 'smooth',
                     scrollMode: 'if-needed',
                 })
@@ -380,10 +368,10 @@ function App() {
             <div
                 style={{
                     backgroundImage: `
-                radial-gradient(ellipse at top left, ${colorOne}30  15%, transparent 100%),
-                radial-gradient(ellipse at bottom  left, ${colorTwo}30  15% , transparent 100%),
-                radial-gradient(ellipse at top    right, ${colorThree}30 15% , transparent 100%),
-                radial-gradient(ellipse at bottom right, ${colorFour}30  15% , transparent 100%)`,
+                radial-gradient(ellipse at top left, ${colors[0]}30  15%, transparent 100%),
+                radial-gradient(ellipse at bottom  left, ${colors[1]}30  15% , transparent 100%),
+                radial-gradient(ellipse at top    right, ${colors[2]}30 15% , transparent 100%),
+                radial-gradient(ellipse at bottom right, ${colors[3]}30  15% , transparent 100%)`,
                     backgroundColor: 'transparent',
                 }}
                 className="bg-[#333333] drag"
@@ -391,23 +379,27 @@ function App() {
                 <div className="flex">
                     <div className="no-drag p-2 pl-2 pb-0">
                         <div className="flex-none w-[64px] h-[64px]">
-                            {cover !== undefined && cover !== null ? (
+                            {covers[currIdx] !== undefined &&
+                            covers[currIdx] !== null ? (
                                 <img
-                                    ref={currCover}
+                                    ref={trackCoverRef}
                                     className="no-drag rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
                                     transition-property: transform, shadow, opacity;
                                     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                                     transition-duration: 150ms;] 
                                     "
                                     src={
-                                        cover !== undefined && cover !== null
-                                            ? `data:${cover};base64,${cover.toString(
-                                                  'base64'
-                                              )}`
+                                        covers[currIdx] !== undefined &&
+                                        covers[currIdx] !== null
+                                            ? `data:${
+                                                  covers[currIdx]
+                                              };base64,${covers[
+                                                  currIdx
+                                              ].toString('base64')}`
                                             : ''
                                     }
                                     onClick={() => {
-                                        downloadCover(cover)
+                                        downloadCover(covers[currIdx])
                                     }}
                                     alt=""
                                     title="Click to download the cover art"
@@ -416,7 +408,7 @@ function App() {
                                 <IconMusic
                                     style={{
                                         color: LightenDarkenColor(
-                                            colorThree,
+                                            colors[2],
                                             200
                                         ),
                                         borderRadius: '10px',
@@ -432,27 +424,32 @@ function App() {
                     <div className="ml-1 mt-2 flex-1">
                         <p
                             style={{
-                                color: LightenDarkenColor(colorFour, 200),
+                                color: LightenDarkenColor(colors[3], 200),
                             }}
                             className="no-drag text-[#a1918c] text-sm"
                         >
-                            {title?.replace('\\', '')}
+                            {files[currIdx] &&
+                                files[currIdx]
+                                    .split('/')
+                                    .reverse()[0]
+                                    .replace(/\.[^/.]+$/, '')}
                         </p>
                         <div
                             style={{
-                                color: LightenDarkenColor(colorThree, 200),
+                                color: LightenDarkenColor(colors[2], 200),
                             }}
                             className="drag grid grid-flow-col auto-cols-max text-sm"
                         >
                             <p>
-                                {artist ||
-                                    files[currIdx]
-                                        .split('/')
-                                        .reverse()[0]
-                                        .replace(/\.[^/.]+$/, '')}
+                                {authors[currIdx] ||
+                                    (files[currIdx] &&
+                                        files[currIdx]
+                                            .split('/')
+                                            .reverse()[0]
+                                            .replace(/\.[^/.]+$/, ''))}
                             </p>
-                            <p>&nbsp;{!artist || '-'}&nbsp;</p>
-                            <p>{album}</p>
+                            <p>&nbsp;{!authors[currIdx] || '-'}&nbsp;</p>
+                            <p>{albums[currIdx]}</p>
                         </div>
                         <div className="w-full h-[20px] flex flex-row">
                             <div
@@ -484,7 +481,7 @@ function App() {
                                             <path
                                                 style={{
                                                     stroke: LightenDarkenColor(
-                                                        colorThree,
+                                                        colors[2],
                                                         200
                                                     ),
                                                 }}
@@ -508,7 +505,7 @@ function App() {
                                             <path
                                                 style={{
                                                     stroke: LightenDarkenColor(
-                                                        colorThree,
+                                                        colors[2],
                                                         200
                                                     ),
                                                 }}
@@ -546,7 +543,7 @@ function App() {
                                         <path
                                             style={{
                                                 stroke: LightenDarkenColor(
-                                                    colorThree,
+                                                    colors[2],
                                                     200
                                                 ),
                                             }}
@@ -585,11 +582,11 @@ function App() {
                                         style={{
                                             fill: mouseDown
                                                 ? LightenDarkenColor(
-                                                      colorThree,
+                                                      colors[2],
                                                       200
                                                   )
                                                 : LightenDarkenColor(
-                                                      colorThree,
+                                                      colors[2],
                                                       150
                                                   ),
                                         }}
@@ -599,7 +596,7 @@ function App() {
                             </div>
                             <div
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="text-xs mr-2 flex-1 text-right"
                             >
@@ -615,7 +612,7 @@ function App() {
                         {resized ? (
                             <Bars3Icon
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={collapse}
@@ -623,7 +620,7 @@ function App() {
                         ) : (
                             <ChevronDoubleUpIcon
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={collapse}
@@ -632,14 +629,14 @@ function App() {
 
                         <AdjustmentsVerticalIcon
                             style={{
-                                color: LightenDarkenColor(colorThree, 200),
+                                color: LightenDarkenColor(colors[2], 200),
                             }}
                             className="no-drag h-[20px] m-1"
                         />
                         {onTop ? (
                             <IconPinFilled
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={alwaysOnTop}
@@ -647,7 +644,7 @@ function App() {
                         ) : (
                             <IconPin
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={alwaysOnTop}
@@ -655,7 +652,7 @@ function App() {
                         )}
                         <CogIcon
                             style={{
-                                color: LightenDarkenColor(colorThree, 200),
+                                color: LightenDarkenColor(colors[2], 200),
                             }}
                             className="no-drag h-[20px] m-1"
                             onClick={() => {
@@ -667,7 +664,7 @@ function App() {
                         {repeat ? (
                             <IconRepeat
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onMouseDown={() => {
@@ -677,7 +674,7 @@ function App() {
                         ) : (
                             <IconRepeatOff
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onMouseDown={() => {
@@ -687,7 +684,7 @@ function App() {
                         )}
                         <BackwardIcon
                             style={{
-                                color: LightenDarkenColor(colorThree, 200),
+                                color: LightenDarkenColor(colors[2], 200),
                             }}
                             className="no-drag h-[20px] m-1"
                             onClick={() => {
@@ -697,7 +694,7 @@ function App() {
                         {play ? (
                             <PauseIcon
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => togglePlay()}
@@ -705,7 +702,7 @@ function App() {
                         ) : (
                             <PlayIcon
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => togglePlay()}
@@ -713,7 +710,7 @@ function App() {
                         )}
                         <ForwardIcon
                             style={{
-                                color: LightenDarkenColor(colorThree, 200),
+                                color: LightenDarkenColor(colors[2], 200),
                             }}
                             className="no-drag h-[20px] m-1"
                             onClick={() => {
@@ -723,7 +720,7 @@ function App() {
                         {shuffle ? (
                             <IconArrowsShuffle
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => setShuffle(false)}
@@ -731,7 +728,7 @@ function App() {
                         ) : (
                             <IconArrowsRight
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => setShuffle(true)}
@@ -742,21 +739,21 @@ function App() {
                         {volume == 0 ? (
                             <IconVolume3
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                             />
                         ) : volume < 0.5 ? (
                             <IconVolume2
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                             />
                         ) : (
                             <IconVolume
                                 style={{
-                                    color: LightenDarkenColor(colorThree, 200),
+                                    color: LightenDarkenColor(colors[2], 200),
                                 }}
                                 className="no-drag h-[20px] m-1"
                             />
@@ -764,10 +761,7 @@ function App() {
 
                         <input
                             style={{
-                                accentColor: LightenDarkenColor(
-                                    colorThree,
-                                    200
-                                ),
+                                accentColor: LightenDarkenColor(colors[2], 200),
                             }}
                             className="no-drag bg-inherit w-[100px]"
                             type="range"
@@ -808,7 +802,7 @@ function App() {
 
             <div
                 style={{
-                    backgroundColor: colorOne + '10',
+                    backgroundColor: colors[0] + '10',
                 }}
                 className="overflow-y-auto flex-1 flex-grow overflow-x-hidden"
             >
@@ -827,14 +821,14 @@ function App() {
                                     paddingRight: '0.5rem',
                                 }}
                                 key={index}
-                                ref={index == currIdx ? ref : null}
+                                ref={index == currIdx ? trackScrollToRef : null}
                                 className="overflow-auto hover:scale-[101%] transition-transform"
                             >
                                 <div
                                     style={{
                                         backgroundColor:
                                             index == currIdx
-                                                ? colorOne + '20'
+                                                ? colors[0] + '20'
                                                 : '',
                                     }}
                                     className="transition duration-75 hover:bg-black/20 flex flex-row p-[1px] text-center rounded-md"
@@ -857,7 +851,7 @@ function App() {
                                         <IconMusic
                                             style={{
                                                 color: LightenDarkenColor(
-                                                    colorThree,
+                                                    colors[2],
                                                     200
                                                 ),
                                             }}
@@ -871,7 +865,7 @@ function App() {
                                     <div
                                         style={{
                                             color: LightenDarkenColor(
-                                                colorThree,
+                                                colors[2],
                                                 200
                                             ),
                                         }}
@@ -884,7 +878,7 @@ function App() {
                                                 <p
                                                     style={{
                                                         color: LightenDarkenColor(
-                                                            colorFour,
+                                                            colors[3],
                                                             200
                                                         ),
                                                     }}
@@ -898,7 +892,7 @@ function App() {
                                                 <p
                                                     style={{
                                                         color: LightenDarkenColor(
-                                                            colorFour,
+                                                            colors[3],
                                                             150
                                                         ),
                                                     }}
@@ -912,7 +906,7 @@ function App() {
                                                 <p
                                                     style={{
                                                         color: LightenDarkenColor(
-                                                            colorFour,
+                                                            colors[3],
                                                             100
                                                         ),
                                                     }}
@@ -941,12 +935,12 @@ function App() {
                                                 fontSize: '0.65rem',
                                                 lineHeight: '1.1rem',
                                                 color: LightenDarkenColor(
-                                                    colorFour,
+                                                    colors[3],
                                                     200
                                                 ),
                                                 backgroundColor:
                                                     LightenDarkenColor(
-                                                        colorThree,
+                                                        colors[2],
                                                         0
                                                     ),
                                             }}
@@ -964,7 +958,7 @@ function App() {
                                                 style={{
                                                     backgroundColor:
                                                         LightenDarkenColor(
-                                                            colorFour,
+                                                            colors[3],
                                                             50
                                                         ),
                                                 }}
