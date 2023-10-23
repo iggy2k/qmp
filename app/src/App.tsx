@@ -32,6 +32,7 @@ import {
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import { FixedSizeList as List } from 'react-window'
 
 import {
     componentToHex,
@@ -215,184 +216,137 @@ function App() {
         setFakeFiles(['a', 'b', 'c'])
     }, [currIdx])
 
-    const ShowFakeFiles = useMemo(() => {
+    const Row = ({ index, style }: any) => (
+        <div
+            style={style}
+            key={index}
+            ref={index == currIdx ? trackScrollToRef : null}
+            className={`overflow-auto hover:scale-[101%] h-7 px-2 transition-transform ${
+                index == 0 ? 'pt-1' : ''
+            } ${index == files.length - 1 ? 'pb-1' : ''}`}
+        >
+            <div
+                style={{
+                    backgroundColor: index == currIdx ? colors[0] + '20' : '',
+                }}
+                className="transition duration-75 hover:bg-black/20 flex flex-row p-[1px] text-center rounded-md"
+                onClick={() => {
+                    openFile(index)
+                }}
+            >
+                {covers[index] !== undefined && covers[index] !== null ? (
+                    <img
+                        className="w-[24px] h-[24px] rounded-lg flex-none"
+                        src={covers[index]}
+                        alt=""
+                    />
+                ) : (
+                    <IconMusic
+                        style={{
+                            color: LightenDarkenColor(colors[2], 200),
+                        }}
+                        className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]"
+                        onClick={() => {
+                            openFile(currIdx + 1)
+                        }}
+                    />
+                )}
+
+                <div
+                    style={{
+                        color: LightenDarkenColor(colors[2], 200),
+                    }}
+                    className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                    {names[index] && authors[index] && albums[index] ? (
+                        <div className="flex flex-row">
+                            <p
+                                style={{
+                                    color: LightenDarkenColor(colors[3], 200),
+                                }}
+                            >
+                                {names[index].replace('\\', '')}
+                            </p>
+                            <p
+                                style={{
+                                    color: LightenDarkenColor(colors[3], 150),
+                                }}
+                                className="ml-1"
+                            >
+                                {authors[index].replace('\\', '')}
+                            </p>
+                            <p
+                                style={{
+                                    color: LightenDarkenColor(colors[3], 100),
+                                }}
+                                className="ml-1"
+                            >
+                                {albums[index].replace('\\', '')}
+                            </p>
+                        </div>
+                    ) : (
+                        <p>
+                            {' '}
+                            {files[index]
+                                .split('/')
+                                .reverse()[0]
+                                .replace(/\.[^/.]+$/, '')}
+                        </p>
+                    )}
+                </div>
+
+                <div className="flex place-items-center ml-auto">
+                    <div
+                        style={{
+                            fontSize: '0.65rem',
+                            lineHeight: '1.1rem',
+                            color: LightenDarkenColor(colors[3], 200),
+                            backgroundColor: LightenDarkenColor(colors[2], 0),
+                        }}
+                        className="pl-1 grid grid-flow-col text-xs font-mono rounded-md"
+                    >
+                        <p>
+                            {formats[index] !== undefined &&
+                            formats[index] !== null
+                                ? formats[index]
+                                : ''}
+                        </p>
+                        <p>&nbsp;</p>
+                        <p
+                            className="rounded-md pl-1 pr-1"
+                            style={{
+                                backgroundColor: LightenDarkenColor(
+                                    colors[3],
+                                    50
+                                ),
+                            }}
+                        >
+                            {sampleRates[index] !== undefined &&
+                            sampleRates[index] !== null
+                                ? Math.trunc(sampleRates[index] / 1000) + 'kHz'
+                                : ''}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+
+    const FileList = () => {
         return (
             <div>
-                {typeof files.map === 'function' &&
-                    files.map((file: string, index: number) => {
-                        console.log('files map re-rendered')
-                        return (
-                            <div
-                                style={{
-                                    paddingTop: index == 0 ? '5px' : '1px',
-                                    paddingBottom:
-                                        index == files.length - 1
-                                            ? '5px'
-                                            : '1px',
-                                    paddingLeft: '0.5rem',
-                                    paddingRight: '0.5rem',
-                                }}
-                                key={index}
-                                ref={index == currIdx ? trackScrollToRef : null}
-                                className="overflow-auto hover:scale-[101%] transition-transform"
-                            >
-                                <div
-                                    style={{
-                                        backgroundColor:
-                                            index == currIdx
-                                                ? colors[0] + '20'
-                                                : '',
-                                    }}
-                                    className="transition duration-75 hover:bg-black/20 flex flex-row p-[1px] text-center rounded-md"
-                                    onClick={() => {
-                                        openFile(index)
-                                    }}
-                                >
-                                    {covers[index] !== undefined &&
-                                    covers[index] !== null ? (
-                                        <img
-                                            className="w-[24px] h-[24px] rounded-lg flex-none"
-                                            src={`data:${
-                                                covers[index]
-                                            };base64,${covers[index].toString(
-                                                'base64'
-                                            )}`}
-                                            alt=""
-                                        />
-                                    ) : (
-                                        <IconMusic
-                                            style={{
-                                                color: LightenDarkenColor(
-                                                    colors[2],
-                                                    200
-                                                ),
-                                            }}
-                                            className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]"
-                                            onClick={() => {
-                                                openFile(currIdx + 1)
-                                            }}
-                                        />
-                                    )}
-
-                                    <div
-                                        style={{
-                                            color: LightenDarkenColor(
-                                                colors[2],
-                                                200
-                                            ),
-                                        }}
-                                        className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis"
-                                    >
-                                        {names[index] &&
-                                        authors[index] &&
-                                        albums[index] ? (
-                                            <div className="flex flex-row">
-                                                <p
-                                                    style={{
-                                                        color: LightenDarkenColor(
-                                                            colors[3],
-                                                            200
-                                                        ),
-                                                    }}
-                                                    // className="font-semibold"
-                                                >
-                                                    {names[index].replace(
-                                                        '\\',
-                                                        ''
-                                                    )}
-                                                </p>
-                                                <p
-                                                    style={{
-                                                        color: LightenDarkenColor(
-                                                            colors[3],
-                                                            150
-                                                        ),
-                                                    }}
-                                                    className="ml-1"
-                                                >
-                                                    {authors[index].replace(
-                                                        '\\',
-                                                        ''
-                                                    )}
-                                                </p>
-                                                <p
-                                                    style={{
-                                                        color: LightenDarkenColor(
-                                                            colors[3],
-                                                            100
-                                                        ),
-                                                    }}
-                                                    className="ml-1"
-                                                >
-                                                    {albums[index].replace(
-                                                        '\\',
-                                                        ''
-                                                    )}
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <p>
-                                                {' '}
-                                                {file
-                                                    .split('/')
-                                                    .reverse()[0]
-                                                    .replace(/\.[^/.]+$/, '')}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="flex place-items-center ml-auto">
-                                        <div
-                                            style={{
-                                                fontSize: '0.65rem',
-                                                lineHeight: '1.1rem',
-                                                color: LightenDarkenColor(
-                                                    colors[3],
-                                                    200
-                                                ),
-                                                backgroundColor:
-                                                    LightenDarkenColor(
-                                                        colors[2],
-                                                        0
-                                                    ),
-                                            }}
-                                            className="pl-1 grid grid-flow-col text-xs font-mono rounded-md"
-                                        >
-                                            <p>
-                                                {formats[index] !== undefined &&
-                                                formats[index] !== null
-                                                    ? formats[index]
-                                                    : ''}
-                                            </p>
-                                            <p>&nbsp;</p>
-                                            <p
-                                                className="rounded-md pl-1 pr-1"
-                                                style={{
-                                                    backgroundColor:
-                                                        LightenDarkenColor(
-                                                            colors[3],
-                                                            50
-                                                        ),
-                                                }}
-                                            >
-                                                {sampleRates[index] !==
-                                                    undefined &&
-                                                sampleRates[index] !== null
-                                                    ? Math.trunc(
-                                                          sampleRates[index] /
-                                                              1000
-                                                      ) + 'kHz'
-                                                    : ''}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
+                <List
+                    className="List"
+                    height={30 * 10}
+                    itemCount={files.length}
+                    itemSize={30}
+                    width={'100%'}
+                >
+                    {Row}
+                </List>
             </div>
         )
-    }, [authors])
+    }
 
     function DirectoryPanel() {
         return (
@@ -572,11 +526,7 @@ function App() {
                                     src={
                                         covers[currIdx] !== undefined &&
                                         covers[currIdx] !== null
-                                            ? `data:${
-                                                  covers[currIdx]
-                                              };base64,${covers[
-                                                  currIdx
-                                              ].toString('base64')}`
+                                            ? covers[currIdx]
                                             : ''
                                     }
                                     onClick={() => {
@@ -592,9 +542,8 @@ function App() {
                                             colors[2],
                                             200
                                         ),
-                                        borderRadius: '10px',
                                     }}
-                                    className="drag  w-[64px] h-[64px]"
+                                    className="drag  w-[64px] h-[64px] rounded-[10px]"
                                     onClick={() => {
                                         openFile(currIdx + 1)
                                     }}
@@ -985,7 +934,7 @@ function App() {
                 }}
                 className="overflow-y-auto flex-1 flex-grow overflow-x-hidden"
             >
-                {ShowFakeFiles}
+                <FileList />
             </div>
             <div className="drag bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
                 <div className="flex flex-row">

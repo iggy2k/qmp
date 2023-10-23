@@ -49,9 +49,12 @@ function openFiles(files: string[]) {
     }
     return Promise.all(promises)
         .then((results) => {
-            const covers = results.map(
-                (md) =>
-                    mm.selectCover(md!.common.picture)?.data.toString('base64')
+            const covers = results.map((md) =>
+                mm.selectCover(md!.common.picture)
+                    ? `data:image/jpeg;base64,${mm
+                          .selectCover(md!.common.picture)
+                          ?.data.toString('base64')}`
+                    : null
             )
             return [results, covers]
         })
@@ -125,7 +128,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
