@@ -1,7 +1,11 @@
 module.exports = {
     content: ['./src/index.html', './src/**/*.{js,ts,jsx,tsx}'],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                titillium: ['Titillium Web', 'sans-serif'],
+            },
+        },
     },
     plugins: [],
 }
