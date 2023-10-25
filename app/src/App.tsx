@@ -324,13 +324,16 @@ function App() {
 
     const openCertainDir = (path: string) => {
         setCurrDir(path)
+
         window.Main.send('get-files-to-main', path)
+        openFile(currIdx + 1)
     }
 
     // Load all supported audio files from
     // a directory (recursive)
     const openDir = (openDefault: boolean) => {
         window.Main.send('open-folder-tm', openDefault)
+        openFile(currIdx + 1)
     }
 
     useEffect(() => {
@@ -410,6 +413,7 @@ function App() {
                             trackData['common']['artist']
                     )
                 )
+                setCurrIdx(0)
             }
         })
         openDir(true)
