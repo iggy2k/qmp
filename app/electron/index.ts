@@ -83,7 +83,7 @@ function createWindow() {
         resizable: true,
         fullscreenable: true,
         title: 'qmp',
-        // minWidth: WIN_WIDTH,
+        minWidth: WIN_WIDTH,
         minHeight: WIN_HEIGHT_MIN,
         vibrancy: 'dark',
         webPreferences: {
@@ -118,17 +118,14 @@ function createWindow() {
         window?.loadFile(url)
     }
 
-    // splash?.loadURL(`file://${__dirname}/../src/splash.html`)
-
     setTimeout(function () {
-        // splash.close()
         window.show()
         let bounds = screen.getPrimaryDisplay().bounds
         let x = bounds.x + (bounds.width - WIN_WIDTH) / 2
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {

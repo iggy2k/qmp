@@ -50,9 +50,6 @@ let gain: any = null
 const audio = new Audio()
 
 function App() {
-    const [currDir, setCurrDir] = useState('')
-    // Current track control states
-
     const [colors, setColors] = useState([
         '#000000',
         '#000000',
@@ -65,6 +62,7 @@ function App() {
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
 
     // Track list states
+    const [fileListFlick, setFileListFlick] = useState(0)
     const [files, setFiles] = useState<any[]>([])
     const [durations, setDurations] = useState<any[]>([])
     const [names, setNames] = useState<any[]>([])
@@ -75,7 +73,9 @@ function App() {
     const [formats, setFormats] = useState<any[]>([])
     const [directories, setDirectories] = useState<string[]>([])
 
-    const [currIdx, setCurrIdx] = useState(0)
+    const [currIdx, setCurrIdx] = useState(-1)
+    const [currDir, setCurrDir] = useState('')
+
     const [play, setPlay] = useState(false)
     const [currTime, setCurrTime] = useState(0)
     const [mouseDown, setMouseDown] = useState(false)
@@ -86,126 +86,6 @@ function App() {
     const [resized, setResized] = useState(false)
     const [repeat, setRepeat] = useState(false)
 
-    useEffect(() => {
-        if (trackScrollToRef.current && !resized) {
-            scrollIntoView(trackScrollToRef.current, {
-                behavior: 'smooth',
-                scrollMode: 'if-needed',
-            })
-        }
-        if (!audio.paused) {
-            audio.pause()
-            setPlay(false)
-        }
-        audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
-    }, [currIdx])
-
-    // Switch to a new track
-    const openFile = (index: number) => {
-        if (index < 0) {
-            index = files.length - 1
-        } else if (index > files.length - 1) {
-            index = 0
-        }
-        setCurrIdx(index)
-    }
-
-    const togglePlay = () => {
-        console.log(`Toggle play -> paused=${audio.paused}`)
-        if (audio) {
-            if (audio.paused) {
-                audio.play()
-                setPlay(true)
-            } else {
-                audio.pause()
-                setPlay(false)
-            }
-        } else {
-            console.log(`audio=${audio}`)
-        }
-    }
-
-    const collapse = () => {
-        if (window.Main) {
-            window.Main.Resize()
-            setResized(!resized)
-        }
-    }
-
-    const alwaysOnTop = () => {
-        if (window.Main) {
-            setOnTop(!onTop)
-            window.Main.AlwaysOnTop()
-        }
-    }
-    useEffect(() => {
-        audio.ontimeupdate = updateProgress
-    }, [])
-    const updateProgress = () => {
-        if (audio) {
-            let frac = audio.currentTime / audio.duration
-            if (frac !== Infinity) {
-                let new_progress = Math.trunc(frac * 800)
-                let new_time = Math.trunc(frac * 100)
-                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
-                    setProgress(new_progress)
-                    setCurrTime(new_time)
-                }
-                if (frac == 1 && play) {
-                    togglePlay()
-                }
-            }
-        }
-    }
-
-    useEffect(() => {
-        trackCoverRef.current &&
-            prominent(trackCoverRef.current, { amount: 20 }).then((color) => {
-                let topColors: Record<string, number> = {}
-                if (Array.isArray(color)) {
-                    color.forEach((element: any) => {
-                        let hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
-                        topColors[hex] =
-                            element[0] * 0.299 +
-                            element[1] * 0.587 +
-                            element[2] * 0.114
-                    })
-                }
-
-                let keys = Object.keys(topColors)
-
-                keys.sort(
-                    (a, b) =>
-                        grayness(b) - grayness(a) ||
-                        Math.abs(topColors[b] - topColors[a])
-                )
-
-                setColors([keys[0], keys[1], keys[2], keys[keys.length - 1]])
-            })
-    }, [currIdx])
-    useEffect(() => {
-        audio.loop = repeat
-        audio.volume = volume
-    }, [repeat, volume])
-    // Get seek time from mouse position on the track
-    const relativeCoords = (e: any) => {
-        if (!audio) {
-            return
-        }
-        e.stopPropagation()
-        let elem = document.getElementById('track')
-        var bounds = elem!.getBoundingClientRect()
-        var x = e.clientX - bounds.left
-        var relative_pos = (audio.duration / 150) * x
-        if (
-            mouseDown &&
-            !Number.isNaN(relative_pos) &&
-            relative_pos !== Infinity
-        ) {
-            setSeek(relative_pos)
-            console.log('relative_pos ' + relative_pos)
-        }
-    }
     const Row = ({ index, style }: any) => (
         <div
             style={style}
@@ -322,19 +202,151 @@ function App() {
         </div>
     )
 
+    // Switch to a new track
+    const openFile = (index: number) => {
+        if (index < 0) {
+            index = files.length - 1
+        } else if (index > files.length - 1) {
+            index = 0
+        }
+        setProgress(0)
+        setCurrTime(0)
+        setCurrIdx(index)
+        setFileListFlick(fileListFlick + 1)
+    }
+
+    const togglePlay = () => {
+        if (audio) {
+            if (audio.paused) {
+                audio.play()
+                setPlay(true)
+            } else {
+                audio.pause()
+                setPlay(false)
+            }
+        }
+    }
+
+    const collapse = () => {
+        if (window.Main) {
+            window.Main.Resize()
+            setResized(!resized)
+        }
+    }
+
+    const alwaysOnTop = () => {
+        if (window.Main) {
+            setOnTop(!onTop)
+            window.Main.AlwaysOnTop()
+        }
+    }
+
+    const updateProgress = () => {
+        if (audio) {
+            let frac = audio.currentTime / audio.duration
+            if (frac !== Infinity) {
+                let new_progress = Math.trunc(frac * 800)
+                let new_time = Math.trunc(frac * 100)
+                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
+                    setProgress(new_progress)
+                    setCurrTime(new_time)
+                }
+                if (frac == 1 && play) {
+                    togglePlay()
+                }
+            }
+        }
+    }
+
+    function updateColors() {
+        trackCoverRef.current &&
+            prominent(trackCoverRef.current, { amount: 20 }).then((color) => {
+                let topColors: Record<string, number> = {}
+                if (Array.isArray(color)) {
+                    color.forEach((element: any) => {
+                        let hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
+                        topColors[hex] =
+                            element[0] * 0.299 +
+                            element[1] * 0.587 +
+                            element[2] * 0.114
+                    })
+                }
+
+                let keys = Object.keys(topColors)
+
+                keys.sort(
+                    (a, b) =>
+                        grayness(b) - grayness(a) ||
+                        Math.abs(topColors[b] - topColors[a])
+                )
+
+                setColors([keys[0], keys[1], keys[2], keys[keys.length - 1]])
+            })
+    }
+
+    // Get seek time from mouse position on the track
+    const relativeCoords = (e: any) => {
+        if (!audio) {
+            return
+        }
+        e.stopPropagation()
+        let elem = document.getElementById('track')
+        var bounds = elem!.getBoundingClientRect()
+        var x = e.clientX - bounds.left
+        var relative_pos = (audio.duration / 150) * x
+        if (
+            mouseDown &&
+            !Number.isNaN(relative_pos) &&
+            relative_pos !== Infinity
+        ) {
+            setSeek(relative_pos)
+            console.log('relative_pos ' + relative_pos)
+        }
+    }
+
     const openCertainDir = (path: string) => {
         setCurrDir(path)
-
         window.Main.send('get-files-to-main', path)
-        openFile(currIdx + 1)
+        setFileListFlick(fileListFlick + 1)
     }
 
     // Load all supported audio files from
     // a directory (recursive)
     const openDir = (openDefault: boolean) => {
         window.Main.send('open-folder-tm', openDefault)
-        openFile(currIdx + 1)
+        setFileListFlick(fileListFlick + 1)
     }
+
+    const setSeek = (time: number) => {
+        if (audio) {
+            audio.currentTime = time
+        }
+    }
+
+    const downloadCover = (b64data: any) => {
+        if (b64data !== undefined) {
+            window.Main.SaveCover(b64data.toString('base64'))
+        }
+    }
+
+    const openSettings = () => {
+        window.Main.send('open-settings-tm', null)
+    }
+
+    const FileList = useMemo(
+        () => (
+            <List
+                className={`List ${fileListFlick}`}
+                height={30 * 9}
+                itemCount={files.length}
+                itemSize={30}
+                width={'100%'}
+            >
+                {Row}
+            </List>
+        ),
+        [files, fileListFlick, currIdx]
+    )
 
     useEffect(() => {
         !directories.includes(currDir) &&
@@ -342,24 +354,32 @@ function App() {
             setDirectories([...directories, currDir])
     }, [currDir])
 
-    // Open a file on new directory load
     useEffect(() => {
-        if (files.length > currIdx) {
-            openFile(currIdx)
-        } else {
-            openFile(0)
-        }
-    }, [files])
+        audio.loop = repeat
+        audio.volume = volume
+    }, [repeat, volume])
 
-    const setSeek = (time: number) => {
-        // console.log(`audio.currentTime = ${audio.currentTime}`)
-        if (audio) {
-            audio.currentTime = time
+    useEffect(() => {
+        if (trackScrollToRef.current && !resized) {
+            scrollIntoView(trackScrollToRef.current, {
+                behavior: 'smooth',
+                scrollMode: 'if-needed',
+            })
         }
-    }
+        if (!audio.paused) {
+            audio.pause()
+            setPlay(false)
+        }
+        audio.src = files[currIdx] ? `file://${files[currIdx]}` : ''
+        updateColors()
+        if (play) {
+            togglePlay()
+        }
+    }, [currIdx])
 
     // Normal way of using react with listeners
     useEffect(() => {
+        audio.ontimeupdate = updateProgress
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
             if (path !== undefined) {
                 setCurrDir(path)
@@ -414,12 +434,12 @@ function App() {
                     )
                 )
                 setCurrIdx(0)
+                setFileListFlick(fileListFlick + 1)
             }
         })
         openDir(true)
         return () => {
             audio.pause()
-            console.log('return')
         }
     }, [])
 
@@ -432,31 +452,6 @@ function App() {
             }
         }
     }, [progress])
-
-    const downloadCover = (b64data: any) => {
-        if (b64data !== undefined) {
-            window.Main.SaveCover(b64data.toString('base64'))
-        }
-    }
-
-    const openSettings = () => {
-        window.Main.send('open-settings-tm', null)
-    }
-
-    const FileList = useMemo(
-        () => (
-            <List
-                className="List"
-                height={30 * 9}
-                itemCount={files.length}
-                itemSize={30}
-                width={'100%'}
-            >
-                {Row}
-            </List>
-        ),
-        [files, currIdx]
-    )
 
     return (
         <div className="bg-[#333333] h-[100vh] flex flex-col overflow-y-hidden">
@@ -593,7 +588,6 @@ function App() {
                                                             200
                                                         ),
                                                     }}
-                                                    // stroke="#c1b7b4"
                                                     fill="none"
                                                     id="sign-wave"
                                                     d="
@@ -617,7 +611,6 @@ function App() {
                                                             200
                                                         ),
                                                     }}
-                                                    // stroke="#c1b7b4"
                                                     fill="none"
                                                     id="sign-wave"
                                                     d="
@@ -655,7 +648,6 @@ function App() {
                                                         200
                                                     ),
                                                 }}
-                                                // stroke="#c1b7b4"
                                                 opacity={0.5}
                                                 fill="none"
                                                 id="sign-wave2"
@@ -698,7 +690,6 @@ function App() {
                                                           150
                                                       ),
                                             }}
-                                            // fill={mouseDown ? '#f08665' : '#c1b7b4'}
                                         />
                                     </svg>
                                 </div>
@@ -817,7 +808,13 @@ function App() {
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => {
-                                    openFile(currIdx - 1)
+                                    shuffle
+                                        ? openFile(
+                                              Math.floor(
+                                                  Math.random() * files.length
+                                              )
+                                          )
+                                        : openFile(currIdx - 1)
                                 }}
                             />
                             {play ? (
@@ -849,7 +846,13 @@ function App() {
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => {
-                                    openFile(currIdx + 1)
+                                    shuffle
+                                        ? openFile(
+                                              Math.floor(
+                                                  Math.random() * files.length
+                                              )
+                                          )
+                                        : openFile(currIdx + 1)
                                 }}
                             />
                             {shuffle ? (
