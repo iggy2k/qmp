@@ -5,6 +5,7 @@ import React, {
     useCallback,
     memo,
     useMemo,
+    useLayoutEffect,
 } from 'react'
 import { prominent } from 'color.js'
 import {
@@ -60,6 +61,7 @@ function App() {
     // Current track data states
     const trackScrollToRef = useRef<null | HTMLDivElement>(null)
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
+    const [electronWindowHeight, setElectronWindowHeight] = useState(450)
 
     // Track list states
     const [fileListFlick, setFileListFlick] = useState(0)
@@ -91,15 +93,15 @@ function App() {
             style={style}
             key={index}
             ref={index == currIdx ? trackScrollToRef : null}
-            className={`overflow-auto hover:scale-[101%] h-7 px-2 transition-transform ${
-                index == 0 ? 'pt-1' : ''
-            } ${index == files.length - 1 ? 'pb-1' : ''}`}
+            className={`overflow-auto h-7 px-2 ${index == 0 ? 'pt-1' : ''} ${
+                index == files.length - 1 ? 'pb-1' : ''
+            }`}
         >
             <div
                 style={{
-                    backgroundColor: index == currIdx ? colors[0] + '20' : '',
+                    backgroundColor: index == currIdx ? '#888888' + '20' : '',
                 }}
-                className="transition duration-75 hover:bg-black/20 flex flex-row p-[1px] text-center rounded-md"
+                className="hover:bg-black/20 transition-opacity duration-300 flex flex-row p-[1px] text-center rounded-md"
                 onClick={() => {
                     openFile(index)
                 }}
@@ -112,45 +114,23 @@ function App() {
                     />
                 ) : (
                     <IconMusic
-                        style={{
-                            color: LightenDarkenColor(colors[2], 200),
-                        }}
-                        className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]"
+                        className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-white"
                         onClick={() => {
                             openFile(currIdx + 1)
                         }}
                     />
                 )}
 
-                <div
-                    style={{
-                        color: LightenDarkenColor(colors[2], 200),
-                    }}
-                    className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis"
-                >
+                <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis text-white/70">
                     {names[index] && authors[index] && albums[index] ? (
                         <div className="flex flex-row">
-                            <p
-                                style={{
-                                    color: LightenDarkenColor(colors[3], 200),
-                                }}
-                            >
+                            <p className="text-white/80">
                                 {names[index].replace('\\', '')}
                             </p>
-                            <p
-                                style={{
-                                    color: LightenDarkenColor(colors[3], 150),
-                                }}
-                                className="ml-1"
-                            >
+                            <p className="ml-1 text-white/50">
                                 {authors[index].replace('\\', '')}
                             </p>
-                            <p
-                                style={{
-                                    color: LightenDarkenColor(colors[3], 100),
-                                }}
-                                className="ml-1"
-                            >
+                            <p className="ml-1 text-white/30">
                                 {albums[index].replace('\\', '')}
                             </p>
                         </div>
@@ -170,10 +150,8 @@ function App() {
                         style={{
                             fontSize: '0.65rem',
                             lineHeight: '1.1rem',
-                            color: LightenDarkenColor(colors[3], 200),
-                            backgroundColor: LightenDarkenColor(colors[2], 0),
                         }}
-                        className="pl-1 grid grid-flow-col text-xs font-mono rounded-md"
+                        className="pl-1 grid grid-flow-col text-xs font-mono rounded-md text-white/80 bg-black/80"
                     >
                         <p>
                             {formats[index] !== undefined &&
@@ -182,15 +160,7 @@ function App() {
                                 : ''}
                         </p>
                         <p>&nbsp;</p>
-                        <p
-                            className="rounded-md pl-1 pr-1"
-                            style={{
-                                backgroundColor: LightenDarkenColor(
-                                    colors[3],
-                                    50
-                                ),
-                            }}
-                        >
+                        <p className="rounded-md pl-1 pr-1 bg-white/80 text-black/80">
                             {sampleRates[index] !== undefined &&
                             sampleRates[index] !== null
                                 ? Math.trunc(sampleRates[index] / 1000) + 'kHz'
@@ -284,6 +254,19 @@ function App() {
             })
     }
 
+    const removeDir = (e: any, idx: number) => {
+        if (directories.length < 2) {
+            return
+        }
+        e.stopPropagation()
+        setDirectories(directories.filter((dir) => dir !== directories[idx]))
+        setFileListFlick(fileListFlick + 1)
+    }
+
+    useEffect(() => {
+        console.log('directories = ' + directories)
+    }, [directories])
+
     // Get seek time from mouse position on the track
     const relativeCoords = (e: any) => {
         if (!audio) {
@@ -336,8 +319,8 @@ function App() {
     const FileList = useMemo(
         () => (
             <List
-                className={`List ${fileListFlick}`}
-                height={30 * 9}
+                className={`list ${fileListFlick}`}
+                height={electronWindowHeight - 165}
                 itemCount={files.length}
                 itemSize={30}
                 width={'100%'}
@@ -345,7 +328,7 @@ function App() {
                 {Row}
             </List>
         ),
-        [files, fileListFlick, currIdx]
+        [files, fileListFlick, currIdx, electronWindowHeight]
     )
 
     useEffect(() => {
@@ -380,6 +363,10 @@ function App() {
     // Normal way of using react with listeners
     useEffect(() => {
         audio.ontimeupdate = updateProgress
+        window.Main.receive('get-height-from-main', (height: number) => {
+            console.log(height)
+            setElectronWindowHeight(height)
+        })
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
             if (path !== undefined) {
                 setCurrDir(path)
@@ -488,7 +475,7 @@ function App() {
                                 covers[currIdx] !== null ? (
                                     <img
                                         ref={trackCoverRef}
-                                        className="no-drag rounded-lg duration-300 hover:sepia hover:scale-125 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] hover:rotate-2 transition-[
+                                        className="no-drag rounded-lg duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-[
                                 transition-property: transform, shadow, opacity;
                                 transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                                 transition-duration: 150ms;] 
@@ -932,27 +919,37 @@ function App() {
                         </div>
                     </div>
                 </div>
-                <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center p-1 drag">
+                <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center px-1 drag">
                     <div className="flex flex-row">
                         {directories.map((dir: string, index: number) => {
                             return (
-                                <div
-                                    key={index}
-                                    style={{
-                                        backgroundColor:
-                                            currDir == dir
-                                                ? '#00000050'
-                                                : '#FFFFFF50',
-                                    }}
-                                    onClick={() => {
-                                        currDir !== dir && openCertainDir(dir)
-                                    }}
-                                    className="text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
-                                >
-                                    {directories[index] &&
-                                        directories[index]
-                                            .split('/')
-                                            .reverse()[0]}
+                                <div className="">
+                                    <div
+                                        key={index}
+                                        style={{
+                                            backgroundColor:
+                                                currDir == dir
+                                                    ? '#00000050'
+                                                    : '#FFFFFF50',
+                                        }}
+                                        onClick={() => {
+                                            currDir !== dir &&
+                                                openCertainDir(dir)
+                                        }}
+                                        className="inline-block text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
+                                    >
+                                        {directories[index] &&
+                                            directories[index]
+                                                .split('/')
+                                                .reverse()[0]}
+
+                                        <div
+                                            className="pl-1 inline-block opacity-30 hover:opacity-100 transition-opacity"
+                                            onClick={(e) => removeDir(e, index)}
+                                        >
+                                            X
+                                        </div>
+                                    </div>
                                 </div>
                             )
                         })}
@@ -960,7 +957,7 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colors[2], 200),
                             }}
-                            className="no-drag h-[24px] m-1 ml-auto mr-1"
+                            className="no-drag h-[24px] m-1 ml-auto mr-1 hover:animate-pulse transition-opacity"
                             onClick={() => {
                                 openDir(false)
                             }}
@@ -969,18 +966,19 @@ function App() {
                 </div>
                 <div
                     style={{
-                        backgroundColor: colors[0] + '10',
+                        height: electronWindowHeight - 165,
                     }}
                     className="overflow-y-auto flex-1 flex-grow overflow-x-hidden"
                 >
                     {FileList}
                 </div>
-                <div className="drag bg-[#333333] min-h-[20px] flex-none place-items-center p-1">
+                <div className="drag bg-[#2a2a2a] min-h-[16px] flex-none place-items-center p-2">
                     <div className="flex flex-row">
-                        <p className="text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">{`${
-                            currIdx + 1
-                        } / ${files.length}`}</p>
-                        <p className=" text-left text-sm ml-1 w-[30%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">
+                        <p className="text-left text-xs ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">
+                            {' '}
+                            {`${currDir}`}
+                        </p>
+                        <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap text-white flex-1">
                             {secondsToDhms(
                                 durations.reduce(
                                     (acc: number, curr: number) => {
@@ -990,12 +988,12 @@ function App() {
                                 )
                             )}
                         </p>
-                        <div className=" mr-1 w-[30%] flex-none inline-block ">
+                        <div className="mr-1 min-w-[35%] flex-none inline-block ">
                             <p
                                 title={currDir}
-                                className="text-sm text-right rtl-grid overflow-hidden whitespace-nowrap text-white  text-ellipsis"
+                                className="text-xs text-right overflow-hidden whitespace-nowrap text-white  text-ellipsis"
                             >
-                                {`${currDir}`}
+                                {`${currIdx + 1} / ${files.length}`}
                             </p>
                         </div>
                     </div>

@@ -32,6 +32,9 @@ const api = {
     SaveCover: (data: any) => {
         ipcRenderer.send('save-cover', data)
     },
+    GetHeight: () => {
+        ipcRenderer.send('get-height')
+    },
     send: (channel: any, data: any) => {
         // whitelist channels
         let validChannels = [
@@ -43,6 +46,7 @@ const api = {
             'open-folder-tm',
             'open-settings-fm',
             'open-settings-tm',
+            'get-height-from-main',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -58,6 +62,7 @@ const api = {
             'open-folder-tm',
             'open-settings-fm',
             'open-settings-tm',
+            'get-height-from-main',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`

@@ -15,8 +15,7 @@ import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MIN = 102
-// const WIN_WIDTH = 470
-const WIN_WIDTH = 900
+const WIN_WIDTH = 470
 const HTML5_AUDIO = [
     'wav',
     'mpeg',
@@ -83,6 +82,7 @@ function createWindow() {
         resizable: true,
         fullscreenable: true,
         title: 'qmp',
+        icon: '/Users/iggy/Documents/GitHub/qmp/app/public/drawing.png',
         minWidth: WIN_WIDTH,
         minHeight: WIN_HEIGHT_MIN,
         vibrancy: 'dark',
@@ -173,18 +173,24 @@ function createWindow() {
     })
 
     ipcMain.on('open-folder-tm', (_, openDefault: boolean) => {
-        if (openDefault) {
-            let dir = store.get('last_open_dir')
-            window.webContents.send('open-folder-fm', dir)
-            store.set('last_open_dir', dir)
-        } else {
-            let dirpath = dialog.showOpenDialogSync(window, {
-                properties: ['openDirectory'],
-            })
-            let dir = dirpath?.pop()
-            window.webContents.send('open-folder-fm', dir)
-            store.set('last_open_dir', dir)
-            console.log(store.get('last_open_dir'))
+        try {
+            if (openDefault) {
+                let dir = store.get('last_open_dir')
+                window.webContents.send('open-folder-fm', dir)
+                store.set('last_open_dir', dir)
+            } else {
+                let dirpath = dialog.showOpenDialogSync(window, {
+                    properties: ['openDirectory'],
+                    defaultPath: '',
+                })
+
+                let dir = dirpath?.pop()
+                window.webContents.send('open-folder-fm', dir)
+                store.set('last_open_dir', dir)
+                console.log(store.get('last_open_dir'))
+            }
+        } catch (error) {
+            console.error(error)
         }
     })
 
@@ -207,6 +213,22 @@ function createWindow() {
             fs.writeFileSync(file, data, {
                 encoding: 'base64',
             })
+    })
+
+    window.on('will-resize', () => {
+        // console.log('resize')
+        window.webContents.send(
+            'get-height-from-main',
+            window.getBounds().height
+        )
+    })
+
+    window.on('blur', () => {
+        window.setOpacity(0.7)
+    })
+
+    window.on('focus', () => {
+        window.setOpacity(1)
     })
 
     settings?.on('close', function (evt) {
