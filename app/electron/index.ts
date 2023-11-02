@@ -15,7 +15,10 @@ import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MIN = 102
-const WIN_WIDTH = 470
+const WIN_HEIGHT_MAX = 600
+
+const WIN_WIDTH_MIN = 470
+const WIN_WIDTH_MAX = 800
 const HTML5_AUDIO = [
     'wav',
     'mpeg',
@@ -31,6 +34,10 @@ const HTML5_AUDIO = [
 var resized = true
 var onTop = false
 const store = new Store()
+store.set('all_dirs', [])
+// if (!store.get('all_dirs')) {
+//     store.set('all_dirs', nl)
+// }
 console.log('Userdata: ' + app.getPath('userData'))
 
 function checkExension(file: string) {
@@ -83,8 +90,10 @@ function createWindow() {
         fullscreenable: true,
         title: 'qmp',
         icon: '/Users/iggy/Documents/GitHub/qmp/app/public/drawing.png',
-        minWidth: WIN_WIDTH,
+        minWidth: WIN_WIDTH_MIN,
         minHeight: WIN_HEIGHT_MIN,
+        maxWidth: WIN_WIDTH_MAX,
+        maxHeight: WIN_HEIGHT_MAX,
         vibrancy: 'dark',
         webPreferences: {
             webSecurity: false,
@@ -121,18 +130,22 @@ function createWindow() {
     setTimeout(function () {
         window.show()
         let bounds = screen.getPrimaryDisplay().bounds
-        let x = bounds.x + (bounds.width - WIN_WIDTH) / 2
+        let x = bounds.x + (bounds.width - WIN_WIDTH_MIN) / 2
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
-        window?.setSize(WIN_WIDTH, WIN_HEIGHT, true)
+        window?.setSize(WIN_WIDTH_MIN, WIN_HEIGHT, true)
         // window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
         if (resized) {
+            window.setMaximumSize(WIN_WIDTH_MAX, WIN_HEIGHT_MIN)
             window?.setSize(window?.getSize()[0], WIN_HEIGHT_MIN, true)
+            window.webContents.send('get-height-from-main', WIN_HEIGHT_MIN)
         } else {
+            window.setMaximumSize(WIN_WIDTH_MAX, WIN_HEIGHT_MAX)
             window?.setSize(window?.getSize()[0], WIN_HEIGHT, true)
+            window.webContents.send('get-height-from-main', WIN_HEIGHT)
         }
         resized = !resized
     })
@@ -178,6 +191,15 @@ function createWindow() {
                 let dir = store.get('last_open_dir')
                 window.webContents.send('open-folder-fm', dir)
                 store.set('last_open_dir', dir)
+
+                let obj = store.get('all_dirs') as string[]
+
+                if (obj && typeof dir == 'string') {
+                    store.set('all_dirs', obj.concat([dir]))
+                } else {
+                    store.set('all_dirs', [dir])
+                }
+                // store.set('all_dirs', new1)
             } else {
                 let dirpath = dialog.showOpenDialogSync(window, {
                     properties: ['openDirectory'],
@@ -187,8 +209,16 @@ function createWindow() {
                 let dir = dirpath?.pop()
                 window.webContents.send('open-folder-fm', dir)
                 store.set('last_open_dir', dir)
-                console.log(store.get('last_open_dir'))
+
+                let obj = store.get('all_dirs') as string[]
+
+                if (obj && typeof dir == 'string') {
+                    store.set('all_dirs', obj.concat([dir]))
+                } else {
+                    store.set('all_dirs', [dir])
+                }
             }
+            console.log(store.get('all_dirs'))
         } catch (error) {
             console.error(error)
         }

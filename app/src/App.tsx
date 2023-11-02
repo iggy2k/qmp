@@ -32,7 +32,7 @@ import {
     ChevronDoubleUpIcon,
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
-import scrollIntoView from 'scroll-into-view-if-needed'
+
 import { FixedSizeList as List } from 'react-window'
 
 import {
@@ -59,7 +59,7 @@ function App() {
     ])
 
     // Current track data states
-    const trackScrollToRef = useRef<null | HTMLDivElement>(null)
+    const listRef = useRef<null | any>(null)
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
     const [electronWindowHeight, setElectronWindowHeight] = useState(450)
 
@@ -92,7 +92,6 @@ function App() {
         <div
             style={style}
             key={index}
-            ref={index == currIdx ? trackScrollToRef : null}
             className={`overflow-auto h-7 px-2 ${index == 0 ? 'pt-1' : ''} ${
                 index == files.length - 1 ? 'pb-1' : ''
             }`}
@@ -319,6 +318,7 @@ function App() {
     const FileList = useMemo(
         () => (
             <List
+                ref={listRef}
                 className={`list ${fileListFlick}`}
                 height={electronWindowHeight - 165}
                 itemCount={files.length}
@@ -343,11 +343,8 @@ function App() {
     }, [repeat, volume])
 
     useEffect(() => {
-        if (trackScrollToRef.current && !resized) {
-            scrollIntoView(trackScrollToRef.current, {
-                behavior: 'smooth',
-                scrollMode: 'if-needed',
-            })
+        if (listRef.current && !resized) {
+            listRef.current.scrollToItem(currIdx, 'smart')
         }
         if (!audio.paused) {
             audio.pause()
