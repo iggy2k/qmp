@@ -35,6 +35,12 @@ const api = {
     GetHeight: () => {
         ipcRenderer.send('get-height')
     },
+    GetOldDirs: () => {
+        ipcRenderer.send('get-old-dirs')
+    },
+    RemoveDir: (dir: string) => {
+        ipcRenderer.send('remove-dir', dir)
+    },
     send: (channel: any, data: any) => {
         // whitelist channels
         let validChannels = [
@@ -47,6 +53,8 @@ const api = {
             'open-settings-fm',
             'open-settings-tm',
             'get-height-from-main',
+            'get-old-dirs-from-main',
+            'remove-dir',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -63,6 +71,8 @@ const api = {
             'open-settings-fm',
             'open-settings-tm',
             'get-height-from-main',
+            'get-old-dirs-from-main',
+            'remove-dir',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`

@@ -254,6 +254,7 @@ function App() {
     }
 
     const removeDir = (e: any, idx: number) => {
+        window.Main.RemoveDir(directories[idx])
         if (directories.length < 2) {
             return
         }
@@ -359,7 +360,12 @@ function App() {
 
     // Normal way of using react with listeners
     useEffect(() => {
+        window.Main.GetOldDirs()
         audio.ontimeupdate = updateProgress
+        window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
+            console.log('dirs ' + dirs)
+            setDirectories(dirs)
+        })
         window.Main.receive('get-height-from-main', (height: number) => {
             console.log(height)
             setElectronWindowHeight(height)
@@ -920,9 +926,8 @@ function App() {
                     <div className="flex flex-row">
                         {directories.map((dir: string, index: number) => {
                             return (
-                                <div className="">
+                                <div key={index}>
                                     <div
-                                        key={index}
                                         style={{
                                             backgroundColor:
                                                 currDir == dir

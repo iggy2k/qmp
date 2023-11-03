@@ -34,11 +34,11 @@ const HTML5_AUDIO = [
 var resized = true
 var onTop = false
 const store = new Store()
-store.set('all_dirs', [])
-// if (!store.get('all_dirs')) {
-//     store.set('all_dirs', nl)
-// }
-console.log('Userdata: ' + app.getPath('userData'))
+
+if ((store.get('all_dirs') as string[]).length < 1) {
+    store.set('all_dirs', [])
+}
+console.log('\nUserdata: ' + app.getPath('userData') + '\n')
 
 function checkExension(file: string) {
     return (
@@ -194,12 +194,9 @@ function createWindow() {
 
                 let obj = store.get('all_dirs') as string[]
 
-                if (obj && typeof dir == 'string') {
+                if (obj && typeof dir == 'string' && !obj.includes(dir)) {
                     store.set('all_dirs', obj.concat([dir]))
-                } else {
-                    store.set('all_dirs', [dir])
                 }
-                // store.set('all_dirs', new1)
             } else {
                 let dirpath = dialog.showOpenDialogSync(window, {
                     properties: ['openDirectory'],
@@ -218,7 +215,7 @@ function createWindow() {
                     store.set('all_dirs', [dir])
                 }
             }
-            console.log(store.get('all_dirs'))
+            console.log(store.get('all_dirs') as string[])
         } catch (error) {
             console.error(error)
         }
@@ -243,6 +240,26 @@ function createWindow() {
             fs.writeFileSync(file, data, {
                 encoding: 'base64',
             })
+    })
+
+    ipcMain.on('get-old-dirs', () => {
+        let dirs = store.get('all_dirs') as string[]
+        console.log('all_dirs ' + dirs)
+        window.webContents.send('get-old-dirs-from-main', dirs)
+    })
+
+    ipcMain.on('remove-dir', (_, dir: string) => {
+        let obj = store.get('all_dirs') as string[]
+
+        console.log(`before removing ${dir} = ${obj}`)
+
+        var filteredArray = obj.filter(function (e) {
+            return e !== dir
+        })
+
+        console.log(`after removing ${dir} = ${filteredArray}`)
+
+        store.set('all_dirs', filteredArray)
     })
 
     window.on('will-resize', () => {
