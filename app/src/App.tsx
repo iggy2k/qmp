@@ -384,6 +384,7 @@ function App() {
             }
         })
         window.Main.receive('fromMain', (data2: any) => {
+            // console.log(data2[0])
             if (data2[1].length > 1) {
                 // Case: get all tracks in the directory
                 setCovers(data2[1])

@@ -55,5 +55,16 @@
         "prettier-plugin-tailwindcss": "^0.5.4",
         "tailwindcss": "^3.3.3",
         "typescript": "^5.0.2"
+    },
+    "build": {
+        "productName": "qmp",
+        "appId": "org.qmp",
+        "dmg": {
+            "icon": "public/icon.icns"
+        },
+        "directories": {
+            "buildResources": "public",
+            "output": "release"
+        }
     }
 }
