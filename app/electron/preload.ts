@@ -29,8 +29,8 @@ const api = {
     ReadInBlob: (path: string) => {
         ipcRenderer.send('read-in-blob', path)
     },
-    SaveCover: (data: any) => {
-        ipcRenderer.send('save-cover', data)
+    SaveCover: (data: any, name: string) => {
+        ipcRenderer.send('save-cover', data, name)
     },
     GetHeight: () => {
         ipcRenderer.send('get-height')

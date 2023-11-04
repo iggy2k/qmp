@@ -53,21 +53,25 @@
     direction: rtl;
 }
 
-.animate-shine {
-    /* background: linear-gra   dient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); */
-    /* background-size: 400% 400%; */
-    /* background-clip: text; */
-    animation: gradient 3s ease infinite;
+.animate-spin {
+    /* background: linear-gradient(130deg, #ff7e00, #ffffff, #5cff00); */
+    background-size: 200% 200%;
+
+    animation: Animation 5s infinite reverse;
 }
 
-@keyframes gradient {
+@keyframes Animation {
     0% {
-        background-position: 0% 50%;
+        background-position: 100% 100%;
     }
     50% {
-        background-position: 100% 50%;
+        background-position: 0% 0%;
     }
     100% {
-        background-position: 0% 50%;
+        background-position: 100% 100%;
     }
+}
+
+.pause {
+    animation-play-state: paused;
 }

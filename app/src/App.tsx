@@ -150,20 +150,20 @@ function App() {
                             fontSize: '0.65rem',
                             lineHeight: '1.1rem',
                         }}
-                        className="pl-1 grid grid-flow-col text-xs font-mono rounded-md text-white/80 bg-black/80"
+                        className="pl-1 grid grid-flow-col text-xs font-mono rounded-md text-[#333333] bg-[#ffa640]"
                     >
                         <p>
                             {formats[index] !== undefined &&
                             formats[index] !== null
                                 ? formats[index]
-                                : ''}
+                                : '🎵'}
                         </p>
                         <p>&nbsp;</p>
-                        <p className="rounded-md pl-1 pr-1 bg-white/80 text-black/80">
+                        <p className="rounded-md pl-1 pr-1 bg-[#333333] text-[#ffa640]">
                             {sampleRates[index] !== undefined &&
                             sampleRates[index] !== null
                                 ? Math.trunc(sampleRates[index] / 1000) + 'kHz'
-                                : ''}
+                                : '🎵'}
                         </p>
                     </div>
                 </div>
@@ -249,7 +249,12 @@ function App() {
                         Math.abs(topColors[b] - topColors[a])
                 )
 
-                setColors([keys[0], keys[1], keys[2], keys[keys.length - 1]])
+                setColors([
+                    keys[0] || '#333333',
+                    keys[6] || '#333333',
+                    keys[12] || '#333333',
+                    keys[18] || '#333333',
+                ])
             })
     }
 
@@ -308,7 +313,7 @@ function App() {
 
     const downloadCover = (b64data: any) => {
         if (b64data !== undefined) {
-            window.Main.SaveCover(b64data.toString('base64'))
+            window.Main.SaveCover(b64data.toString('base64'), names[currIdx])
         }
     }
 
@@ -320,7 +325,7 @@ function App() {
         () => (
             <List
                 ref={listRef}
-                className={`list ${fileListFlick}`}
+                className={`list ${fileListFlick} scroll-smooth`}
                 height={electronWindowHeight - 165}
                 itemCount={files.length}
                 itemSize={30}
@@ -356,7 +361,11 @@ function App() {
         if (play) {
             togglePlay()
         }
-    }, [currIdx])
+    }, [currIdx, fileListFlick])
+
+    useEffect(() => {
+        updateColors()
+    }, [fileListFlick])
 
     // Normal way of using react with listeners
     useEffect(() => {
@@ -464,13 +473,14 @@ function App() {
                 <div
                     style={{
                         backgroundImage: `
-            radial-gradient(ellipse at top left, ${colors[0]}30  15%, transparent 100%),
-            radial-gradient(ellipse at bottom  left, ${colors[1]}30  15% , transparent 100%),
-            radial-gradient(ellipse at top    right, ${colors[2]}30 15% , transparent 100%),
-            radial-gradient(ellipse at bottom right, ${colors[3]}30  15% , transparent 100%)`,
-                        backgroundColor: 'transparent',
+                            radial-gradient(ellipse at top left, ${colors[0]}30  55%, transparent 100%),
+                            radial-gradient(ellipse at bottom  left, ${colors[1]}30  55% , transparent 100%),
+                            radial-gradient(ellipse at top    right, ${colors[2]}30 55% , transparent 100%),
+                            radial-gradient(ellipse at bottom right, ${colors[3]}30  55% , transparent 100%)`,
                     }}
-                    className="bg-[#333333] drag"
+                    className={`bg-[#333333] drag ${
+                        play ? 'animate-spin' : 'animate-spin pause'
+                    }`}
                 >
                     <div className="flex">
                         <div className="no-drag p-2 pl-2 pb-0">
@@ -932,14 +942,18 @@ function App() {
                                         style={{
                                             backgroundColor:
                                                 currDir == dir
-                                                    ? '#00000050'
-                                                    : '#FFFFFF50',
+                                                    ? '#ffa640'
+                                                    : '#333333',
+                                            color:
+                                                currDir == dir
+                                                    ? '#333333'
+                                                    : '#ffa640',
                                         }}
                                         onClick={() => {
                                             currDir !== dir &&
                                                 openCertainDir(dir)
                                         }}
-                                        className="inline-block text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-md bg-white/20"
+                                        className="inline-block text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-xl"
                                     >
                                         {directories[index] &&
                                             directories[index]
@@ -977,9 +991,12 @@ function App() {
                 </div>
                 <div className="drag bg-[#2a2a2a] min-h-[16px] flex-none place-items-center p-2">
                     <div className="flex flex-row">
-                        <p className="text-left text-xs ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1">
+                        <p
+                            title={currDir}
+                            className="text-left text-xs rtl-grid ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
+                        >
                             {' '}
-                            {`${currDir}`}
+                            {currDir}
                         </p>
                         <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap text-white flex-1">
                             {secondsToDhms(

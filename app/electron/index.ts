@@ -231,12 +231,13 @@ function createWindow() {
         settings?.show()
     })
 
-    ipcMain.on('save-cover', (_, data: any) => {
+    ipcMain.on('save-cover', (_, data: any, name: string) => {
         console.log('saving cover ' + data)
         let split = data.split(';base64')
         let file = dialog.showSaveDialogSync(window, {
             defaultPath:
-                'cover.' +
+                name +
+                '.' +
                 split[0].substring('data:image/'.length, split[0].length),
         })
         file &&
