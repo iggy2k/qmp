@@ -8,6 +8,7 @@ declare global {
 }
 
 const api = {
+    // meow vaga
     sendMessage: (message: string) => {
         ipcRenderer.send('message', message)
     },
@@ -41,6 +42,9 @@ const api = {
     RemoveDir: (dir: string) => {
         ipcRenderer.send('remove-dir', dir)
     },
+    RemoveLastOpenDir: () => {
+        ipcRenderer.send('remove-last-open-dir')
+    },
     send: (channel: any, data: any) => {
         // whitelist channels
         let validChannels = [
@@ -55,6 +59,10 @@ const api = {
             'get-height-from-main',
             'get-old-dirs-from-main',
             'remove-dir',
+            'get-old-idx-tm',
+            'get-old-idx-fm',
+            'set-old-idx',
+            'remove-last-open-dir',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -73,6 +81,10 @@ const api = {
             'get-height-from-main',
             'get-old-dirs-from-main',
             'remove-dir',
+            'get-old-idx-tm',
+            'get-old-idx-fm',
+            'set-old-idx',
+            'remove-last-open-dir',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`

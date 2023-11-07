@@ -65,7 +65,9 @@ function App() {
 
     // Track list states
     const [fileListFlick, setFileListFlick] = useState(0)
-    const [files, setFiles] = useState<any[]>([])
+    const [files, setFiles] = useState<any[]>([
+        'Click folder icon to load songs.',
+    ])
     const [durations, setDurations] = useState<any[]>([])
     const [names, setNames] = useState<any[]>([])
     const [authors, setAuthors] = useState<any[]>([])
@@ -150,21 +152,19 @@ function App() {
                             fontSize: '0.65rem',
                             lineHeight: '1.1rem',
                         }}
-                        className="pl-1 grid grid-flow-col text-xs font-mono rounded-md text-[#333333] bg-[#ffa640]"
+                        className="p-[0.1rem] grid grid-flow-col text-xs font-mono rounded-md"
                     >
-                        <p>
+                        <div className="rounded-md px-1 font-mono bg-[#222222] text-[#ffa640]">
+                            {secondsToDhmsShort(durations[index]).replace(
+                                ' : ',
+                                ':'
+                            )}
+                            &nbsp;|&nbsp;
                             {formats[index] !== undefined &&
                             formats[index] !== null
                                 ? formats[index]
                                 : '🎵'}
-                        </p>
-                        <p>&nbsp;</p>
-                        <p className="rounded-md pl-1 pr-1 bg-[#333333] text-[#ffa640]">
-                            {sampleRates[index] !== undefined &&
-                            sampleRates[index] !== null
-                                ? Math.trunc(sampleRates[index] / 1000) + 'kHz'
-                                : '🎵'}
-                        </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -181,6 +181,7 @@ function App() {
         setProgress(0)
         setCurrTime(0)
         setCurrIdx(index)
+        window.Main.send('set-old-idx', index)
         setFileListFlick(fileListFlick + 1)
     }
 
@@ -259,13 +260,23 @@ function App() {
     }
 
     const removeDir = (e: any, idx: number) => {
-        window.Main.RemoveDir(directories[idx])
-        if (directories.length < 2) {
-            return
+        if (directories.length == 1) {
+            setFiles(['Click folder icon to load songs.'])
+            setCovers([])
+            setFormats([])
+            setDurations([])
+            setSampleRates([])
+            setNames([])
+            setAlbums([])
+            setAuthors([])
+            setColors(['#000000', '#000000', '#000000', '#000000'])
         }
+        window.Main.RemoveDir(directories[idx])
         e.stopPropagation()
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
+        window.Main.RemoveLastOpenDir()
         setFileListFlick(fileListFlick + 1)
+        setCurrDir(directories[idx - 1] || '')
     }
 
     useEffect(() => {
@@ -273,7 +284,7 @@ function App() {
     }, [directories])
 
     // Get seek time from mouse position on the track
-    const relativeCoords = (e: any) => {
+    const relativeCoords = (e: any, click: boolean) => {
         if (!audio) {
             return
         }
@@ -283,12 +294,11 @@ function App() {
         var x = e.clientX - bounds.left
         var relative_pos = (audio.duration / 150) * x
         if (
-            mouseDown &&
+            (mouseDown || click) &&
             !Number.isNaN(relative_pos) &&
             relative_pos !== Infinity
         ) {
             setSeek(relative_pos)
-            console.log('relative_pos ' + relative_pos)
         }
     }
 
@@ -369,8 +379,10 @@ function App() {
 
     // Normal way of using react with listeners
     useEffect(() => {
-        window.Main.GetOldDirs()
         audio.ontimeupdate = updateProgress
+        window.Main.receive('get-old-idx-fm', (index: number) => {
+            setCurrIdx(index)
+        })
         window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
             console.log('dirs ' + dirs)
             setDirectories(dirs)
@@ -433,10 +445,14 @@ function App() {
                             trackData['common']['artist']
                     )
                 )
-                setCurrIdx(0)
+                // setCurrIdx(0)
+                window.Main.send('get-old-idx-tm', null)
                 setFileListFlick(fileListFlick + 1)
             }
         })
+
+        window.Main.GetOldDirs()
+
         openDir(true)
         return () => {
             audio.pause()
@@ -473,10 +489,10 @@ function App() {
                 <div
                     style={{
                         backgroundImage: `
-                            radial-gradient(ellipse at top left, ${colors[0]}30  55%, transparent 100%),
-                            radial-gradient(ellipse at bottom  left, ${colors[1]}30  55% , transparent 100%),
-                            radial-gradient(ellipse at top    right, ${colors[2]}30 55% , transparent 100%),
-                            radial-gradient(ellipse at bottom right, ${colors[3]}30  55% , transparent 100%)`,
+                            radial-gradient(ellipse at top left, ${colors[0]}50  50%, transparent 80%),
+                            radial-gradient(ellipse at bottom  left, ${colors[1]}50  50% , transparent 80%),
+                            radial-gradient(ellipse at top    right, ${colors[2]}50 50% , transparent 80%),
+                            radial-gradient(ellipse at bottom right, ${colors[3]}50  50% , transparent 80%)`,
                     }}
                     className={`bg-[#333333] drag ${
                         play ? 'animate-spin' : 'animate-spin pause'
@@ -563,7 +579,10 @@ function App() {
                                     // latter being the track knob which has its own bounds.
                                     // This causes unexpected bahaviour
                                     onMouseMove={(e) => {
-                                        relativeCoords(e)
+                                        relativeCoords(e, false)
+                                    }}
+                                    onClick={(e) => {
+                                        relativeCoords(e, true)
                                     }}
                                     onMouseDown={() => setMouseDown(true)}
                                     onMouseLeave={() => setMouseDown(false)}
@@ -996,24 +1015,28 @@ function App() {
                             className="text-left text-xs rtl-grid ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
                         >
                             {' '}
-                            {currDir}
+                            {currDir || 'Current Directory: None'}
                         </p>
                         <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap text-white flex-1">
-                            {secondsToDhms(
-                                durations.reduce(
-                                    (acc: number, curr: number) => {
-                                        return acc + curr
-                                    },
-                                    0
-                                )
-                            )}
+                            {durations.length > 0
+                                ? secondsToDhms(
+                                      durations.reduce(
+                                          (acc: number, curr: number) => {
+                                              return acc + curr
+                                          },
+                                          0
+                                      )
+                                  )
+                                : 'Total Song Duration'}
                         </p>
                         <div className="mr-1 min-w-[35%] flex-none inline-block ">
                             <p
                                 title={currDir}
                                 className="text-xs text-right overflow-hidden whitespace-nowrap text-white  text-ellipsis"
                             >
-                                {`${currIdx + 1} / ${files.length}`}
+                                {files.length > 0
+                                    ? `${currIdx + 1} / ${files.length}`
+                                    : 'Current song #'}
                             </p>
                         </div>
                     </div>

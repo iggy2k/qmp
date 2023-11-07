@@ -6,6 +6,7 @@ import {
     IpcMainEvent,
     screen,
     dialog,
+    Menu,
 } from 'electron'
 import isDev from 'electron-is-dev'
 import * as mm from 'music-metadata'
@@ -103,7 +104,7 @@ function createWindow() {
     })
 
     const settings = new BrowserWindow({
-        height: 480,
+        height: 300,
         width: 450,
         frame: true,
         show: false,
@@ -185,18 +186,35 @@ function createWindow() {
         window.webContents.send('get-files-from-main', lsdir)
     })
 
+    ipcMain.on('set-old-idx', (_, index: number) => {
+        store.set('last_idx', index)
+        console.log('last_idx = ' + index)
+    })
+
+    ipcMain.on('get-old-idx-tm', (_) => {
+        window.webContents.send('get-old-idx-fm', store.get('last_idx') || 0)
+        console.log('last_idx = ' + store.get('last_idx') || 0)
+    })
+
+    ipcMain.on('remove-last-open-dir', (_) => {
+        store.delete('last_open_dir')
+    })
+
     ipcMain.on('open-folder-tm', (_, openDefault: boolean) => {
         try {
             if (openDefault) {
                 let dir = store.get('last_open_dir')
-                window.webContents.send('open-folder-fm', dir)
+
                 store.set('last_open_dir', dir)
 
                 let obj = store.get('all_dirs') as string[]
 
                 if (obj && typeof dir == 'string' && !obj.includes(dir)) {
                     store.set('all_dirs', obj.concat([dir]))
+                } else {
+                    return
                 }
+                window.webContents.send('open-folder-fm', dir)
             } else {
                 let dirpath = dialog.showOpenDialogSync(window, {
                     properties: ['openDirectory'],
@@ -209,7 +227,7 @@ function createWindow() {
 
                 let obj = store.get('all_dirs') as string[]
 
-                if (obj && typeof dir == 'string') {
+                if (obj && typeof dir == 'string' && !obj.includes(dir)) {
                     store.set('all_dirs', obj.concat([dir]))
                 } else {
                     store.set('all_dirs', [dir])
@@ -266,7 +284,15 @@ function createWindow() {
         store.set('all_dirs', filteredArray)
     })
 
-    window.on('will-resize', () => {
+    // window.on('will-resize', () => {
+    //     // console.log('resize')
+    //     window.webContents.send(
+    //         'get-height-from-main',
+    //         window.getBounds().height
+    //     )
+    // })
+
+    window.on('resized', () => {
         // console.log('resize')
         window.webContents.send(
             'get-height-from-main',
@@ -275,7 +301,7 @@ function createWindow() {
     })
 
     window.on('blur', () => {
-        window.setOpacity(0.7)
+        window.setOpacity(0.85)
     })
 
     window.on('focus', () => {
@@ -289,6 +315,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    const menu = Menu.buildFromTemplate(template)
+    Menu.setApplicationMenu(menu)
     createWindow()
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -305,3 +333,106 @@ ipcMain.on('message', (event: IpcMainEvent, message: any) => {
         500
     )
 })
+
+const isMac = process.platform === 'darwin'
+
+const template = [
+    // { role: 'appMenu' }
+    ...(isMac
+        ? [
+              {
+                  label: app.name,
+                  submenu: [
+                      { role: 'about' },
+                      { type: 'separator' },
+                      { role: 'services' },
+                      { type: 'separator' },
+                      { role: 'hide' },
+                      { role: 'hideOthers' },
+                      { role: 'unhide' },
+                      { type: 'separator' },
+                      { role: 'quit' },
+                  ],
+              },
+          ]
+        : []),
+    // { role: 'fileMenu' }
+    {
+        label: 'File',
+        submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+    },
+    // { role: 'editMenu' }
+    {
+        label: 'Edit',
+        submenu: [
+            { role: 'undo' },
+            { role: 'redo' },
+            { type: 'separator' },
+            { role: 'cut' },
+            { role: 'copy' },
+            { role: 'paste' },
+            ...(isMac
+                ? [
+                      { role: 'pasteAndMatchStyle' },
+                      { role: 'delete' },
+                      { role: 'selectAll' },
+                      { type: 'separator' },
+                      {
+                          label: 'Speech',
+                          submenu: [
+                              { role: 'startSpeaking' },
+                              { role: 'stopSpeaking' },
+                          ],
+                      },
+                  ]
+                : [
+                      { role: 'delete' },
+                      { type: 'separator' },
+                      { role: 'selectAll' },
+                  ]),
+        ],
+    },
+    // { role: 'viewMenu' }
+    {
+        label: 'View',
+        submenu: [
+            { role: 'reload' },
+            { role: 'forceReload' },
+            { role: 'toggleDevTools' },
+            { type: 'separator' },
+            { role: 'resetZoom' },
+            // { role: 'zoomIn' },
+            // { role: 'zoomOut' },
+            { type: 'separator' },
+            { role: 'togglefullscreen' },
+        ],
+    },
+    // { role: 'windowMenu' }
+    {
+        label: 'Window',
+        submenu: [
+            { role: 'minimize' },
+            { role: 'zoom' },
+            ...(isMac
+                ? [
+                      { type: 'separator' },
+                      { role: 'front' },
+                      { type: 'separator' },
+                      { role: 'window' },
+                  ]
+                : [{ role: 'close' }]),
+        ],
+    },
+    {
+        role: 'help',
+        submenu: [
+            {
+                label: 'Learn More',
+                click: async () => {
+                    const { shell } = require('electron')
+                    await shell.openExternal('https://electronjs.org')
+                },
+            },
+        ],
+    },
+] as Electron.MenuItemConstructorOptions[]

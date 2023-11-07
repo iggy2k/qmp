@@ -55,20 +55,26 @@
 
 .animate-spin {
     /* background: linear-gradient(130deg, #ff7e00, #ffffff, #5cff00); */
-    background-size: 200% 200%;
+    background-size: 400% 400%;
 
-    animation: Animation 5s infinite reverse;
+    animation: Animation 10s infinite ease-in-out reverse;
 }
 
 @keyframes Animation {
     0% {
-        background-position: 100% 100%;
-    }
-    50% {
         background-position: 0% 0%;
     }
+    25% {
+        background-position: 75% 0%;
+    }
+    50% {
+        background-position: 75% 75%;
+    }
+    75% {
+        background-position: 0% 75%;
+    }
     100% {
-        background-position: 100% 100%;
+        background-position: 0% 0%;
     }
 }
 

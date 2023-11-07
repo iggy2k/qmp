@@ -1,51 +1,63 @@
 import React, { useEffect, useState, useRef } from 'react'
-import ThemeCircle from './components/ThemeCircle'
-import { PlusCircleIcon } from '@heroicons/react/24/solid'
 import { HexColorPicker } from 'react-colorful'
+import { invertColor, randomHexColor } from './helpers'
+import { IconAlertHexagon } from '@tabler/icons-react'
 
 function Settings() {
-    const [tab, setTab] = useState('theme')
+    const [tab, setTab] = useState('appearance')
 
     const [background, setBackground] = useState('#aabbcc')
     const [accent, setAccent] = useState('#aabbcc')
     const [text, setText] = useState('#aabbcc')
-    const [lightText, setLightText] = useState('#aabbcc')
+    const [altText, setAltText] = useState('#aabbcc')
+
+    const [isChecked, setIsChecked] = useState(false)
+    const handleCheckboxChange = () => {
+        setIsChecked(!isChecked)
+    }
 
     const [selected, setSelected] = useState('background')
 
     const [showPicker, setShowPicker] = useState(false)
 
+    const setRandomColors = () => {
+        setBackground(randomHexColor())
+        setAccent(randomHexColor())
+        setText(randomHexColor())
+        setAltText(randomHexColor())
+    }
+
     return (
-        <div className="bg-[#333333] h-[100vh] p-1 overflow-hidden">
+        <div className="bg-[#333333] h-[100vh] p-1 overflow-hidden drag">
             <div className="grid grid-cols-3 gap-3 mt-3 bg-black/10 rounded-md m-2 h-[30px]">
                 <div
-                    className={`text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
+                    className={`no-drag text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
          ${
-             tab == 'theme'
+             tab == 'appearance'
                  ? 'transition ease-in-out duration-300 border-[#f08665] border-x-[1px]  '
                  : ' hover:bg-black/10'
          }`}
                     onClick={() => {
-                        setTab('theme')
+                        setTab('appearance')
                     }}
                 >
-                    <p>Themes</p>
+                    <p>Features</p>
                 </div>
                 <div
-                    className={`text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
+                    className={`no-drag text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
          ${
-             tab == 'playlists'
+             tab == 'colors'
                  ? 'transition ease-in-out duration-300 border-[#f08665] border-x-[1px] '
                  : ' hover:bg-black/10'
          }`}
                     onClick={() => {
-                        setTab('playlists')
+                        setTab('colors')
                     }}
                 >
-                    <p>Playlists</p>
+                    <p>Colors</p>
                 </div>
                 <div
-                    className={`text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
+                    className={`no-drag text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
          ${
              tab == 'misc'
                  ? 'transition ease-in-out duration-300 border-[#f08665] border-x-[1px] '
@@ -58,213 +70,237 @@ function Settings() {
                     <p>Misc.</p>
                 </div>
             </div>
-            {tab == 'theme' ? (
-                <div className="grid grid-flow-col auto-cols-2 transition-opacity bg-black/10 m-2 pb-4">
-                    <div className="">
-                        <div className=" w-[100px] p-[15px] ml-7 mt-5 rounded-lg outline outline-[2px] outline-[black]/20 border-black/20 max-h-[350px] overflow-y-auto shadow-[inset_0px_-19px_30px_-27px_#000000,inset_2px_19px_30px_-27px_#000000] col-span-1">
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20 mb-3 hover:outline hover:outline-[#f08665]/20"
+            {tab == 'appearance' ? (
+                <div className="grid grid-flow-col auto-cols-2 transition-opacity bg-black/10 m-1 pb-4">
+                    <div className="no-drag  flex flex-col p-2">
+                        <div className="w-max flex mb-2">
+                            <input
+                                type="checkbox"
+                                id="use-cover"
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+
+before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                            />
+                            <label
+                                className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
+                                "
+                                htmlFor="use-cover"
                             >
-                                <ThemeCircle
-                                    bg={'#333333'}
-                                    accent={'#f08665'}
-                                    text={'#6e635f'}
-                                    textlight={'#a1918c'}
-                                />
+                                Use cover for track colors
+                            </label>
+                        </div>
+                        <div className="w-max flex mb-2">
+                            <input
+                                type="checkbox"
+                                id="move-colors"
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+
+before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                            />
+                            <label
+                                className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
+                                "
+                                htmlFor="move-colors"
+                            >
+                                Moving track colors
+                            </label>
+                        </div>
+                        <div className="w-max flex mb-2">
+                            <input
+                                type="checkbox"
+                                id="download-cover"
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+
+before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                            />
+                            <label
+                                className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
+                                "
+                                htmlFor="download-cover"
+                            >
+                                Click cover to download
+                            </label>
+                        </div>
+                        <div className="w-max flex">
+                            <input
+                                type="checkbox"
+                                id="transparent-inactive"
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+
+before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                            />
+                            <label
+                                className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
+                                "
+                                htmlFor="transparent-inactive"
+                            >
+                                Transparency when inactive
+                            </label>
+                            <div title="Requires restarting the app.">
+                                <IconAlertHexagon className="pb-[0.4rem] h-[24px] text-red-400" />
                             </div>
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20  mb-3 hover:outline hover:outline-[#f08665]/20"
+                        </div>
+                        <div className="w-max flex mb-2">
+                            <input
+                                type="checkbox"
+                                id="bottom-bar"
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+
+before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                            />
+                            <label
+                                className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
+                                "
+                                htmlFor="bottom-bar"
                             >
-                                <ThemeCircle
-                                    bg={'#7394c9'}
-                                    accent={'#1f5cbf'}
-                                    text={'#949494'}
-                                    textlight={'#ebebeb'}
-                                />
-                            </div>
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20  mb-3 hover:outline hover:outline-[#f08665]/20"
+                                Bottom information bar
+                            </label>
+                        </div>
+                        <div className="w-max flex mb-2">
+                            <input
+                                type="checkbox"
+                                id="frameless"
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+
+before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                            />
+                            <label
+                                className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
+                                "
+                                htmlFor="frameless"
                             >
-                                <ThemeCircle
-                                    bg={'#3e4a41'}
-                                    accent={'#3ac961'}
-                                    text={'#000000'}
-                                    textlight={'#323333'}
-                                />
-                            </div>
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20  mb-3 hover:outline hover:outline-[#f08665]/20"
-                            >
-                                <ThemeCircle
-                                    bg={'#3e4a41'}
-                                    accent={'#3ac961'}
-                                    text={'#000000'}
-                                    textlight={'#323333'}
-                                />
-                            </div>
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20  mb-3 hover:outline hover:outline-[#f08665]/20"
-                            >
-                                <ThemeCircle
-                                    bg={'#3e4a41'}
-                                    accent={'#3ac961'}
-                                    text={'#000000'}
-                                    textlight={'#323333'}
-                                />
-                            </div>
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20  mb-3 hover:outline hover:outline-[#f08665]/20"
-                            >
-                                <ThemeCircle
-                                    bg={'#3e4a41'}
-                                    accent={'#3ac961'}
-                                    text={'#000000'}
-                                    textlight={'#323333'}
-                                />
-                            </div>
-                            <div
-                                className="w-[70px] h-[70px] rounded-[30%]
-            bg-[#5c5954]/20  mb-3 hover:outline hover:outline-[#f08665]/20 pl-[10px] pt-[10px]"
-                            >
-                                <div
-                                    className="w-[50px] h-[50px] 
-              rounded-full
-              bg-gradient-to-r
-              bg-[linear-gradient(to right,theme(colors.blue.500),theme(colors.green.500),theme(colors.red.500),theme(colors.yellow.500))]"
-                                ></div>
+                                Frameless window
+                            </label>
+                            <div title="Requires restarting the app.">
+                                <IconAlertHexagon className=" pb-[0.4rem] h-[24px] text-red-400" />
                             </div>
                         </div>
                     </div>
-
-                    <div className="ml-4 mt-1 px-2 col-span-1 ">
-                        <div className="mt-5 grid grid-flow-col auto-cols-max">
-                            <div
-                                className={`w-[30px] h-[30px] rounded-md ${
-                                    selected == 'background'
-                                        ? 'border-black/20 border-[4px]'
-                                        : ''
-                                }`}
-                                style={{ backgroundColor: `${background}` }}
-                                onClick={() => setSelected('background')}
-                            ></div>
-                            <div className="grid grid-flow-col auto-cols-2">
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold min-w-[75px]">
-                                    {background}
-                                </p>
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold">
-                                    Background
-                                </p>
-                            </div>
-                        </div>
-                        <div className="mt-5 grid grid-flow-col auto-cols-max">
-                            <div
-                                className={`w-[30px] h-[30px] rounded-md ${
-                                    selected == 'accent'
-                                        ? 'border-black/20 border-[4px]'
-                                        : ''
-                                }`}
-                                style={{ backgroundColor: `${accent}` }}
-                                onClick={() => setSelected('accent')}
-                            ></div>
-                            <div className="grid grid-flow-col auto-cols-2">
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold min-w-[75px]">
-                                    {accent}
-                                </p>
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold">
-                                    Accent
-                                </p>
-                            </div>
-                        </div>
-                        <div className="mt-5 grid grid-flow-col auto-cols-max">
-                            <div
-                                className={`w-[30px] h-[30px] rounded-md ${
-                                    selected == 'text'
-                                        ? 'border-black/20 border-[4px]'
-                                        : ''
-                                }`}
-                                style={{ backgroundColor: `${text}` }}
-                                onClick={() => setSelected('text')}
-                            ></div>
-                            <div className="grid grid-flow-col auto-cols-2">
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold min-w-[75px]">
-                                    {text}
-                                </p>
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold">
-                                    Text
-                                </p>
-                            </div>
-                        </div>
-                        <div className="mt-5 grid grid-flow-col auto-cols-max">
-                            <div
-                                className={`w-[30px] h-[30px] rounded-md ${
-                                    selected == 'lightText'
-                                        ? 'border-black/20 border-[4px]'
-                                        : ''
-                                }`}
-                                style={{ backgroundColor: `${lightText}` }}
-                                onClick={() => setSelected('lightText')}
-                            ></div>
-                            <div className="grid grid-flow-col auto-cols-2">
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold min-w-[75px]">
-                                    {lightText}
-                                </p>
-                                <p className="ml-4 b-1 mt-[4px] text-[#bfbfbf] font-extrabold">
-                                    Light text
-                                </p>
-                            </div>
-                        </div>
-
+                </div>
+            ) : tab == 'colors' ? (
+                <div className="rounded-md m-1 p-2 grid grid-flow-row grid-cols-2  bg-black/10">
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
                         <div
-                            className="grid grid-flow-col grid-cols-2 mt-4
-          min-w-[500px] min-h-[100px]"
-                        >
-                            <HexColorPicker
-                                className=" max-h-[100px] max-w-[240px] min-w-[240px]"
-                                color={
-                                    selected == 'background'
-                                        ? background
-                                        : selected == 'accent'
-                                        ? accent
-                                        : selected == 'text'
-                                        ? text
-                                        : selected == 'lightText'
-                                        ? lightText
-                                        : '#000000'
-                                }
-                                onChange={
-                                    selected == 'background'
-                                        ? setBackground
-                                        : selected == 'accent'
-                                        ? setAccent
-                                        : selected == 'text'
-                                        ? setText
-                                        : selected == 'lightText'
-                                        ? setLightText
-                                        : () => null
-                                }
-                            />
+                            className={
+                                `w-[35px] h-[20px]` +
+                                (selected == 'background' ? ` border-2` : '')
+                            }
+                            style={{
+                                backgroundColor: `${background}`,
+                                borderColor: `${invertColor(background)}`,
+                            }}
+                            onClick={() => setSelected('background')}
+                        ></div>
+                        <div className="grid grid-flow-col auto-cols-2">
+                            <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
+                                Background
+                            </p>
                         </div>
+                    </div>
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                        <div
+                            className={
+                                `w-[35px] h-[20px]` +
+                                (selected == 'accent' ? ` border-2` : '')
+                            }
+                            style={{
+                                backgroundColor: `${accent}`,
+                                borderColor: `${invertColor(accent)}`,
+                            }}
+                            onClick={() => setSelected('accent')}
+                        ></div>
+                        <div className="grid grid-flow-col auto-cols-2">
+                            <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
+                                Accent
+                            </p>
+                        </div>
+                    </div>
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                        <div
+                            className={
+                                `w-[35px] h-[20px]` +
+                                (selected == 'text' ? ` border-2` : '')
+                            }
+                            style={{
+                                backgroundColor: `${text}`,
+                                borderColor: `${invertColor(text)}`,
+                            }}
+                            onClick={() => setSelected('text')}
+                        ></div>
+                        <div className="grid grid-flow-col auto-cols-2">
+                            <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
+                                Text
+                            </p>
+                        </div>
+                    </div>
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                        <div
+                            className={
+                                `w-[35px] h-[20px]` +
+                                (selected == 'altText' ? ` border-2` : '')
+                            }
+                            style={{
+                                backgroundColor: `${altText}`,
+                                borderColor: `${invertColor(altText)}`,
+                            }}
+                            onClick={() => setSelected('altText')}
+                        ></div>
+                        <div className="grid grid-flow-col auto-cols-2">
+                            <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
+                                Alt text
+                            </p>
+                        </div>
+                    </div>
 
-                        <div className="grid grid-flow-col grid-cols-2 max-w-[240px] gap-3 mt-2">
-                            <div
-                                className="text-center text-[#bfbfbf] p-2 rounded-md col-span-1	
-         border-[#f08665] border-b-[1px] 5] hover:bg-black/10
-         "
-                            >
-                                <p>Add</p>
-                            </div>
-                            <div
-                                className="text-center text-[#bfbfbf] p-2 rounded-md col-span-1	
-        border-[#f08665] border-b-[1px] hover:bg-black/10"
-                            >
-                                <p>Randomize</p>
-                            </div>
+                    <div
+                        className="grid grid-flow-col grid-cols-2 my-4
+min-h-[100px]"
+                    >
+                        <HexColorPicker
+                            className="no-drag max-h-[100px] max-w-[240px]"
+                            color={
+                                selected == 'background'
+                                    ? background
+                                    : selected == 'accent'
+                                    ? accent
+                                    : selected == 'text'
+                                    ? text
+                                    : selected == 'altText'
+                                    ? altText
+                                    : '#000000'
+                            }
+                            onChange={
+                                selected == 'background'
+                                    ? setBackground
+                                    : selected == 'accent'
+                                    ? setAccent
+                                    : selected == 'text'
+                                    ? setText
+                                    : selected == 'altText'
+                                    ? setAltText
+                                    : () => null
+                            }
+                        />
+                    </div>
+
+                    <div className="grid grid-flow-row w-[70%] items-center">
+                        <div
+                            className="no-drag text-center text-[#bfbfbf] p-2 rounded-md	
+border-[#f08665] border-b-[1px] hover:bg-black/10 h-[40px]"
+                            onClick={() => {
+                                setRandomColors()
+                            }}
+                        >
+                            <p>Randomize</p>
+                        </div>
+                        <div
+                            className="no-drag text-center text-[#bfbfbf] p-2 rounded-md	
+border-[#f08665] border-b-[1px] hover:bg-black/10 h-[40px]"
+                            onClick={() => {
+                                setRandomColors()
+                            }}
+                        >
+                            <p>Apply</p>
                         </div>
                     </div>
                 </div>
