@@ -18,7 +18,7 @@ const WIN_HEIGHT = 450
 const WIN_HEIGHT_MIN = 102
 const WIN_HEIGHT_MAX = 600
 
-const WIN_WIDTH_MIN = 470
+const WIN_WIDTH_MIN = 800
 const WIN_WIDTH_MAX = 800
 const HTML5_AUDIO = [
     'wav',
@@ -175,7 +175,7 @@ function createWindow() {
         }
         openFiles(files).then((data) => {
             // console.log(data);
-            window.webContents.send('fromMain', data)
+            window.webContents.send('fromMain', data, files)
         })
     })
 
@@ -284,21 +284,21 @@ function createWindow() {
         store.set('all_dirs', filteredArray)
     })
 
-    // window.on('will-resize', () => {
-    //     // console.log('resize')
-    //     window.webContents.send(
-    //         'get-height-from-main',
-    //         window.getBounds().height
-    //     )
-    // })
-
-    window.on('resized', () => {
+    window.on('will-resize', () => {
         // console.log('resize')
         window.webContents.send(
             'get-height-from-main',
             window.getBounds().height
         )
     })
+
+    // window.on('resized', () => {
+    //     // console.log('resize')
+    //     window.webContents.send(
+    //         'get-height-from-main',
+    //         window.getBounds().height
+    //     )
+    // })
 
     window.on('blur', () => {
         window.setOpacity(0.85)
