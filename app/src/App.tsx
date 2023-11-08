@@ -257,12 +257,12 @@ function App() {
         if (directories.length == 1) {
             setSongs([])
             setColors(['#000000', '#000000', '#000000', '#000000'])
+            window.Main.RemoveLastOpenDir()
         }
         window.Main.RemoveDir(directories[idx])
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
-        window.Main.RemoveLastOpenDir()
         setFileListFlick(fileListFlick + 1)
-        setCurrDir(directories[idx - 1] || '')
+        openCertainDir(directories[idx - 1] || directories[idx + 1])
     }
 
     useEffect(() => {
@@ -293,16 +293,13 @@ function App() {
     }
 
     const openCertainDir = (path: string) => {
-        setCurrDir(path)
         window.Main.send('get-files-to-main', path)
-        setFileListFlick(fileListFlick + 1)
     }
 
     // Load all supported audio files from
     // a directory (recursive)
     const openDir = (openDefault: boolean) => {
         window.Main.send('open-folder-tm', openDefault)
-        setFileListFlick(fileListFlick + 1)
     }
 
     const setSeek = (time: number) => {
@@ -380,7 +377,7 @@ function App() {
         window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
             console.log('dirs ' + dirs)
             setDirectories(dirs)
-            openCertainDir(dirs[0])
+            openCertainDir(dirs[dirs.length - 1])
         })
         window.Main.receive('get-height-from-main', (height: number) => {
             console.log(height)
@@ -388,20 +385,24 @@ function App() {
         })
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
             if (path !== undefined) {
-                setCurrDir(path)
                 window.Main.send('get-files-to-main', path)
             }
         })
         let files = []
-        window.Main.receive('get-files-from-main', (data: any) => {
-            if (data.length > 0) {
-                files = data
-                const paths = Object.values(data)
-                window.Main.send('toMain', paths)
+        window.Main.receive(
+            'get-files-from-main',
+            (data: any, path: string) => {
+                if (data.length > 0) {
+                    setCurrDir(path)
+                    files = data
+                    const paths = Object.values(data)
+                    window.Main.send('toMain', paths)
+                }
             }
-        })
+        )
         window.Main.receive('fromMain', (data2: any, files: any) => {
-            if (data2[1].length > 1) {
+            console.log('Received songs: ' + data2[0].length)
+            if (data2[0].length > 0) {
                 // Case: get all tracks in the directory
                 let formats = data2[0].map(
                     (trackData: { [x: string]: { [x: string]: any } }) =>
@@ -474,9 +475,8 @@ function App() {
     }, [])
 
     useEffect(() => {
-        console.log('songs ' + songs.length)
-        songs[0] && console.log('songs ' + Object.entries(songs[0].name))
-    }, [currIdx])
+        songs[0] && console.log('songs[0].file ' + songs[0].file)
+    }, [songs, currDir])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {

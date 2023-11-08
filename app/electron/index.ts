@@ -183,7 +183,7 @@ function createWindow() {
         let lsdir = rreaddirSync(path, [])
         lsdir = lsdir.filter(checkExension)
         // console.log(lsdir)
-        window.webContents.send('get-files-from-main', lsdir)
+        window.webContents.send('get-files-from-main', lsdir, path)
     })
 
     ipcMain.on('set-old-idx', (_, index: number) => {
