@@ -77,6 +77,7 @@ function App() {
     const [mouseDown, setMouseDown] = useState(false)
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(0.5)
+    const [preMuteVolume, setPreMuteVolume] = useState(0.5)
     const [shuffle, setShuffle] = useState(false)
     const [onTop, setOnTop] = useState(false)
     const [resized, setResized] = useState(false)
@@ -252,17 +253,25 @@ function App() {
             })
     }
 
+    const mute = () => {
+        setPreMuteVolume(volume)
+        setVolume(0)
+    }
+
     const removeDir = (e: any, idx: number) => {
         e.stopPropagation()
         if (directories.length == 1) {
             setSongs([])
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.RemoveLastOpenDir()
+        } else {
+            idx == currIdx &&
+                openCertainDir(directories[idx - 1] || directories[idx + 1])
         }
         window.Main.RemoveDir(directories[idx])
+
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
         setFileListFlick(fileListFlick + 1)
-        openCertainDir(directories[idx - 1] || directories[idx + 1])
     }
 
     useEffect(() => {
@@ -360,6 +369,8 @@ function App() {
             audio.src = songs[currIdx].file
                 ? `file://${songs[currIdx].file}`
                 : ''
+        } else {
+            audio.src = ''
         }
 
         updateColors()
@@ -377,7 +388,7 @@ function App() {
         window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
             console.log('dirs ' + dirs)
             setDirectories(dirs)
-            openCertainDir(dirs[dirs.length - 1])
+            dirs[dirs.length - 1] && openCertainDir(dirs[dirs.length - 1])
         })
         window.Main.receive('get-height-from-main', (height: number) => {
             console.log(height)
@@ -523,7 +534,7 @@ function App() {
                                 {songs[currIdx] && songs[currIdx].cover ? (
                                     <img
                                         ref={trackCoverRef}
-                                        className="no-drag rounded-lg duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-[
+                                        className="no-drag ml-[0.1rem] rounded-lg duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-[
                                 transition-property: transform, shadow, opacity;
                                 transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                                 transition-duration: 150ms;] 
@@ -551,7 +562,7 @@ function App() {
                                                 200
                                             ),
                                         }}
-                                        className="drag  w-[64px] h-[64px] rounded-[10px]"
+                                        className="drag ml-[0.15rem] w-[64px] h-[64px] rounded-[10px]"
                                         onClick={() => {
                                             openFile(currIdx + 1)
                                         }}
@@ -579,11 +590,17 @@ function App() {
                                 className="drag grid grid-flow-col auto-cols-max text-sm"
                             >
                                 <p>
-                                    {songs[currIdx] &&
-                                        songs[currIdx].file
-                                            .split('/')
-                                            .reverse()[0]
-                                            .replace(/\.[^/.]+$/, '')}
+                                    {songs[currIdx]
+                                        ? songs[currIdx].name
+                                            ? songs[currIdx].name
+                                                  .split('/')
+                                                  .reverse()[0]
+                                                  .replace(/\.[^/.]+$/, '')
+                                            : songs[currIdx].file
+                                                  .split('/')
+                                                  .reverse()[0]
+                                                  .replace(/\.[^/.]+$/, '')
+                                        : ''}
                                 </p>
                                 <p>
                                     &nbsp;{!songs[currIdx] || '-'}
@@ -789,7 +806,7 @@ function App() {
                                     style={{
                                         color: LightenDarkenColor(
                                             colors[2],
-                                            200
+                                            150
                                         ),
                                     }}
                                     className="no-drag h-[20px] m-1"
@@ -823,7 +840,7 @@ function App() {
                                     style={{
                                         color: LightenDarkenColor(
                                             colors[2],
-                                            200
+                                            150
                                         ),
                                     }}
                                     className="no-drag h-[20px] m-1"
@@ -903,7 +920,7 @@ function App() {
                                     style={{
                                         color: LightenDarkenColor(
                                             colors[2],
-                                            200
+                                            150
                                         ),
                                     }}
                                     className="no-drag h-[20px] m-1"
@@ -931,6 +948,9 @@ function App() {
                                             200
                                         ),
                                     }}
+                                    onClick={() => {
+                                        setVolume(preMuteVolume)
+                                    }}
                                     className="no-drag h-[20px] m-1"
                                 />
                             ) : volume < 0.5 ? (
@@ -941,6 +961,9 @@ function App() {
                                             200
                                         ),
                                     }}
+                                    onClick={() => {
+                                        mute()
+                                    }}
                                     className="no-drag h-[20px] m-1"
                                 />
                             ) : (
@@ -950,6 +973,9 @@ function App() {
                                             colors[2],
                                             200
                                         ),
+                                    }}
+                                    onClick={() => {
+                                        mute()
                                     }}
                                     className="no-drag h-[20px] m-1"
                                 />
@@ -1016,7 +1042,11 @@ function App() {
                             style={{
                                 color: LightenDarkenColor(colors[2], 200),
                             }}
-                            className="no-drag h-[24px] m-1 ml-auto mr-1 hover:animate-pulse transition-opacity"
+                            className={`no-drag h-[24px] m-1 ml-auto mr-1 ${
+                                directories.length == 0
+                                    ? 'animate-pulse transition-opacity'
+                                    : ''
+                            }`}
                             onClick={() => {
                                 openDir(false)
                             }}
@@ -1038,7 +1068,7 @@ function App() {
                             className="text-left text-xs rtl-grid ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
                         >
                             {' '}
-                            {currDir || 'Current Directory: None'}
+                            {currDir || 'No directory loaded'}
                         </p>
                         <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap text-white flex-1">
                             {songs.length > 0
@@ -1054,7 +1084,7 @@ function App() {
                                               0
                                           )
                                   )
-                                : 'Total Song Duration'}
+                                : '0d 0h 0m 0s'}
                         </p>
                         <div className="mr-1 min-w-[35%] flex-none inline-block ">
                             <p
@@ -1063,7 +1093,7 @@ function App() {
                             >
                                 {songs.length > 0
                                     ? `${currIdx + 1} / ${songs.length}`
-                                    : 'Current song #'}
+                                    : '0 / 0'}
                             </p>
                         </div>
                     </div>
