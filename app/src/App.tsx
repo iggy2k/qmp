@@ -69,7 +69,7 @@ function App() {
     const [songs, setSongs] = useState<any[]>([])
     const [directories, setDirectories] = useState<string[]>([])
 
-    const [currIdx, setCurrIdx] = useState(-1)
+    const [currIdx, setCurrIdx] = useState(0)
     const [currDir, setCurrDir] = useState('')
 
     const [play, setPlay] = useState(false)
@@ -265,21 +265,21 @@ function App() {
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.RemoveLastOpenDir()
         } else {
-            idx == currIdx &&
+            directories[idx] == currDir &&
                 openCertainDir(directories[idx - 1] || directories[idx + 1])
+            // setFileListFlick(fileListFlick + 1)
         }
         window.Main.RemoveDir(directories[idx])
 
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
-        setFileListFlick(fileListFlick + 1)
     }
 
     useEffect(() => {
-        console.log('directories = ' + directories)
+        // console.log('directories = ' + directories)
     }, [directories])
 
     useEffect(() => {
-        console.log('currDir = ' + currDir)
+        // console.log('currDir = ' + currDir)
     }, [currDir])
 
     // Get seek time from mouse position on the track
@@ -377,7 +377,7 @@ function App() {
         if (play) {
             togglePlay()
         }
-    }, [currIdx, fileListFlick])
+    }, [currIdx])
 
     // Normal way of using react with listeners
     useEffect(() => {
@@ -386,12 +386,12 @@ function App() {
             setCurrIdx(index)
         })
         window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
-            console.log('dirs ' + dirs)
+            // console.log('dirs ' + dirs)
             setDirectories(dirs)
             dirs[dirs.length - 1] && openCertainDir(dirs[dirs.length - 1])
         })
         window.Main.receive('get-height-from-main', (height: number) => {
-            console.log(height)
+            // console.log(height)
             setElectronWindowHeight(height)
         })
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
@@ -412,7 +412,7 @@ function App() {
             }
         )
         window.Main.receive('fromMain', (data2: any, files: any) => {
-            console.log('Received songs: ' + data2[0].length)
+            // console.log('Received songs: ' + data2[0].length)
             if (data2[0].length > 0) {
                 // Case: get all tracks in the directory
                 let formats = data2[0].map(
@@ -475,6 +475,7 @@ function App() {
                 setSongs(newSongs)
                 window.Main.send('get-old-idx-tm', null)
                 setFileListFlick(fileListFlick + 1)
+                updateColors()
             }
         })
 
@@ -486,8 +487,8 @@ function App() {
     }, [])
 
     useEffect(() => {
-        songs[0] && console.log('songs[0].file ' + songs[0].file)
-    }, [songs, currDir])
+        songs[currIdx] && updateColors()
+    }, [songs, currIdx])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {
@@ -1065,7 +1066,7 @@ function App() {
                     <div className="flex flex-row">
                         <p
                             title={currDir}
-                            className="text-left text-xs rtl-grid ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
+                            className="text-left text-xs ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
                         >
                             {' '}
                             {currDir || 'No directory loaded'}
