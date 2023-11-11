@@ -169,21 +169,25 @@ function createWindow() {
         onTop = !onTop
     })
 
-    ipcMain.on('toMain', (_, files: string[]) => {
+    ipcMain.on('toMain', (_, args: any[]) => {
+        let files = args[0]
+        let changeIndex = args[1]
         if (files[0] == undefined) {
             return
         }
         openFiles(files).then((data) => {
             // console.log(data);
-            window.webContents.send('fromMain', data, files)
+            window.webContents.send('fromMain', data, files, changeIndex)
         })
     })
 
-    ipcMain.on('get-files-to-main', (_, path: string) => {
+    ipcMain.on('get-files-to-main', (_, args: any[]) => {
+        let path = args[0]
+        let changeIndex = args[1]
         let lsdir = rreaddirSync(path, [])
         lsdir = lsdir.filter(checkExension)
         // console.log(lsdir)
-        window.webContents.send('get-files-from-main', lsdir, path)
+        window.webContents.send('get-files-from-main', lsdir, path, changeIndex)
     })
 
     ipcMain.on('set-old-idx', (_, index: number) => {

@@ -266,7 +266,10 @@ function App() {
             window.Main.RemoveLastOpenDir()
         } else {
             directories[idx] == currDir &&
-                openCertainDir(directories[idx - 1] || directories[idx + 1])
+                openCertainDir(
+                    directories[idx - 1] || directories[idx + 1],
+                    true
+                )
             // setFileListFlick(fileListFlick + 1)
         }
         window.Main.RemoveDir(directories[idx])
@@ -301,8 +304,8 @@ function App() {
         }
     }
 
-    const openCertainDir = (path: string) => {
-        window.Main.send('get-files-to-main', path)
+    const openCertainDir = (path: string, changeIndex: boolean) => {
+        window.Main.send('get-files-to-main', [path, changeIndex])
     }
 
     // Load all supported audio files from
@@ -388,7 +391,8 @@ function App() {
         window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
             // console.log('dirs ' + dirs)
             setDirectories(dirs)
-            dirs[dirs.length - 1] && openCertainDir(dirs[dirs.length - 1])
+            dirs[dirs.length - 1] &&
+                openCertainDir(dirs[dirs.length - 1], false)
         })
         window.Main.receive('get-height-from-main', (height: number) => {
             // console.log(height)
@@ -396,88 +400,95 @@ function App() {
         })
         window.Main.receive('open-folder-fm', (path: string | undefined) => {
             if (path !== undefined) {
-                window.Main.send('get-files-to-main', path)
+                window.Main.send('get-files-to-main', [path, false])
             }
         })
         let files = []
         window.Main.receive(
             'get-files-from-main',
-            (data: any, path: string) => {
+            (data: any, path: string, changeIndex: boolean) => {
                 if (data.length > 0) {
                     setCurrDir(path)
                     files = data
                     const paths = Object.values(data)
-                    window.Main.send('toMain', paths)
+                    window.Main.send('toMain', [paths, changeIndex])
                 }
             }
         )
-        window.Main.receive('fromMain', (data2: any, files: any) => {
-            // console.log('Received songs: ' + data2[0].length)
-            if (data2[0].length > 0) {
-                // Case: get all tracks in the directory
-                let formats = data2[0].map(
-                    (trackData: { [x: string]: { [x: string]: any } }) =>
-                        trackData['format']['container']
-                            ? trackData['format']['container']
-                            : null
-                )
+        window.Main.receive(
+            'fromMain',
+            (data2: any, files: any, changeIndex: boolean) => {
+                console.log('changeIndex: ' + changeIndex)
+                if (data2[0].length > 0) {
+                    // Case: get all tracks in the directory
+                    let formats = data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['format']['container']
+                                ? trackData['format']['container']
+                                : null
+                    )
 
-                let durations = data2[0].map(
-                    (trackData: { [x: string]: { [x: string]: any } }) =>
-                        trackData['format']['duration']
-                            ? trackData['format']['duration']
-                            : null
-                )
+                    let durations = data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['format']['duration']
+                                ? trackData['format']['duration']
+                                : null
+                    )
 
-                let rates = data2[0].map(
-                    (trackData: { [x: string]: { [x: string]: any } }) =>
-                        trackData['format']['sampleRate']
-                            ? trackData['format']['sampleRate']
-                            : null
-                )
+                    let rates = data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['format']['sampleRate']
+                                ? trackData['format']['sampleRate']
+                                : null
+                    )
 
-                let names = data2[0].map(
-                    (trackData: { [x: string]: { [x: string]: any } }) =>
-                        trackData['common']['title']
-                            ? trackData['common']['title']
-                            : null
-                )
+                    let names = data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['common']['title']
+                                ? trackData['common']['title']
+                                : null
+                    )
 
-                let albums = data2[0].map(
-                    (trackData: { [x: string]: { [x: string]: any } }) =>
-                        trackData['common']['album']
-                            ? trackData['common']['album']
-                            : null
-                )
+                    let albums = data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['common']['album']
+                                ? trackData['common']['album']
+                                : null
+                    )
 
-                let authors = data2[0].map(
-                    (trackData: { [x: string]: { [x: string]: any } }) =>
-                        trackData['common']['artist']
-                            ? trackData['common']['artist']
-                            : null
-                )
+                    let authors = data2[0].map(
+                        (trackData: { [x: string]: { [x: string]: any } }) =>
+                            trackData['common']['artist']
+                                ? trackData['common']['artist']
+                                : null
+                    )
 
-                let covers = data2[1]
+                    let covers = data2[1]
 
-                let newSongs = []
-                for (let i = 0; i < names.length; i++) {
-                    newSongs.push({
-                        format: formats[i],
-                        duration: durations[i],
-                        rate: rates[i],
-                        name: names[i],
-                        album: albums[i],
-                        author: authors[i],
-                        cover: covers[i],
-                        file: files[i],
-                    })
+                    let newSongs = []
+                    for (let i = 0; i < names.length; i++) {
+                        newSongs.push({
+                            format: formats[i],
+                            duration: durations[i],
+                            rate: rates[i],
+                            name: names[i],
+                            album: albums[i],
+                            author: authors[i],
+                            cover: covers[i],
+                            file: files[i],
+                        })
+                    }
+                    setSongs(newSongs)
+                    setFileListFlick(fileListFlick + 1)
+                    updateColors()
+                    if (changeIndex) {
+                        setCurrIdx(0)
+                    } else {
+                        window.Main.send('get-old-idx-tm', null)
+                    }
                 }
-                setSongs(newSongs)
-                window.Main.send('get-old-idx-tm', null)
-                setFileListFlick(fileListFlick + 1)
-                updateColors()
             }
-        })
+        )
 
         window.Main.GetOldDirs()
 
@@ -485,6 +496,10 @@ function App() {
             audio.pause()
         }
     }, [])
+
+    useEffect(() => {
+        console.log('currIdx ' + currIdx)
+    }, [currIdx])
 
     useEffect(() => {
         songs[currIdx] && updateColors()
@@ -1020,7 +1035,7 @@ function App() {
                                         }}
                                         onClick={() => {
                                             currDir !== dir &&
-                                                openCertainDir(dir)
+                                                openCertainDir(dir, true)
                                         }}
                                         className="inline-block text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-xl"
                                     >
