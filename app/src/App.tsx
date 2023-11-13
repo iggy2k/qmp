@@ -66,11 +66,15 @@ function App() {
     // Track list states
     const [fileListFlick, setFileListFlick] = useState(0)
 
-    const [songs, setSongs] = useState<any[]>([])
+    const [swapTracks, setSwapTracks] = useState<any[][]>([[], []])
+
     const [directories, setDirectories] = useState<string[]>([])
 
+    const [swapDirs, setSwapDirs] = useState<string[]>(['', ''])
+
     const [currIdx, setCurrIdx] = useState(0)
-    const [currDir, setCurrDir] = useState('')
+
+    const [currSong, setCurrSong] = useState<any>({})
 
     const [play, setPlay] = useState(false)
     const [currTime, setCurrTime] = useState(0)
@@ -88,54 +92,58 @@ function App() {
             style={style}
             key={index}
             className={`overflow-auto h-7 px-2 ${index == 0 ? 'pt-1' : ''} ${
-                index == songs.length - 1 ? 'pb-1' : ''
+                index == swapTracks[0].length - 1 ? 'pb-1' : ''
             }`}
         >
             <div
                 style={{
-                    backgroundColor: index == currIdx ? '#888888' + '20' : '',
+                    backgroundColor:
+                        index == currIdx && swapDirs[0] == swapDirs[1]
+                            ? '#888888' + '20'
+                            : '',
                 }}
                 className="hover:bg-black/20 transition-opacity duration-300 flex flex-row p-[1px] text-center rounded-md"
                 onClick={() => {
-                    openFile(index)
+                    openFile(swapTracks[0][index].file, true)
                 }}
             >
-                {songs[index] && songs[index].cover ? (
+                {swapTracks[0][index] && swapTracks[0][index].cover ? (
                     <img
                         className="w-[24px] h-[24px] rounded-lg flex-none"
-                        src={songs[index].cover}
+                        src={swapTracks[0][index].cover}
                         alt=""
                     />
                 ) : (
-                    <IconMusic
-                        className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-white"
-                        onClick={() => {
-                            openFile(currIdx + 1)
-                        }}
-                    />
+                    <IconMusic className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-white" />
                 )}
 
                 <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis text-white/70">
-                    {songs[index] && songs[index].name ? (
+                    {swapTracks[0][index] && swapTracks[0][index].name ? (
                         <div className="flex flex-row">
                             <p className="text-white/80">
-                                {songs[index].name &&
-                                    songs[index].name.replace('\\', '')}
+                                {swapTracks[0][index].name &&
+                                    swapTracks[0][index].name.replace('\\', '')}
                             </p>
                             <p className="ml-1 text-white/50">
-                                {songs[index].author &&
-                                    songs[index].author.replace('\\', '')}
+                                {swapTracks[0][index].author &&
+                                    swapTracks[0][index].author.replace(
+                                        '\\',
+                                        ''
+                                    )}
                             </p>
                             <p className="ml-1 text-white/30">
-                                {songs[index].album &&
-                                    songs[index].album.replace('\\', '')}
+                                {swapTracks[0][index].album &&
+                                    swapTracks[0][index].album.replace(
+                                        '\\',
+                                        ''
+                                    )}
                             </p>
                         </div>
                     ) : (
                         <p>
                             {' '}
-                            {songs[index] &&
-                                songs[index].file
+                            {swapTracks[0][index] &&
+                                swapTracks[0][index].file
                                     .split('/')
                                     .reverse()[0]
                                     .replace(/\.[^/.]+$/, '')}
@@ -152,12 +160,14 @@ function App() {
                         className="p-[0.1rem] grid grid-flow-col text-xs font-mono rounded-md"
                     >
                         <div className="rounded-md px-1 font-mono bg-[#222222] text-[#ffa640]">
-                            {songs[index] &&
+                            {swapTracks[0][index] &&
                                 secondsToDhmsShort(
-                                    songs[index].duration
+                                    swapTracks[0][index].duration
                                 ).replace(' : ', ':')}
                             &nbsp;|&nbsp;
-                            {songs[index] ? songs[index].format : '🎵'}
+                            {swapTracks[0][index]
+                                ? swapTracks[0][index].format
+                                : '🎵'}
                         </div>
                     </div>
                 </div>
@@ -166,12 +176,50 @@ function App() {
     )
 
     // Switch to a new track
-    const openFile = (index: number) => {
-        if (index < 0) {
-            index = songs.length - 1
-        } else if (index > songs.length - 1) {
-            index = 0
+    const openFile = (path: string, setSameDir: boolean) => {
+        let files = swapTracks[0].map(function (e) {
+            return e.file
+        })
+        let currentSongFiles = swapTracks[1].map(function (e) {
+            return e.file
+        })
+        let index = 0
+
+        if (swapDirs[0] == swapDirs[1]) {
+            index = files.indexOf(path)
+            if (index == -1) {
+                index = 0
+            }
+            setCurrSong(swapTracks[0][index])
+
+            if (swapTracks[0][index]) {
+                audio.src = swapTracks[0][index].file
+                    ? `file://${swapTracks[0][index].file}`
+                    : ''
+            } else {
+                audio.src = ''
+            }
+        } else {
+            index = currentSongFiles.indexOf(path)
+            if (index == -1) {
+                index = 0
+            }
+            setCurrSong(swapTracks[1][index])
+
+            if (setSameDir) {
+                setSwapTracks((swapTracks) => [swapTracks[0], swapTracks[0]])
+                setSwapDirs((swapDirs) => [swapDirs[0], swapDirs[0]])
+            }
+
+            if (swapTracks[1][index]) {
+                audio.src = swapTracks[1][index].file
+                    ? `file://${swapTracks[1][index].file}`
+                    : ''
+            } else {
+                audio.src = ''
+            }
         }
+
         setProgress(0)
         setCurrTime(0)
         setCurrIdx(index)
@@ -261,11 +309,11 @@ function App() {
     const removeDir = (e: any, idx: number) => {
         e.stopPropagation()
         if (directories.length == 1) {
-            setSongs([])
+            setSwapTracks([[], []])
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.RemoveLastOpenDir()
         } else {
-            directories[idx] == currDir &&
+            directories[idx] == swapDirs[0] &&
                 openCertainDir(
                     directories[idx - 1] || directories[idx + 1],
                     true
@@ -276,14 +324,6 @@ function App() {
 
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
     }
-
-    useEffect(() => {
-        // console.log('directories = ' + directories)
-    }, [directories])
-
-    useEffect(() => {
-        // console.log('currDir = ' + currDir)
-    }, [currDir])
 
     // Get seek time from mouse position on the track
     const relativeCoords = (e: any, click: boolean) => {
@@ -321,11 +361,8 @@ function App() {
     }
 
     const downloadCover = (b64data: any) => {
-        if (b64data !== undefined) {
-            window.Main.SaveCover(
-                b64data.toString('base64'),
-                songs[currIdx].name
-            )
+        if (b64data !== undefined && currSong) {
+            window.Main.SaveCover(b64data.toString('base64'), currSong.name)
         }
     }
 
@@ -339,21 +376,22 @@ function App() {
                 ref={listRef}
                 className={`list ${fileListFlick} scroll-smooth`}
                 height={electronWindowHeight - 165}
-                itemCount={songs.length}
+                itemCount={swapTracks[0] ? swapTracks[0].length : 0}
                 itemSize={30}
                 width={'100%'}
             >
                 {Row}
             </List>
         ),
-        [songs, fileListFlick, currIdx, electronWindowHeight]
+        [swapTracks, fileListFlick, currIdx, electronWindowHeight, swapDirs]
     )
 
     useEffect(() => {
-        !directories.includes(currDir) &&
-            currDir &&
-            setDirectories([...directories, currDir])
-    }, [currDir])
+        !directories.includes(swapDirs[0]) &&
+            swapDirs[0] &&
+            setDirectories([...directories, swapDirs[0]])
+        console.log('swapDirs: ' + swapDirs)
+    }, [swapDirs])
 
     useEffect(() => {
         audio.loop = repeat
@@ -361,24 +399,8 @@ function App() {
     }, [repeat, volume])
 
     useEffect(() => {
-        if (listRef.current && !resized) {
+        if (listRef.current && !resized && swapDirs[0] == swapDirs[1]) {
             listRef.current.scrollToItem(currIdx, 'smart')
-        }
-        if (!audio.paused) {
-            audio.pause()
-            setPlay(false)
-        }
-        if (songs[currIdx]) {
-            audio.src = songs[currIdx].file
-                ? `file://${songs[currIdx].file}`
-                : ''
-        } else {
-            audio.src = ''
-        }
-
-        updateColors()
-        if (play) {
-            togglePlay()
         }
     }, [currIdx])
 
@@ -386,13 +408,13 @@ function App() {
     useEffect(() => {
         audio.ontimeupdate = updateProgress
         window.Main.receive('get-old-idx-fm', (index: number) => {
-            setCurrIdx(index)
+            openFile(swapTracks[0][index], false)
         })
-        window.Main.receive('get-old-dirs-from-main', (dirs: string[]) => {
-            // console.log('dirs ' + dirs)
-            setDirectories(dirs)
-            dirs[dirs.length - 1] &&
-                openCertainDir(dirs[dirs.length - 1], false)
+        window.Main.receive('get-old-dirs-from-main', (swapDirs: string[]) => {
+            // console.log('swapDirs ' + swapDirs)
+            setDirectories(swapDirs)
+            swapDirs[swapDirs.length - 1] &&
+                openCertainDir(swapDirs[swapDirs.length - 1], false)
         })
         window.Main.receive('get-height-from-main', (height: number) => {
             // console.log(height)
@@ -407,8 +429,13 @@ function App() {
         window.Main.receive(
             'get-files-from-main',
             (data: any, path: string, changeIndex: boolean) => {
-                if (data.length > 0) {
-                    setCurrDir(path)
+                if (data && data.length > 0) {
+                    if (changeIndex) {
+                        setSwapDirs((swapDirs) => [path, swapDirs[1]])
+                    } else {
+                        setSwapDirs([path, path])
+                    }
+
                     files = data
                     const paths = Object.values(data)
                     window.Main.send('toMain', [paths, changeIndex])
@@ -418,8 +445,8 @@ function App() {
         window.Main.receive(
             'fromMain',
             (data2: any, files: any, changeIndex: boolean) => {
-                console.log('changeIndex: ' + changeIndex)
-                if (data2[0].length > 0) {
+                // console.log('changeIndex: ' + changeIndex)
+                if (data2[0] && data2[0].length > 0) {
                     // Case: get all tracks in the directory
                     let formats = data2[0].map(
                         (trackData: { [x: string]: { [x: string]: any } }) =>
@@ -464,8 +491,16 @@ function App() {
                     )
 
                     let covers = data2[1]
-
-                    let newSongs = []
+                    let newSongs: {
+                        format: string
+                        duration: string
+                        rate: string
+                        name: string
+                        album: string
+                        author: string
+                        cover: string
+                        file: string
+                    }[] = []
                     for (let i = 0; i < names.length; i++) {
                         newSongs.push({
                             format: formats[i],
@@ -478,12 +513,16 @@ function App() {
                             file: files[i],
                         })
                     }
-                    setSongs(newSongs)
-                    setFileListFlick(fileListFlick + 1)
-                    updateColors()
+
+                    console.log('SET SONGS')
+
                     if (changeIndex) {
+                        console.log('changeIndex')
                         setCurrIdx(0)
+                        setSwapTracks((swapTracks) => [newSongs, swapTracks[0]])
                     } else {
+                        console.log('no changeIndex')
+                        setSwapTracks([newSongs, newSongs])
                         window.Main.send('get-old-idx-tm', null)
                     }
                 }
@@ -498,19 +537,27 @@ function App() {
     }, [])
 
     useEffect(() => {
-        console.log('currIdx ' + currIdx)
-    }, [currIdx])
+        updateColors()
+        currSong && console.log('currSong: ' + currSong.name)
+    }, [currSong])
 
     useEffect(() => {
-        songs[currIdx] && updateColors()
-    }, [songs, currIdx])
+        console.log(
+            'swapTracks: ' + swapTracks[0].length + ' , ' + swapTracks[1].length
+        )
+    }, [swapTracks])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {
             if (shuffle) {
-                openFile(Math.floor(Math.random() * songs.length))
+                openFile(
+                    swapTracks[1][
+                        Math.floor(Math.random() * swapTracks[1].length)
+                    ].file,
+                    false
+                )
             } else {
-                openFile(currIdx + 1)
+                openFile(swapTracks[1][currIdx + 1].file, false)
             }
         }
     }, [progress])
@@ -547,7 +594,7 @@ function App() {
                     <div className="flex">
                         <div className="no-drag p-2 pl-2 pb-0">
                             <div className="flex-none w-[64px] h-[64px]">
-                                {songs[currIdx] && songs[currIdx].cover ? (
+                                {currSong && currSong.cover ? (
                                     <img
                                         ref={trackCoverRef}
                                         className="no-drag ml-[0.1rem] rounded-lg duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-[
@@ -555,16 +602,10 @@ function App() {
                                 transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                                 transition-duration: 150ms;] 
                                 "
-                                        src={
-                                            songs[currIdx]
-                                                ? songs[currIdx].cover
-                                                : ''
-                                        }
+                                        src={currSong ? currSong.cover : ''}
                                         onClick={() => {
-                                            songs[currIdx]
-                                                ? downloadCover(
-                                                      songs[currIdx].cover
-                                                  )
+                                            currSong
+                                                ? downloadCover(currSong.cover)
                                                 : null
                                         }}
                                         alt=""
@@ -579,9 +620,6 @@ function App() {
                                             ),
                                         }}
                                         className="drag ml-[0.15rem] w-[64px] h-[64px] rounded-[10px]"
-                                        onClick={() => {
-                                            openFile(currIdx + 1)
-                                        }}
                                     />
                                 )}
                             </div>
@@ -593,8 +631,9 @@ function App() {
                                 }}
                                 className="no-drag text-[#a1918c] text-sm"
                             >
-                                {songs[currIdx] &&
-                                    songs[currIdx].file
+                                {currSong &&
+                                    currSong.file &&
+                                    currSong.file
                                         .split('/')
                                         .reverse()[0]
                                         .replace(/\.[^/.]+$/, '')}
@@ -606,23 +645,25 @@ function App() {
                                 className="drag grid grid-flow-col auto-cols-max text-sm"
                             >
                                 <p>
-                                    {songs[currIdx]
-                                        ? songs[currIdx].name
-                                            ? songs[currIdx].name
+                                    {currSong
+                                        ? currSong.name
+                                            ? currSong.name
                                                   .split('/')
                                                   .reverse()[0]
                                                   .replace(/\.[^/.]+$/, '')
-                                            : songs[currIdx].file
+                                            : currSong.file
+                                            ? currSong.file
                                                   .split('/')
                                                   .reverse()[0]
                                                   .replace(/\.[^/.]+$/, '')
+                                            : ''
                                         : ''}
                                 </p>
                                 <p>
-                                    &nbsp;{!songs[currIdx] || '-'}
+                                    &nbsp;{!currSong || '-'}
                                     &nbsp;
                                 </p>
-                                <p>{songs[currIdx] && songs[currIdx].album}</p>
+                                <p>{currSong && currSong.album}</p>
                             </div>
                             <div className="w-full h-[20px] flex flex-row">
                                 <div
@@ -777,10 +818,8 @@ function App() {
                                 >
                                     {secondsToDhmsShort(audio.currentTime)}
                                     &nbsp;/&nbsp;
-                                    {songs[currIdx] &&
-                                        secondsToDhmsShort(
-                                            songs[currIdx].duration
-                                        )}
+                                    {currSong &&
+                                        secondsToDhmsShort(currSong.duration)}
                                 </div>
                             </div>
                         </div>
@@ -886,11 +925,22 @@ function App() {
                                 onClick={() => {
                                     shuffle
                                         ? openFile(
-                                              Math.floor(
-                                                  Math.random() * songs.length
-                                              )
+                                              swapTracks[1][
+                                                  Math.floor(
+                                                      Math.random() *
+                                                          swapTracks[1].length
+                                                  )
+                                              ].file,
+                                              false
                                           )
-                                        : openFile(currIdx - 1)
+                                        : openFile(
+                                              swapTracks[1][
+                                                  currIdx - 1 >= 0
+                                                      ? currIdx - 1
+                                                      : swapTracks[1].length - 1
+                                              ].file,
+                                              false
+                                          )
                                 }}
                             />
                             {play ? (
@@ -924,11 +974,21 @@ function App() {
                                 onClick={() => {
                                     shuffle
                                         ? openFile(
-                                              Math.floor(
-                                                  Math.random() * songs.length
-                                              )
+                                              swapTracks[1][
+                                                  Math.floor(
+                                                      Math.random() *
+                                                          swapTracks[1].length
+                                                  )
+                                              ].file,
+                                              false
                                           )
-                                        : openFile(currIdx + 1)
+                                        : openFile(
+                                              swapTracks[1][
+                                                  (currIdx + 1) %
+                                                      swapTracks[1].length
+                                              ].file,
+                                              false
+                                          )
                                 }}
                             />
                             {shuffle ? (
@@ -1025,16 +1085,16 @@ function App() {
                                     <div
                                         style={{
                                             backgroundColor:
-                                                currDir == dir
+                                                swapDirs[0] == dir
                                                     ? '#ffa640'
                                                     : '#333333',
                                             color:
-                                                currDir == dir
+                                                swapDirs[0] == dir
                                                     ? '#333333'
                                                     : '#ffa640',
                                         }}
                                         onClick={() => {
-                                            currDir !== dir &&
+                                            swapDirs[0] !== dir &&
                                                 openCertainDir(dir, true)
                                         }}
                                         className="inline-block text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-xl"
@@ -1080,16 +1140,16 @@ function App() {
                 <div className="drag bg-[#2a2a2a] min-h-[16px] flex-none place-items-center p-2">
                     <div className="flex flex-row">
                         <p
-                            title={currDir}
+                            title={swapDirs[0]}
                             className="text-left text-xs ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
                         >
                             {' '}
-                            {currDir || 'No directory loaded'}
+                            {swapDirs[0] || 'No directory loaded'}
                         </p>
                         <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap text-white flex-1">
-                            {songs.length > 0
+                            {swapTracks[0].length > 0
                                 ? secondsToDhms(
-                                      songs
+                                      swapTracks[0]
                                           .map(function (song) {
                                               return song.duration
                                           })
@@ -1104,11 +1164,11 @@ function App() {
                         </p>
                         <div className="mr-1 min-w-[35%] flex-none inline-block ">
                             <p
-                                title={currDir}
+                                title={swapDirs[0]}
                                 className="text-xs text-right overflow-hidden whitespace-nowrap text-white  text-ellipsis"
                             >
-                                {songs.length > 0
-                                    ? `${currIdx + 1} / ${songs.length}`
+                                {swapTracks[0].length > 0
+                                    ? `${currIdx + 1} / ${swapTracks[0].length}`
                                     : '0 / 0'}
                             </p>
                         </div>
