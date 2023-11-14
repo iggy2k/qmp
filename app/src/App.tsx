@@ -49,7 +49,7 @@ const AudioContext = window.AudioContext
 let track: any = null
 let gain: any = null
 const audio = new Audio()
-
+let loadOldSong = -1
 function App() {
     const [colors, setColors] = useState([
         '#000000',
@@ -177,6 +177,7 @@ function App() {
 
     // Switch to a new track
     const openFile = (path: string, setSameDir: boolean) => {
+        console.log(`Trying to load song with path ${path}`)
         let files = swapTracks[0].map(function (e) {
             return e.file
         })
@@ -187,10 +188,9 @@ function App() {
 
         if (swapDirs[0] == swapDirs[1]) {
             index = files.indexOf(path)
-            if (index == -1) {
-                index = 0
-            }
+
             setCurrSong(swapTracks[0][index])
+            console.log(`Set song #${index} from swapTracks[0]`)
 
             if (swapTracks[0][index]) {
                 audio.src = swapTracks[0][index].file
@@ -201,10 +201,8 @@ function App() {
             }
         } else {
             index = currentSongFiles.indexOf(path)
-            if (index == -1) {
-                index = 0
-            }
             setCurrSong(swapTracks[1][index])
+            console.log(`Set song #${index} from swapTracks[1]`)
 
             if (setSameDir) {
                 setSwapTracks((swapTracks) => [swapTracks[0], swapTracks[0]])
@@ -225,6 +223,8 @@ function App() {
         setCurrIdx(index)
         window.Main.send('set-old-idx', index)
         setFileListFlick(fileListFlick + 1)
+
+        audio.pause()
     }
 
     const togglePlay = () => {
@@ -402,13 +402,21 @@ function App() {
         if (listRef.current && !resized && swapDirs[0] == swapDirs[1]) {
             listRef.current.scrollToItem(currIdx, 'smart')
         }
+        if (audio.paused && play) {
+            audio.play()
+            setPlay(true)
+        } else {
+            audio.pause()
+            setPlay(false)
+        }
     }, [currIdx])
 
     // Normal way of using react with listeners
     useEffect(() => {
         audio.ontimeupdate = updateProgress
         window.Main.receive('get-old-idx-fm', (index: number) => {
-            openFile(swapTracks[0][index], false)
+            loadOldSong = index
+            console.log('loadOldSong2: ' + loadOldSong)
         })
         window.Main.receive('get-old-dirs-from-main', (swapDirs: string[]) => {
             // console.log('swapDirs ' + swapDirs)
@@ -522,8 +530,8 @@ function App() {
                         setSwapTracks((swapTracks) => [newSongs, swapTracks[0]])
                     } else {
                         console.log('no changeIndex')
-                        setSwapTracks([newSongs, newSongs])
                         window.Main.send('get-old-idx-tm', null)
+                        setSwapTracks([newSongs, newSongs])
                     }
                 }
             }
@@ -545,6 +553,11 @@ function App() {
         console.log(
             'swapTracks: ' + swapTracks[0].length + ' , ' + swapTracks[1].length
         )
+        if (swapTracks[0].length > 0 && loadOldSong > -1) {
+            console.log('loadOldSong: ' + loadOldSong)
+            openFile(swapTracks[0][loadOldSong].file, true)
+            loadOldSong = -1
+        }
     }, [swapTracks])
 
     useEffect(() => {
@@ -1092,6 +1105,10 @@ function App() {
                                                 swapDirs[0] == dir
                                                     ? '#333333'
                                                     : '#ffa640',
+                                            borderBottom:
+                                                swapDirs[1] == dir
+                                                    ? '1px solid #ffa640'
+                                                    : '',
                                         }}
                                         onClick={() => {
                                             swapDirs[0] !== dir &&
@@ -1139,10 +1156,7 @@ function App() {
                 </div>
                 <div className="drag bg-[#2a2a2a] min-h-[16px] flex-none place-items-center p-2">
                     <div className="flex flex-row">
-                        <p
-                            title={swapDirs[0]}
-                            className="text-left text-xs ml-1 min-w-[35%] overflow-hidden inline-block whitespace-nowrap text-white flex-1 no-drag duration-1000 transition-colors hover:text-[#ee8383] "
-                        >
+                        <p className="text-left text-xs ml-1 min-w-[35%] .rtl-grid overflow-hidden inline-block whitespace-nowrap text-white flex-1">
                             {' '}
                             {swapDirs[0] || 'No directory loaded'}
                         </p>
