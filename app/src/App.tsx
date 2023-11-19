@@ -72,7 +72,7 @@ function App() {
 
     const [swapDirs, setSwapDirs] = useState<string[]>(['', ''])
 
-    const [currIdx, setCurrIdx] = useState(0)
+    const [swapIndeces, setSwapIndeces] = useState<number[]>([0, 0])
 
     const [currSong, setCurrSong] = useState<any>({})
 
@@ -98,13 +98,13 @@ function App() {
             <div
                 style={{
                     backgroundColor:
-                        index == currIdx && swapDirs[0] == swapDirs[1]
+                        index == swapIndeces[1] && swapDirs[0] == swapDirs[1]
                             ? '#888888' + '20'
                             : '',
                 }}
                 className="hover:bg-black/20 transition-opacity duration-300 flex flex-row p-[1px] text-center rounded-md"
                 onClick={() => {
-                    openFile(swapTracks[0][index].file, true)
+                    openFile(index, true)
                 }}
             >
                 {swapTracks[0][index] && swapTracks[0][index].cover ? (
@@ -176,19 +176,16 @@ function App() {
     )
 
     // Switch to a new track
-    const openFile = (path: string, setSameDir: boolean) => {
-        console.log(`Trying to load song with path ${path}`)
+    const openFile = (index: number, setSameDir: boolean) => {
+        console.log(`Trying to load song with index ${index}`)
         let files = swapTracks[0].map(function (e) {
             return e.file
         })
         let currentSongFiles = swapTracks[1].map(function (e) {
             return e.file
         })
-        let index = 0
 
         if (swapDirs[0] == swapDirs[1]) {
-            index = files.indexOf(path)
-
             setCurrSong(swapTracks[0][index])
             console.log(`Set song #${index} from swapTracks[0]`)
 
@@ -200,31 +197,39 @@ function App() {
                 audio.src = ''
             }
         } else {
-            index = currentSongFiles.indexOf(path)
-            setCurrSong(swapTracks[1][index])
             console.log(`Set song #${index} from swapTracks[1]`)
 
             if (setSameDir) {
                 setSwapTracks((swapTracks) => [swapTracks[0], swapTracks[0]])
                 setSwapDirs((swapDirs) => [swapDirs[0], swapDirs[0]])
-            }
 
-            if (swapTracks[1][index]) {
-                audio.src = swapTracks[1][index].file
-                    ? `file://${swapTracks[1][index].file}`
-                    : ''
+                setCurrSong(swapTracks[0][index])
+                if (swapTracks[0][index]) {
+                    audio.src = swapTracks[0][index].file
+                        ? `file://${swapTracks[0][index].file}`
+                        : ''
+                } else {
+                    audio.src = ''
+                }
             } else {
-                audio.src = ''
+                setCurrSong(swapTracks[1][index])
+                if (swapTracks[1][index]) {
+                    audio.src = swapTracks[1][index].file
+                        ? `file://${swapTracks[1][index].file}`
+                        : ''
+                } else {
+                    audio.src = ''
+                }
             }
         }
 
         setProgress(0)
         setCurrTime(0)
-        setCurrIdx(index)
+        setSwapIndeces((swapIndeces) => [swapIndeces[0], index])
         window.Main.send('set-old-idx', index)
         setFileListFlick(fileListFlick + 1)
 
-        audio.pause()
+        // audio.pause()
     }
 
     const togglePlay = () => {
@@ -316,12 +321,10 @@ function App() {
             directories[idx] == swapDirs[0] &&
                 openCertainDir(
                     directories[idx - 1] || directories[idx + 1],
-                    true
+                    false
                 )
-            // setFileListFlick(fileListFlick + 1)
         }
         window.Main.RemoveDir(directories[idx])
-
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
     }
 
@@ -383,7 +386,7 @@ function App() {
                 {Row}
             </List>
         ),
-        [swapTracks, fileListFlick, currIdx, electronWindowHeight, swapDirs]
+        [swapTracks, fileListFlick, swapIndeces, electronWindowHeight, swapDirs]
     )
 
     useEffect(() => {
@@ -399,24 +402,24 @@ function App() {
     }, [repeat, volume])
 
     useEffect(() => {
+        console.log(`swapIndeces = ${swapIndeces}`)
         if (listRef.current && !resized && swapDirs[0] == swapDirs[1]) {
-            listRef.current.scrollToItem(currIdx, 'smart')
+            listRef.current.scrollToItem(swapIndeces[0], 'smart')
         }
         if (audio.paused && play) {
             audio.play()
-            setPlay(true)
-        } else {
+        } else if (audio.paused && !play) {
             audio.pause()
             setPlay(false)
         }
-    }, [currIdx])
+    }, [swapIndeces])
 
     // Normal way of using react with listeners
     useEffect(() => {
         audio.ontimeupdate = updateProgress
         window.Main.receive('get-old-idx-fm', (index: number) => {
             loadOldSong = index
-            console.log('loadOldSong2: ' + loadOldSong)
+            // console.log('loadOldSong2: ' + loadOldSong)
         })
         window.Main.receive('get-old-dirs-from-main', (swapDirs: string[]) => {
             // console.log('swapDirs ' + swapDirs)
@@ -438,11 +441,7 @@ function App() {
             'get-files-from-main',
             (data: any, path: string, changeIndex: boolean) => {
                 if (data && data.length > 0) {
-                    if (changeIndex) {
-                        setSwapDirs((swapDirs) => [path, swapDirs[1]])
-                    } else {
-                        setSwapDirs([path, path])
-                    }
+                    setSwapDirs((swapDirs) => [path, swapDirs[1]])
 
                     files = data
                     const paths = Object.values(data)
@@ -522,14 +521,16 @@ function App() {
                         })
                     }
 
-                    console.log('SET SONGS')
-
                     if (changeIndex) {
-                        console.log('changeIndex')
-                        setCurrIdx(0)
-                        setSwapTracks((swapTracks) => [newSongs, swapTracks[0]])
+                        console.log('swapIndeces[0] to 0')
+                        setSwapIndeces((swapIndeces) => [0, swapIndeces[1]])
+                        setSwapTracks((swapTracks) =>
+                            swapTracks[0] == swapTracks[1]
+                                ? [newSongs, swapTracks[0]]
+                                : [newSongs, newSongs]
+                        )
                     } else {
-                        console.log('no changeIndex')
+                        console.log('no change in index')
                         window.Main.send('get-old-idx-tm', null)
                         setSwapTracks([newSongs, newSongs])
                     }
@@ -554,8 +555,8 @@ function App() {
             'swapTracks: ' + swapTracks[0].length + ' , ' + swapTracks[1].length
         )
         if (swapTracks[0].length > 0 && loadOldSong > -1) {
-            console.log('loadOldSong: ' + loadOldSong)
-            openFile(swapTracks[0][loadOldSong].file, true)
+            // console.log('loadOldSong: ' + loadOldSong)
+            openFile(loadOldSong, true)
             loadOldSong = -1
         }
     }, [swapTracks])
@@ -564,13 +565,11 @@ function App() {
         if (progress === 800 && !repeat) {
             if (shuffle) {
                 openFile(
-                    swapTracks[1][
-                        Math.floor(Math.random() * swapTracks[1].length)
-                    ].file,
+                    Math.floor(Math.random() * swapTracks[1].length),
                     false
                 )
             } else {
-                openFile(swapTracks[1][currIdx + 1].file, false)
+                openFile(swapIndeces[1] + 1, false)
             }
         }
     }, [progress])
@@ -938,20 +937,16 @@ function App() {
                                 onClick={() => {
                                     shuffle
                                         ? openFile(
-                                              swapTracks[1][
-                                                  Math.floor(
-                                                      Math.random() *
-                                                          swapTracks[1].length
-                                                  )
-                                              ].file,
+                                              Math.floor(
+                                                  Math.random() *
+                                                      swapTracks[1].length
+                                              ),
                                               false
                                           )
                                         : openFile(
-                                              swapTracks[1][
-                                                  currIdx - 1 >= 0
-                                                      ? currIdx - 1
-                                                      : swapTracks[1].length - 1
-                                              ].file,
+                                              swapIndeces[1] >= 1
+                                                  ? swapIndeces[1] - 1
+                                                  : swapTracks[1].length - 1,
                                               false
                                           )
                                 }}
@@ -987,19 +982,15 @@ function App() {
                                 onClick={() => {
                                     shuffle
                                         ? openFile(
-                                              swapTracks[1][
-                                                  Math.floor(
-                                                      Math.random() *
-                                                          swapTracks[1].length
-                                                  )
-                                              ].file,
+                                              Math.floor(
+                                                  Math.random() *
+                                                      swapTracks[1].length
+                                              ),
                                               false
                                           )
                                         : openFile(
-                                              swapTracks[1][
-                                                  (currIdx + 1) %
-                                                      swapTracks[1].length
-                                              ].file,
+                                              (swapIndeces[1] + 1) %
+                                                  swapTracks[1].length,
                                               false
                                           )
                                 }}
@@ -1182,7 +1173,9 @@ function App() {
                                 className="text-xs text-right overflow-hidden whitespace-nowrap text-white  text-ellipsis"
                             >
                                 {swapTracks[0].length > 0
-                                    ? `${currIdx + 1} / ${swapTracks[0].length}`
+                                    ? `${swapIndeces[0] + 1} / ${
+                                          swapTracks[0].length
+                                      }`
                                     : '0 / 0'}
                             </p>
                         </div>
