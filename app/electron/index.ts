@@ -33,7 +33,6 @@ const HTML5_AUDIO = [
     'ogg',
 ] // Incomplete
 var resized = true
-var onTop = false
 const store = new Store()
 
 if ((store.get('all_dirs') as string[]).length < 1) {
@@ -51,7 +50,6 @@ function checkExension(file: string) {
 function openFiles(files: string[]) {
     const promises = []
     for (let i = 0; i < files.length; i++) {
-        // console.log('file: ' + files[i])
         promises.push(mm.parseFile(files[i]))
     }
     return Promise.all(promises)
@@ -161,86 +159,89 @@ function createWindow() {
     })
 
     ipcMain.on('always-on-top', () => {
-        if (onTop) {
+        if (window.isAlwaysOnTop()) {
             window?.setAlwaysOnTop(false)
         } else {
             window?.setAlwaysOnTop(true)
         }
-        onTop = !onTop
     })
 
-    ipcMain.on('toMain', (_, args: any[]) => {
-        let files = args[0]
+    ipcMain.on('open-dir-tm', (_, args: any[]) => {
+        console.log('open-dir-tm ' + args)
+        let dir = args[0]
         let changeIndex = args[1]
-        if (files[0] == undefined) {
+
+        let file_list = rreaddirSync(dir, [])
+        file_list = file_list.filter(checkExension)
+
+        if (file_list.length < 1) {
             return
         }
-        openFiles(files).then((data) => {
-            // console.log(data);
-            window.webContents.send('fromMain', data, files, changeIndex)
+
+        openFiles(file_list).then((files_data_array) => {
+            window.webContents.send(
+                'open-dir-fm',
+                dir,
+                files_data_array,
+                file_list,
+                changeIndex
+            )
         })
     })
 
-    ipcMain.on('get-files-to-main', (_, args: any[]) => {
-        let path = args[0]
-        let changeIndex = args[1]
-        let lsdir = rreaddirSync(path, [])
-        lsdir = lsdir.filter(checkExension)
-        // console.log(lsdir)
-        window.webContents.send('get-files-from-main', lsdir, path, changeIndex)
+    ipcMain.on('set-old-file', (_, file: string) => {
+        console.log('set-old-file ' + file)
+        file ? store.set('last_file', file) : store.delete('last_file')
     })
 
-    ipcMain.on('set-old-idx', (_, index: number) => {
-        store.set('last_idx', index)
-        console.log('last_idx = ' + index)
+    ipcMain.on('set-old-index', (_, index: number) => {
+        console.log('set-old-index ' + index)
+        index ? store.set('last_index', index) : store.delete('last_index')
     })
 
-    ipcMain.on('get-old-idx-tm', (_) => {
-        window.webContents.send('get-old-idx-fm', store.get('last_idx') || 0)
-        console.log('last_idx = ' + store.get('last_idx') || 0)
+    ipcMain.on('set-last-open-dir', (_, dir: string) => {
+        console.log('set-last-open-dir ' + dir)
+        dir !== ''
+            ? store.set('last_open_dir', dir)
+            : store.delete('last_open_dir')
     })
 
-    ipcMain.on('remove-last-open-dir', (_) => {
-        store.delete('last_open_dir')
-    })
+    ipcMain.on('add-dir-tm', (_) => {
+        console.log('add-dir-tm')
+        let dirpath = dialog.showOpenDialogSync(window, {
+            properties: ['openDirectory'],
+            defaultPath: '',
+        })
 
-    ipcMain.on('open-folder-tm', (_, openDefault: boolean) => {
-        try {
-            if (openDefault) {
-                let dir = store.get('last_open_dir')
+        let dir = dirpath?.pop()
 
-                store.set('last_open_dir', dir)
-
-                let obj = store.get('all_dirs') as string[]
-
-                if (obj && typeof dir == 'string' && !obj.includes(dir)) {
-                    store.set('all_dirs', obj.concat([dir]))
-                } else {
-                    return
-                }
-                window.webContents.send('open-folder-fm', dir)
-            } else {
-                let dirpath = dialog.showOpenDialogSync(window, {
-                    properties: ['openDirectory'],
-                    defaultPath: '',
-                })
-
-                let dir = dirpath?.pop()
-                window.webContents.send('open-folder-fm', dir)
-                store.set('last_open_dir', dir)
-
-                let obj = store.get('all_dirs') as string[]
-
-                if (obj && typeof dir == 'string' && !obj.includes(dir)) {
-                    store.set('all_dirs', obj.concat([dir]))
-                } else {
-                    store.set('all_dirs', [dir])
-                }
-            }
-            console.log(store.get('all_dirs') as string[])
-        } catch (error) {
-            console.error(error)
+        if (!dir) {
+            return
         }
+
+        let obj = store.get('all_dirs') as string[]
+
+        if (obj && typeof dir == 'string' && !obj.includes(dir)) {
+            store.set('all_dirs', obj.concat([dir]))
+        } else {
+            store.set('all_dirs', [dir])
+        }
+
+        let file_list = rreaddirSync(dir, [])
+        file_list = file_list.filter(checkExension)
+
+        if (file_list.length < 1) {
+            return
+        }
+
+        openFiles(file_list).then((files_data_array) => {
+            window.webContents.send(
+                'add-dir-tm',
+                dir,
+                files_data_array,
+                file_list
+            )
+        })
     })
 
     ipcMain.on('open-settings-tm', (_) => {
@@ -268,10 +269,27 @@ function createWindow() {
             })
     })
 
-    ipcMain.on('get-old-dirs', () => {
-        let dirs = store.get('all_dirs') as string[]
-        console.log('all_dirs ' + dirs)
-        window.webContents.send('get-old-dirs-from-main', dirs)
+    ipcMain.on('restore-session-tm', (_) => {
+        let last_open_dir = store.get('last_open_dir')
+        let last_file = store.get('last_file')
+        let last_index = store.get('last_index')
+        let past_dirs = store.get('all_dirs') as string[]
+
+        console.log(
+            `last_open_dir = ${last_open_dir} \n last_file = ${last_file} \n past_dirs = ${past_dirs} \n last_index = ${last_index}`
+        )
+
+        // if (!last_open_dir || !last_file || !past_dirs) {
+        //     return
+        // }
+
+        window.webContents.send(
+            'restore-session-fm',
+            last_open_dir,
+            last_file,
+            past_dirs,
+            last_index
+        )
     })
 
     ipcMain.on('remove-dir', (_, dir: string) => {
@@ -295,14 +313,6 @@ function createWindow() {
             window.getBounds().height
         )
     })
-
-    // window.on('resized', () => {
-    //     // console.log('resize')
-    //     window.webContents.send(
-    //         'get-height-from-main',
-    //         window.getBounds().height
-    //     )
-    // })
 
     window.on('blur', () => {
         window.setOpacity(0.85)

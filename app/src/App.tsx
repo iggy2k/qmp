@@ -63,16 +63,13 @@ function App() {
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
     const [electronWindowHeight, setElectronWindowHeight] = useState(450)
 
-    // Track list states
-    const [fileListFlick, setFileListFlick] = useState(0)
-
     const [swapTracks, setSwapTracks] = useState<any[][]>([[], []])
 
     const [directories, setDirectories] = useState<string[]>([])
 
     const [swapDirs, setSwapDirs] = useState<string[]>(['', ''])
 
-    const [swapIndeces, setSwapIndeces] = useState<number[]>([0, 0])
+    const [swapIndeces, setSwapIndeces] = useState<number[]>([-1, -1])
 
     const [currSong, setCurrSong] = useState<any>({})
 
@@ -104,7 +101,7 @@ function App() {
                 }}
                 className="hover:bg-black/20 transition-opacity duration-300 flex flex-row p-[1px] text-center rounded-md"
                 onClick={() => {
-                    openFile(index, true)
+                    openFile(swapTracks[0][index].file, true, index)
                 }}
             >
                 {swapTracks[0][index] && swapTracks[0][index].cover ? (
@@ -175,61 +172,41 @@ function App() {
         </div>
     )
 
-    // Switch to a new track
-    const openFile = (index: number, setSameDir: boolean) => {
-        console.log(`Trying to load song with index ${index}`)
-        let files = swapTracks[0].map(function (e) {
-            return e.file
-        })
-        let currentSongFiles = swapTracks[1].map(function (e) {
-            return e.file
-        })
+    const setAudioSource = (filePath: string) => {
+        if (filePath) {
+            audio.src = `file://${filePath}`
+        } else {
+            audio.src = ''
+        }
+    }
 
+    // Switch to a new track
+    const openFile = (file: string, setSameDir: boolean, index: number) => {
+        console.log(
+            `openFile(file: ${file}, setSameDir: ${setSameDir}), index: ${index}`
+        )
         if (swapDirs[0] == swapDirs[1]) {
             setCurrSong(swapTracks[0][index])
-            console.log(`Set song #${index} from swapTracks[0]`)
-
-            if (swapTracks[0][index]) {
-                audio.src = swapTracks[0][index].file
-                    ? `file://${swapTracks[0][index].file}`
-                    : ''
-            } else {
-                audio.src = ''
-            }
+            setAudioSource(file)
         } else {
-            console.log(`Set song #${index} from swapTracks[1]`)
-
             if (setSameDir) {
                 setSwapTracks((swapTracks) => [swapTracks[0], swapTracks[0]])
                 setSwapDirs((swapDirs) => [swapDirs[0], swapDirs[0]])
-
                 setCurrSong(swapTracks[0][index])
-                if (swapTracks[0][index]) {
-                    audio.src = swapTracks[0][index].file
-                        ? `file://${swapTracks[0][index].file}`
-                        : ''
-                } else {
-                    audio.src = ''
-                }
+                setAudioSource(file)
             } else {
                 setCurrSong(swapTracks[1][index])
-                if (swapTracks[1][index]) {
-                    audio.src = swapTracks[1][index].file
-                        ? `file://${swapTracks[1][index].file}`
-                        : ''
-                } else {
-                    audio.src = ''
-                }
+                setAudioSource(file)
             }
         }
 
         setProgress(0)
         setCurrTime(0)
         setSwapIndeces((swapIndeces) => [swapIndeces[0], index])
-        window.Main.send('set-old-idx', index)
-        setFileListFlick(fileListFlick + 1)
 
-        // audio.pause()
+        window.Main.setLastOpenDir(swapDirs[0])
+        window.Main.setOldFile(file)
+        window.Main.setOldIndex(index)
     }
 
     const togglePlay = () => {
@@ -316,7 +293,7 @@ function App() {
         if (directories.length == 1) {
             setSwapTracks([[], []])
             setColors(['#000000', '#000000', '#000000', '#000000'])
-            window.Main.RemoveLastOpenDir()
+            window.Main.setLastOpenDir('')
         } else {
             directories[idx] == swapDirs[0] &&
                 openCertainDir(
@@ -348,13 +325,82 @@ function App() {
     }
 
     const openCertainDir = (path: string, changeIndex: boolean) => {
-        window.Main.send('get-files-to-main', [path, changeIndex])
+        window.Main.send('open-dir-tm', [path, changeIndex])
     }
 
     // Load all supported audio files from
     // a directory (recursive)
-    const openDir = (openDefault: boolean) => {
-        window.Main.send('open-folder-tm', openDefault)
+    const addDir = () => {
+        window.Main.send('add-dir-tm', null)
+    }
+
+    const unpackFilesData = (filesData: any[], filesPaths: string[]) => {
+        let formats = filesData[0].map(
+            (trackData: { [x: string]: { [x: string]: any } }) =>
+                trackData['format']['container']
+                    ? trackData['format']['container']
+                    : null
+        )
+
+        let durations = filesData[0].map(
+            (trackData: { [x: string]: { [x: string]: any } }) =>
+                trackData['format']['duration']
+                    ? trackData['format']['duration']
+                    : null
+        )
+
+        let rates = filesData[0].map(
+            (trackData: { [x: string]: { [x: string]: any } }) =>
+                trackData['format']['sampleRate']
+                    ? trackData['format']['sampleRate']
+                    : null
+        )
+
+        let names = filesData[0].map(
+            (trackData: { [x: string]: { [x: string]: any } }) =>
+                trackData['common']['title']
+                    ? trackData['common']['title']
+                    : null
+        )
+
+        let albums = filesData[0].map(
+            (trackData: { [x: string]: { [x: string]: any } }) =>
+                trackData['common']['album']
+                    ? trackData['common']['album']
+                    : null
+        )
+
+        let authors = filesData[0].map(
+            (trackData: { [x: string]: { [x: string]: any } }) =>
+                trackData['common']['artist']
+                    ? trackData['common']['artist']
+                    : null
+        )
+
+        let covers = filesData[1]
+        let newSongs: {
+            format: string
+            duration: string
+            rate: string
+            name: string
+            album: string
+            author: string
+            cover: string
+            file: string
+        }[] = []
+        for (let i = 0; i < names.length; i++) {
+            newSongs.push({
+                format: formats[i],
+                duration: durations[i],
+                rate: rates[i],
+                name: names[i],
+                album: albums[i],
+                author: authors[i],
+                cover: covers[i],
+                file: filesPaths[i],
+            })
+        }
+        return newSongs
     }
 
     const setSeek = (time: number) => {
@@ -377,7 +423,7 @@ function App() {
         () => (
             <List
                 ref={listRef}
-                className={`list ${fileListFlick} scroll-smooth`}
+                className={`list scroll-smooth`}
                 height={electronWindowHeight - 165}
                 itemCount={swapTracks[0] ? swapTracks[0].length : 0}
                 itemSize={30}
@@ -386,7 +432,7 @@ function App() {
                 {Row}
             </List>
         ),
-        [swapTracks, fileListFlick, swapIndeces, electronWindowHeight, swapDirs]
+        [swapTracks, swapIndeces, electronWindowHeight, swapDirs]
     )
 
     useEffect(() => {
@@ -404,7 +450,7 @@ function App() {
     useEffect(() => {
         console.log(`swapIndeces = ${swapIndeces}`)
         if (listRef.current && !resized && swapDirs[0] == swapDirs[1]) {
-            listRef.current.scrollToItem(swapIndeces[0], 'smart')
+            listRef.current.scrollToItem(swapIndeces[1], 'smart')
         }
         if (audio.paused && play) {
             audio.play()
@@ -417,128 +463,74 @@ function App() {
     // Normal way of using react with listeners
     useEffect(() => {
         audio.ontimeupdate = updateProgress
-        window.Main.receive('get-old-idx-fm', (index: number) => {
-            loadOldSong = index
-            // console.log('loadOldSong2: ' + loadOldSong)
-        })
-        window.Main.receive('get-old-dirs-from-main', (swapDirs: string[]) => {
-            // console.log('swapDirs ' + swapDirs)
-            setDirectories(swapDirs)
-            swapDirs[swapDirs.length - 1] &&
-                openCertainDir(swapDirs[swapDirs.length - 1], false)
-        })
+        window.Main.send('restore-session-tm', null)
+        window.Main.receive(
+            'restore-session-fm',
+            (
+                last_open_dir: string,
+                last_file: string,
+                past_dirs: string[],
+                last_index: number
+            ) => {
+                console.log(
+                    `restore-session-fm * ${last_open_dir} \n ${last_file} \n ${past_dirs} * `
+                )
+                past_dirs && setDirectories(past_dirs)
+                last_open_dir && openCertainDir(last_open_dir, true)
+                last_file && openFile(last_file, true, last_index)
+            }
+        )
         window.Main.receive('get-height-from-main', (height: number) => {
-            // console.log(height)
             setElectronWindowHeight(height)
         })
-        window.Main.receive('open-folder-fm', (path: string | undefined) => {
-            if (path !== undefined) {
-                window.Main.send('get-files-to-main', [path, false])
-            }
-        })
-        let files = []
+
         window.Main.receive(
-            'get-files-from-main',
-            (data: any, path: string, changeIndex: boolean) => {
-                if (data && data.length > 0) {
-                    setSwapDirs((swapDirs) => [path, swapDirs[1]])
+            'add-dir-tm',
+            (new_dir: string, filesData: any[], filesPaths: string[]) => {
+                setSwapDirs((swapDirs) => [new_dir, swapDirs[1]])
 
-                    files = data
-                    const paths = Object.values(data)
-                    window.Main.send('toMain', [paths, changeIndex])
-                }
-            }
-        )
-        window.Main.receive(
-            'fromMain',
-            (data2: any, files: any, changeIndex: boolean) => {
-                // console.log('changeIndex: ' + changeIndex)
-                if (data2[0] && data2[0].length > 0) {
-                    // Case: get all tracks in the directory
-                    let formats = data2[0].map(
-                        (trackData: { [x: string]: { [x: string]: any } }) =>
-                            trackData['format']['container']
-                                ? trackData['format']['container']
-                                : null
-                    )
+                let newSongs = unpackFilesData(filesData, filesPaths)
 
-                    let durations = data2[0].map(
-                        (trackData: { [x: string]: { [x: string]: any } }) =>
-                            trackData['format']['duration']
-                                ? trackData['format']['duration']
-                                : null
-                    )
-
-                    let rates = data2[0].map(
-                        (trackData: { [x: string]: { [x: string]: any } }) =>
-                            trackData['format']['sampleRate']
-                                ? trackData['format']['sampleRate']
-                                : null
-                    )
-
-                    let names = data2[0].map(
-                        (trackData: { [x: string]: { [x: string]: any } }) =>
-                            trackData['common']['title']
-                                ? trackData['common']['title']
-                                : null
-                    )
-
-                    let albums = data2[0].map(
-                        (trackData: { [x: string]: { [x: string]: any } }) =>
-                            trackData['common']['album']
-                                ? trackData['common']['album']
-                                : null
-                    )
-
-                    let authors = data2[0].map(
-                        (trackData: { [x: string]: { [x: string]: any } }) =>
-                            trackData['common']['artist']
-                                ? trackData['common']['artist']
-                                : null
-                    )
-
-                    let covers = data2[1]
-                    let newSongs: {
-                        format: string
-                        duration: string
-                        rate: string
-                        name: string
-                        album: string
-                        author: string
-                        cover: string
-                        file: string
-                    }[] = []
-                    for (let i = 0; i < names.length; i++) {
-                        newSongs.push({
-                            format: formats[i],
-                            duration: durations[i],
-                            rate: rates[i],
-                            name: names[i],
-                            album: albums[i],
-                            author: authors[i],
-                            cover: covers[i],
-                            file: files[i],
-                        })
-                    }
-
-                    if (changeIndex) {
-                        console.log('swapIndeces[0] to 0')
-                        setSwapIndeces((swapIndeces) => [0, swapIndeces[1]])
-                        setSwapTracks((swapTracks) =>
-                            swapTracks[0] == swapTracks[1]
-                                ? [newSongs, swapTracks[0]]
-                                : [newSongs, newSongs]
-                        )
-                    } else {
-                        console.log('no change in index')
-                        window.Main.send('get-old-idx-tm', null)
-                        setSwapTracks([newSongs, newSongs])
-                    }
-                }
+                setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
             }
         )
 
-        window.Main.GetOldDirs()
+        window.Main.receive(
+            'open-dir-fm',
+            (
+                new_dir: string,
+                filesData: any[],
+                filesPaths: string[],
+                changeIndex: boolean
+            ) => {
+                setSwapDirs((swapDirs) => [new_dir, swapDirs[1]])
+
+                let newSongs = unpackFilesData(filesData, filesPaths)
+
+                setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+
+                if (changeIndex) {
+                    console.log('change swapIndeces[0] to 0')
+                    setSwapIndeces((swapIndeces) => [0, swapIndeces[1]])
+                    setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+                } else {
+                    console.log('no change in swapIndeces[0]')
+
+                    setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+                    openFile(
+                        swapTracks[1][
+                            swapIndeces[1] >= 1
+                                ? swapIndeces[1] - 1
+                                : swapTracks[1].length - 1
+                        ].file,
+                        false,
+                        swapIndeces[1] >= 1
+                            ? swapIndeces[1] - 1
+                            : swapTracks[1].length - 1
+                    )
+                }
+            }
+        )
 
         return () => {
             audio.pause()
@@ -547,29 +539,25 @@ function App() {
 
     useEffect(() => {
         updateColors()
-        currSong && console.log('currSong: ' + currSong.name)
+        currSong &&
+            console.log(
+                'updateColors for ' +
+                    (currSong.name ? currSong.name : currSong.file)
+            )
     }, [currSong])
-
-    useEffect(() => {
-        console.log(
-            'swapTracks: ' + swapTracks[0].length + ' , ' + swapTracks[1].length
-        )
-        if (swapTracks[0].length > 0 && loadOldSong > -1) {
-            // console.log('loadOldSong: ' + loadOldSong)
-            openFile(loadOldSong, true)
-            loadOldSong = -1
-        }
-    }, [swapTracks])
 
     useEffect(() => {
         if (progress === 800 && !repeat) {
             if (shuffle) {
-                openFile(
-                    Math.floor(Math.random() * swapTracks[1].length),
-                    false
-                )
+                let rand_idx = Math.floor(Math.random() * swapTracks[1].length)
+                openFile(swapTracks[1][rand_idx].file, false, rand_idx)
             } else {
-                openFile(swapIndeces[1] + 1, false)
+                openFile(
+                    swapTracks[1][(swapIndeces[1] + 1) % swapTracks[1].length]
+                        .file,
+                    false,
+                    (swapIndeces[1] + 1) % swapTracks[1].length
+                )
             }
         }
     }, [progress])
@@ -935,19 +923,25 @@ function App() {
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => {
+                                    let rand_idx = Math.floor(
+                                        Math.random() * swapTracks[1].length
+                                    )
                                     shuffle
                                         ? openFile(
-                                              Math.floor(
-                                                  Math.random() *
-                                                      swapTracks[1].length
-                                              ),
-                                              false
+                                              swapTracks[1][rand_idx].file,
+                                              false,
+                                              rand_idx
                                           )
                                         : openFile(
+                                              swapTracks[1][
+                                                  swapIndeces[1] >= 1
+                                                      ? swapIndeces[1] - 1
+                                                      : swapTracks[1].length - 1
+                                              ].file,
+                                              false,
                                               swapIndeces[1] >= 1
                                                   ? swapIndeces[1] - 1
-                                                  : swapTracks[1].length - 1,
-                                              false
+                                                  : swapTracks[1].length - 1
                                           )
                                 }}
                             />
@@ -980,18 +974,23 @@ function App() {
                                 }}
                                 className="no-drag h-[20px] m-1"
                                 onClick={() => {
+                                    let rand_idx = Math.floor(
+                                        Math.random() * swapTracks[1].length
+                                    )
                                     shuffle
                                         ? openFile(
-                                              Math.floor(
-                                                  Math.random() *
-                                                      swapTracks[1].length
-                                              ),
-                                              false
+                                              swapTracks[1][rand_idx].file,
+                                              false,
+                                              rand_idx
                                           )
                                         : openFile(
+                                              swapTracks[1][
+                                                  (swapIndeces[1] + 1) %
+                                                      swapTracks[1].length
+                                              ].file,
+                                              false,
                                               (swapIndeces[1] + 1) %
-                                                  swapTracks[1].length,
-                                              false
+                                                  swapTracks[1].length
                                           )
                                 }}
                             />
@@ -1132,7 +1131,7 @@ function App() {
                                     : ''
                             }`}
                             onClick={() => {
-                                openDir(false)
+                                addDir()
                             }}
                         />
                     </div>

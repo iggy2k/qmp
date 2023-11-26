@@ -36,14 +36,17 @@ const api = {
     GetHeight: () => {
         ipcRenderer.send('get-height')
     },
-    GetOldDirs: () => {
-        ipcRenderer.send('get-old-dirs')
-    },
     RemoveDir: (dir: string) => {
         ipcRenderer.send('remove-dir', dir)
     },
-    RemoveLastOpenDir: () => {
-        ipcRenderer.send('remove-last-open-dir')
+    setLastOpenDir: (dir: string) => {
+        ipcRenderer.send('set-last-open-dir', dir)
+    },
+    setOldFile: (file: string) => {
+        ipcRenderer.send('set-old-file', file)
+    },
+    setOldIndex: (idx: number) => {
+        ipcRenderer.send('set-old-index', idx)
     },
     send: (channel: any, data: any) => {
         // whitelist channels
@@ -52,8 +55,6 @@ const api = {
             'fromMain',
             'get-files-from-main',
             'get-files-to-main',
-            'open-folder-fm',
-            'open-folder-tm',
             'open-settings-fm',
             'open-settings-tm',
             'get-height-from-main',
@@ -61,8 +62,15 @@ const api = {
             'remove-dir',
             'get-old-idx-tm',
             'get-old-idx-fm',
-            'set-old-idx',
-            'remove-last-open-dir',
+            'set-old-file',
+            'set-old-index',
+            'set-last-open-dir',
+            'restore-session-tm',
+            'restore-session-fm',
+            'add-dir-tm',
+            'add-dir-fm',
+            'open-dir-tm',
+            'open-dir-fm',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -74,8 +82,6 @@ const api = {
             'fromMain',
             'get-files-from-main',
             'get-files-to-main',
-            'open-folder-fm',
-            'open-folder-tm',
             'open-settings-fm',
             'open-settings-tm',
             'get-height-from-main',
@@ -83,8 +89,16 @@ const api = {
             'remove-dir',
             'get-old-idx-tm',
             'get-old-idx-fm',
-            'set-old-idx',
-            'remove-last-open-dir',
+            'set-old-file',
+            'set-old-index',
+            'set-last-open-dir',
+            'restore-session-tm',
+            'restore-session-fm',
+            'restore-session-fm',
+            'add-dir-tm',
+            'add-dir-fm',
+            'open-dir-tm',
+            'open-dir-fm',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`
