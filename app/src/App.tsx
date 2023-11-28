@@ -84,6 +84,10 @@ function App() {
     const [resized, setResized] = useState(false)
     const [repeat, setRepeat] = useState(false)
 
+    const [sessionRestored, setSessionRestored] = useState(false)
+    const [lastFile, setLastFile] = useState('')
+    const [lastIndex, setLastIndex] = useState(-1)
+
     const Row = ({ index, style }: any) => (
         <div
             style={style}
@@ -436,6 +440,18 @@ function App() {
     )
 
     useEffect(() => {
+        if (
+            !sessionRestored &&
+            swapTracks[0][lastIndex] &&
+            lastFile !== '' &&
+            lastIndex !== -1
+        ) {
+            setSessionRestored(true)
+            openFile(lastFile, true, lastIndex)
+        }
+    }, [sessionRestored, swapTracks, lastFile, lastIndex])
+
+    useEffect(() => {
         !directories.includes(swapDirs[0]) &&
             swapDirs[0] &&
             setDirectories([...directories, swapDirs[0]])
@@ -477,7 +493,9 @@ function App() {
                 )
                 past_dirs && setDirectories(past_dirs)
                 last_open_dir && openCertainDir(last_open_dir, true)
-                last_file && openFile(last_file, true, last_index)
+                last_file && setLastFile(last_file)
+                last_index && setLastIndex(last_index)
+                // last_file && openFile(last_file, true, last_index)
             }
         )
         window.Main.receive('get-height-from-main', (height: number) => {
@@ -517,17 +535,17 @@ function App() {
                     console.log('no change in swapIndeces[0]')
 
                     setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
-                    openFile(
-                        swapTracks[1][
-                            swapIndeces[1] >= 1
-                                ? swapIndeces[1] - 1
-                                : swapTracks[1].length - 1
-                        ].file,
-                        false,
-                        swapIndeces[1] >= 1
-                            ? swapIndeces[1] - 1
-                            : swapTracks[1].length - 1
-                    )
+                    // openFile(
+                    //     swapTracks[1][
+                    //         swapIndeces[1] >= 1
+                    //             ? swapIndeces[1] - 1
+                    //             : swapTracks[1].length - 1
+                    //     ].file,
+                    //     false,
+                    //     swapIndeces[1] >= 1
+                    //         ? swapIndeces[1] - 1
+                    //         : swapTracks[1].length - 1
+                    // )
                 }
             }
         )
