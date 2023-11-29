@@ -51,14 +51,9 @@ const api = {
     send: (channel: any, data: any) => {
         // whitelist channels
         let validChannels = [
-            'toMain',
-            'fromMain',
-            'get-files-from-main',
-            'get-files-to-main',
             'open-settings-fm',
             'open-settings-tm',
             'get-height-from-main',
-            'get-old-dirs-from-main',
             'remove-dir',
             'get-old-idx-tm',
             'get-old-idx-fm',
@@ -78,14 +73,9 @@ const api = {
     },
     receive: (channel: any, func: any) => {
         let validChannels = [
-            'toMain',
-            'fromMain',
-            'get-files-from-main',
-            'get-files-to-main',
             'open-settings-fm',
             'open-settings-tm',
             'get-height-from-main',
-            'get-old-dirs-from-main',
             'remove-dir',
             'get-old-idx-tm',
             'get-old-idx-fm',

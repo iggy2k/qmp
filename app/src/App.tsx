@@ -88,6 +88,8 @@ function App() {
     const [lastFile, setLastFile] = useState('')
     const [lastIndex, setLastIndex] = useState(-1)
 
+    const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
+
     const Row = ({ index, style }: any) => (
         <div
             style={style}
@@ -239,6 +241,7 @@ function App() {
         }
     }
 
+    // Update the fancy progressbar
     const updateProgress = () => {
         if (audio) {
             let frac = audio.currentTime / audio.duration
@@ -256,6 +259,7 @@ function App() {
         }
     }
 
+    // Update the colors for the dynamic gradient of the current track
     function updateColors() {
         trackCoverRef.current &&
             prominent(trackCoverRef.current, { amount: 20 }).then((color) => {
@@ -287,24 +291,42 @@ function App() {
             })
     }
 
+    // Hmm... What can this be?
     const mute = () => {
         setPreMuteVolume(volume)
         setVolume(0)
     }
 
+    // Remove a certain directory
     const removeDir = (e: any, idx: number) => {
         e.stopPropagation()
+        // Last directory case
         if (directories.length == 1) {
             setSwapTracks([[], []])
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.setLastOpenDir('')
         } else {
-            directories[idx] == swapDirs[0] &&
+            // Directory that is both open and playing
+            if (directories[idx] == swapDirs[0] && swapDirs[0] == swapDirs[1]) {
+                let idx = directories.indexOf(swapDirs[1])
+                openCertainDir(
+                    directories[idx + 1] || directories[idx - 1],
+                    false
+                )
+                setClosedBothSwapDirs(true)
+                // Directory that is currently open
+            } else if (directories[idx] == swapDirs[0]) {
                 openCertainDir(
                     directories[idx - 1] || directories[idx + 1],
                     false
                 )
+                // Directory that is currently playing
+            } else if (directories[idx] == swapDirs[1]) {
+                openCertainDir(swapDirs[0], false)
+                openFile(swapTracks[0][0].file, true, 0)
+            }
         }
+        // Update directory for session restore
         window.Main.RemoveDir(directories[idx])
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
     }
@@ -328,6 +350,7 @@ function App() {
         }
     }
 
+    // Open a directory via dialog window
     const openCertainDir = (path: string, changeIndex: boolean) => {
         window.Main.send('open-dir-tm', [path, changeIndex])
     }
@@ -338,6 +361,7 @@ function App() {
         window.Main.send('add-dir-tm', null)
     }
 
+    // Set track metadata and covers once the directory is loaded
     const unpackFilesData = (filesData: any[], filesPaths: string[]) => {
         let formats = filesData[0].map(
             (trackData: { [x: string]: { [x: string]: any } }) =>
@@ -407,22 +431,26 @@ function App() {
         return newSongs
     }
 
+    // Change track time
     const setSeek = (time: number) => {
         if (audio) {
             audio.currentTime = time
         }
     }
 
+    // Save current track cover art if it exists
     const downloadCover = (b64data: any) => {
         if (b64data !== undefined && currSong) {
             window.Main.SaveCover(b64data.toString('base64'), currSong.name)
         }
     }
 
+    // Open settings in a new window
     const openSettings = () => {
         window.Main.send('open-settings-tm', null)
     }
 
+    // Currently open directory track list
     const FileList = useMemo(
         () => (
             <List
@@ -439,6 +467,7 @@ function App() {
         [swapTracks, swapIndeces, electronWindowHeight, swapDirs]
     )
 
+    // Restore old dir and song after restore-session-fm is received
     useEffect(() => {
         if (
             !sessionRestored &&
@@ -451,17 +480,27 @@ function App() {
         }
     }, [sessionRestored, swapTracks, lastFile, lastIndex])
 
+    // Add a new directory after add-dir-tm receiver fires
     useEffect(() => {
         !directories.includes(swapDirs[0]) &&
             swapDirs[0] &&
             setDirectories([...directories, swapDirs[0]])
-        console.log('swapDirs: ' + swapDirs)
     }, [swapDirs])
 
+    // Audio update
     useEffect(() => {
         audio.loop = repeat
         audio.volume = volume
     }, [repeat, volume])
+
+    // Open a file of a different directory
+    // in case a directory that is both open and playing was closed
+    useEffect(() => {
+        if (swapTracks[0][0] && closedBothSwapDirs) {
+            openFile(swapTracks[0][0].file, true, 0)
+            setClosedBothSwapDirs(false)
+        }
+    }, [swapTracks])
 
     useEffect(() => {
         console.log(`swapIndeces = ${swapIndeces}`)
@@ -521,6 +560,11 @@ function App() {
                 filesPaths: string[],
                 changeIndex: boolean
             ) => {
+                console.log(`open-dir-fm(
+                    ${new_dir}
+                    \${filesData}
+                    ${filesPaths}
+                    ${changeIndex})`)
                 setSwapDirs((swapDirs) => [new_dir, swapDirs[1]])
 
                 let newSongs = unpackFilesData(filesData, filesPaths)
@@ -530,22 +574,9 @@ function App() {
                 if (changeIndex) {
                     console.log('change swapIndeces[0] to 0')
                     setSwapIndeces((swapIndeces) => [0, swapIndeces[1]])
-                    setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
                 } else {
                     console.log('no change in swapIndeces[0]')
-
                     setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
-                    // openFile(
-                    //     swapTracks[1][
-                    //         swapIndeces[1] >= 1
-                    //             ? swapIndeces[1] - 1
-                    //             : swapTracks[1].length - 1
-                    //     ].file,
-                    //     false,
-                    //     swapIndeces[1] >= 1
-                    //         ? swapIndeces[1] - 1
-                    //         : swapTracks[1].length - 1
-                    // )
                 }
             }
         )
