@@ -6,19 +6,12 @@ import { IconAlertHexagon } from '@tabler/icons-react'
 function Settings() {
     const [tab, setTab] = useState('appearance')
 
-    const [background, setBackground] = useState('#aabbcc')
-    const [accent, setAccent] = useState('#aabbcc')
-    const [text, setText] = useState('#aabbcc')
-    const [altText, setAltText] = useState('#aabbcc')
-
-    const [isChecked, setIsChecked] = useState(false)
-    const handleCheckboxChange = () => {
-        setIsChecked(!isChecked)
-    }
+    const [background, setBackground] = useState('#000000')
+    const [accent, setAccent] = useState('#555555')
+    const [text, setText] = useState('#30F93D')
+    const [altText, setAltText] = useState('#30F93D')
 
     const [selected, setSelected] = useState('background')
-
-    const [showPicker, setShowPicker] = useState(false)
 
     const setRandomColors = () => {
         setBackground(randomHexColor())
@@ -26,6 +19,28 @@ function Settings() {
         setText(randomHexColor())
         setAltText(randomHexColor())
     }
+
+    const setUIColors = () => {
+        window.Main.send('set-ui-colors-tm', {
+            background: background,
+            accent: accent,
+            text: text,
+            altText: altText,
+        })
+    }
+
+    const setOldUIColors = () => {
+        window.Main.send('set-old-ui-colors-tm', {
+            background: background,
+            accent: accent,
+            text: text,
+            altText: altText,
+        })
+    }
+
+    useEffect(() => {
+        setUIColors()
+    }, [background, accent, text, altText])
 
     return (
         <div className="bg-[#333333] h-[100vh] p-1 overflow-hidden drag">
@@ -178,8 +193,8 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                     </div>
                 </div>
             ) : tab == 'colors' ? (
-                <div className="rounded-md m-1 p-2 grid grid-flow-row grid-cols-2  bg-black/10">
-                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                <div className="rounded-md m-1 p-2 grid grid-flow-row grid-cols-2 place-items-left bg-black/10">
+                    <div className="no-drag mt-1 flex flex-row ml-5">
                         <div
                             className={
                                 `w-[35px] h-[20px]` +
@@ -191,13 +206,18 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             }}
                             onClick={() => setSelected('background')}
                         ></div>
-                        <div className="grid grid-flow-col auto-cols-2">
+                        <div>
                             <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
                                 Background
                             </p>
                         </div>
                     </div>
-                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max ml-auto mr-5">
+                        <div className="">
+                            <p className="mr-4 b-1 text-[#bfbfbf] font-semi text-sm">
+                                Accent
+                            </p>
+                        </div>
                         <div
                             className={
                                 `w-[35px] h-[20px]` +
@@ -209,13 +229,8 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             }}
                             onClick={() => setSelected('accent')}
                         ></div>
-                        <div className="grid grid-flow-col auto-cols-2">
-                            <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
-                                Accent
-                            </p>
-                        </div>
                     </div>
-                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max ml-5">
                         <div
                             className={
                                 `w-[35px] h-[20px]` +
@@ -233,7 +248,12 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             </p>
                         </div>
                     </div>
-                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max">
+                    <div className="no-drag mt-1 grid grid-flow-col auto-cols-max ml-auto mr-5">
+                        <div className="grid grid-flow-col auto-cols-2">
+                            <p className="mr-4 b-1 text-[#bfbfbf] font-semi text-sm">
+                                Alt text
+                            </p>
+                        </div>
                         <div
                             className={
                                 `w-[35px] h-[20px]` +
@@ -245,19 +265,14 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             }}
                             onClick={() => setSelected('altText')}
                         ></div>
-                        <div className="grid grid-flow-col auto-cols-2">
-                            <p className="ml-4 b-1 text-[#bfbfbf] font-semi text-sm">
-                                Alt text
-                            </p>
-                        </div>
                     </div>
 
                     <div
-                        className="grid grid-flow-col grid-cols-2 my-4
-min-h-[100px]"
+                        className="grid grid-flow-col grid-cols-2 my-4 ml-10
+max-h-[110px]"
                     >
                         <HexColorPicker
-                            className="no-drag max-h-[100px] max-w-[240px]"
+                            className="no-drag max-h-[120px] max-w-[240px]"
                             color={
                                 selected == 'background'
                                     ? background
@@ -283,10 +298,10 @@ min-h-[100px]"
                         />
                     </div>
 
-                    <div className="grid grid-flow-row w-[70%] items-center">
+                    <div className="flex flex-col justify-evenly w-[50%] ml-auto mr-10 pt-1">
                         <div
                             className="no-drag text-center text-[#bfbfbf] p-2 rounded-md	
-border-[#f08665] border-b-[1px] hover:bg-black/10 h-[40px]"
+border-[#f08665] border-b-[1px] hover:bg-black/10 transition-colors duration-300 h-[40px]"
                             onClick={() => {
                                 setRandomColors()
                             }}
@@ -295,12 +310,13 @@ border-[#f08665] border-b-[1px] hover:bg-black/10 h-[40px]"
                         </div>
                         <div
                             className="no-drag text-center text-[#bfbfbf] p-2 rounded-md	
-border-[#f08665] border-b-[1px] hover:bg-black/10 h-[40px]"
+border-[#f08665] border-b-[1px] hover:bg-black/10 transition-colors duration-300 h-[40px]"
                             onClick={() => {
-                                setRandomColors()
+                                setOldUIColors()
+                                alert('Colors will remain after reload.')
                             }}
                         >
-                            <p>Apply</p>
+                            <p>Save</p>
                         </div>
                     </div>
                 </div>

@@ -58,6 +58,30 @@ function App() {
         '#000000',
     ])
 
+    const [UIColors, setUIColors] = useState<{
+        background: string
+        accent: string
+        text: string
+        altText: string
+    }>({
+        background: '#000000',
+        accent: '#000000',
+        text: '#000000',
+        altText: '#000000',
+    })
+
+    const [oldUIColors, setOldUIColors] = useState<{
+        background: string
+        accent: string
+        text: string
+        altText: string
+    }>({
+        background: '#000000',
+        accent: '#000000',
+        text: '#000000',
+        altText: '#000000',
+    })
+
     // Current track data states
     const listRef = useRef<null | any>(null)
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
@@ -102,7 +126,7 @@ function App() {
                 style={{
                     backgroundColor:
                         index == swapIndeces[1] && swapDirs[0] == swapDirs[1]
-                            ? '#888888' + '20'
+                            ? UIColors.background + '20'
                             : '',
                 }}
                 className="hover:bg-black/20 transition-opacity duration-300 flex flex-row p-[1px] text-center rounded-md"
@@ -120,21 +144,27 @@ function App() {
                     <IconMusic className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-white" />
                 )}
 
-                <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis text-white/70">
+                <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
                     {swapTracks[0][index] && swapTracks[0][index].name ? (
                         <div className="flex flex-row">
-                            <p className="text-white/80">
+                            <p style={{ color: UIColors.text }}>
                                 {swapTracks[0][index].name &&
                                     swapTracks[0][index].name.replace('\\', '')}
                             </p>
-                            <p className="ml-1 text-white/50">
+                            <p
+                                className="ml-1"
+                                style={{ color: UIColors.text + '90' }}
+                            >
                                 {swapTracks[0][index].author &&
                                     swapTracks[0][index].author.replace(
                                         '\\',
                                         ''
                                     )}
                             </p>
-                            <p className="ml-1 text-white/30">
+                            <p
+                                className="ml-1"
+                                style={{ color: UIColors.text + '80' }}
+                            >
                                 {swapTracks[0][index].album &&
                                     swapTracks[0][index].album.replace(
                                         '\\',
@@ -143,7 +173,7 @@ function App() {
                             </p>
                         </div>
                     ) : (
-                        <p>
+                        <p style={{ color: UIColors.text }}>
                             {' '}
                             {swapTracks[0][index] &&
                                 swapTracks[0][index].file
@@ -162,7 +192,14 @@ function App() {
                         }}
                         className="p-[0.1rem] grid grid-flow-col text-xs font-mono rounded-md"
                     >
-                        <div className="rounded-md px-1 font-mono bg-[#222222] text-[#ffa640]">
+                        <div
+                            className="rounded-md px-1 font-mono
+                        "
+                            style={{
+                                color: UIColors.altText,
+                                backgroundColor: UIColors.background,
+                            }}
+                        >
                             {swapTracks[0][index] &&
                                 secondsToDhmsShort(
                                     swapTracks[0][index].duration
@@ -184,6 +221,10 @@ function App() {
         } else {
             audio.src = ''
         }
+    }
+
+    const sendOldColors = () => {
+        window.Main.send('set-old-ui-colors-tm', UIColors)
     }
 
     // Switch to a new track
@@ -464,7 +505,7 @@ function App() {
                 {Row}
             </List>
         ),
-        [swapTracks, swapIndeces, electronWindowHeight, swapDirs]
+        [swapTracks, swapIndeces, electronWindowHeight, swapDirs, UIColors]
     )
 
     // Restore old dir and song after restore-session-fm is received
@@ -519,6 +560,18 @@ function App() {
     useEffect(() => {
         audio.ontimeupdate = updateProgress
         window.Main.send('restore-session-tm', null)
+        window.Main.send('get-old-ui-colors-tm', null)
+        window.Main.receive(
+            'get-old-ui-colors-fm',
+            (UIColors: {
+                background: string
+                accent: string
+                text: string
+                altText: string
+            }) => {
+                setUIColors(UIColors)
+            }
+        )
         window.Main.receive(
             'restore-session-fm',
             (
@@ -540,6 +593,18 @@ function App() {
         window.Main.receive('get-height-from-main', (height: number) => {
             setElectronWindowHeight(height)
         })
+
+        window.Main.receive(
+            'set-ui-colors-fm',
+            (args: {
+                background: string
+                accent: string
+                text: string
+                altText: string
+            }) => {
+                setUIColors(args)
+            }
+        )
 
         window.Main.receive(
             'add-dir-tm',
@@ -612,7 +677,10 @@ function App() {
     }, [progress])
 
     return (
-        <div className="bg-[#333333] h-[100vh] flex flex-col overflow-y-hidden">
+        <div
+            className="h-[100vh] flex flex-col overflow-y-hidden"
+            style={{ backgroundColor: UIColors.background + '70' }}
+        >
             <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
                 <div
                     className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
@@ -1129,7 +1197,10 @@ function App() {
                         </div>
                     </div>
                 </div>
-                <div className="bg-[#2a2a2a] min-h-[20px] flex-none place-items-center px-1 drag">
+                <div
+                    className="min-h-[20px] flex-none place-items-center px-1 drag"
+                    style={{ backgroundColor: UIColors.background }}
+                >
                     <div className="flex flex-row">
                         {directories.map((dir: string, index: number) => {
                             return (
@@ -1138,22 +1209,20 @@ function App() {
                                         style={{
                                             backgroundColor:
                                                 swapDirs[0] == dir
-                                                    ? '#ffa640'
-                                                    : '#333333',
-                                            color:
-                                                swapDirs[0] == dir
-                                                    ? '#333333'
-                                                    : '#ffa640',
+                                                    ? UIColors.accent
+                                                    : UIColors.accent + '90',
+
+                                            color: UIColors.altText,
                                             borderBottom:
                                                 swapDirs[1] == dir
-                                                    ? '1px solid #ffa640'
-                                                    : '',
+                                                    ? `2px solid ${UIColors.altText}`
+                                                    : ``,
                                         }}
                                         onClick={() => {
                                             swapDirs[0] !== dir &&
                                                 openCertainDir(dir, true)
                                         }}
-                                        className="inline-block text-white h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-xl"
+                                        className="inline-block h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-xl"
                                     >
                                         {directories[index] &&
                                             directories[index]
@@ -1193,13 +1262,19 @@ function App() {
                 >
                     {FileList}
                 </div>
-                <div className="drag bg-[#2a2a2a] min-h-[16px] flex-none place-items-center p-2">
+                <div
+                    className="drag min-h-[16px] flex-none place-items-center p-2"
+                    style={{
+                        backgroundColor: UIColors.background,
+                        color: UIColors.altText,
+                    }}
+                >
                     <div className="flex flex-row">
-                        <p className="text-left text-xs ml-1 min-w-[35%] .rtl-grid overflow-hidden inline-block whitespace-nowrap text-white flex-1">
+                        <p className="text-left text-xs ml-1 min-w-[35%] .rtl-grid overflow-hidden inline-block whitespace-nowrapflex-1">
                             {' '}
                             {swapDirs[0] || 'No directory loaded'}
                         </p>
-                        <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap text-white flex-1">
+                        <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap flex-1">
                             {swapTracks[0].length > 0
                                 ? secondsToDhms(
                                       swapTracks[0]
@@ -1218,7 +1293,7 @@ function App() {
                         <div className="mr-1 min-w-[35%] flex-none inline-block ">
                             <p
                                 title={swapDirs[0]}
-                                className="text-xs text-right overflow-hidden whitespace-nowrap text-white  text-ellipsis"
+                                className="text-xs text-right overflow-hidden whitespace-nowrap text-ellipsis"
                             >
                                 {swapTracks[0].length > 0
                                     ? `${swapIndeces[0] + 1} / ${

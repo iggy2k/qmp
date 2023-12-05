@@ -66,6 +66,12 @@ const api = {
             'add-dir-fm',
             'open-dir-tm',
             'open-dir-fm',
+            'set-ui-colors-tm',
+            'set-ui-colors-fm',
+            'set-old-ui-colors-tm',
+            'set-old-ui-colors-fm',
+            'get-old-ui-colors-tm',
+            'get-old-ui-colors-fm',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -89,6 +95,12 @@ const api = {
             'add-dir-fm',
             'open-dir-tm',
             'open-dir-fm',
+            'set-ui-colors-tm',
+            'set-ui-colors-fm',
+            'set-old-ui-colors-tm',
+            'set-old-ui-colors-fm',
+            'get-old-ui-colors-tm',
+            'get-old-ui-colors-fm',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`

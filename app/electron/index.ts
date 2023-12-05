@@ -166,6 +166,44 @@ function createWindow() {
         }
     })
 
+    ipcMain.on(
+        'set-ui-colors-tm',
+        (
+            _,
+            UIColors: {
+                background: string
+                accent: string
+                text: string
+                altText: string
+            }
+        ) => {
+            console.log('set-ui-colors-tm ' + JSON.stringify(UIColors))
+            window.webContents.send('set-ui-colors-fm', UIColors)
+        }
+    )
+
+    ipcMain.on(
+        'set-old-ui-colors-tm',
+        (
+            _,
+            UIColors: {
+                background: string
+                accent: string
+                text: string
+                altText: string
+            }
+        ) => {
+            console.log('set-old-ui-colors-tm ' + JSON.stringify(UIColors))
+            store.set('old_ui_colors', UIColors)
+        }
+    )
+
+    ipcMain.on('get-old-ui-colors-tm', (_) => {
+        let UIColors = store.get('old_ui_colors')
+        console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
+        window.webContents.send('get-old-ui-colors-fm', UIColors)
+    })
+
     ipcMain.on('open-dir-tm', (_, args: any[]) => {
         console.log('open-dir-tm ' + args)
         let dir = args[0]
@@ -278,10 +316,6 @@ function createWindow() {
         console.log(
             `last_open_dir = ${last_open_dir} \n last_file = ${last_file} \n past_dirs = ${past_dirs} \n last_index = ${last_index}`
         )
-
-        // if (!last_open_dir || !last_file || !past_dirs) {
-        //     return
-        // }
 
         window.webContents.send(
             'restore-session-fm',
