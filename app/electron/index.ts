@@ -18,7 +18,7 @@ const WIN_HEIGHT = 450
 const WIN_HEIGHT_MIN = 102
 const WIN_HEIGHT_MAX = 600
 
-const WIN_WIDTH_MIN = 800
+const WIN_WIDTH_MIN = 450
 const WIN_WIDTH_MAX = 800
 const HTML5_AUDIO = [
     'wav',
@@ -133,7 +133,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH_MIN, WIN_HEIGHT, true)
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
@@ -199,6 +199,13 @@ function createWindow() {
     )
 
     ipcMain.on('get-old-ui-colors-tm', (_) => {
+        let UIColors = store.get('old_ui_colors')
+        console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
+        window.webContents.send('get-old-ui-colors-fm', UIColors)
+    })
+
+    // Restore colors when closing settings
+    settings?.on('close', (_) => {
         let UIColors = store.get('old_ui_colors')
         console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
@@ -293,7 +300,6 @@ function createWindow() {
     })
 
     ipcMain.on('save-cover', (_, data: any, name: string) => {
-        console.log('saving cover ' + data)
         let split = data.split(';base64')
         let file = dialog.showSaveDialogSync(window, {
             defaultPath:

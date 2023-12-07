@@ -1198,13 +1198,13 @@ function App() {
                     </div>
                 </div>
                 <div
-                    className="min-h-[20px] flex-none place-items-center px-1 drag"
+                    className="h-[32px] flex-none place-items-center px-1 drag flex flex-row"
                     style={{ backgroundColor: UIColors.background }}
                 >
-                    <div className="flex flex-row">
+                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap w-[100%-24px] directory-list">
                         {directories.map((dir: string, index: number) => {
                             return (
-                                <div key={index}>
+                                <div className="" key={index}>
                                     <div
                                         style={{
                                             backgroundColor:
@@ -1222,7 +1222,7 @@ function App() {
                                             swapDirs[0] !== dir &&
                                                 openCertainDir(dir, true)
                                         }}
-                                        className="inline-block h-[24px] no-drag text-xs ml-1 mt-1 p-1 rounded-xl"
+                                        className="inline-block h-[24px] no-drag text-xs p-1 rounded-xl"
                                     >
                                         {directories[index] &&
                                             directories[index]
@@ -1239,20 +1239,20 @@ function App() {
                                 </div>
                             )
                         })}
-                        <FolderPlusIcon
-                            style={{
-                                color: LightenDarkenColor(colors[2], 200),
-                            }}
-                            className={`no-drag h-[24px] m-1 ml-auto mr-1 ${
-                                directories.length == 0
-                                    ? 'animate-pulse transition-opacity'
-                                    : ''
-                            }`}
-                            onClick={() => {
-                                addDir()
-                            }}
-                        />
                     </div>
+                    <FolderPlusIcon
+                        style={{
+                            color: LightenDarkenColor(colors[2], 200),
+                        }}
+                        className={`no-drag min-h-[24px] max-h-[24px] w-[24px] m-1 ml-auto mr-1 flex-none ${
+                            directories.length == 0
+                                ? 'animate-pulse transition-opacity'
+                                : ''
+                        }`}
+                        onClick={() => {
+                            addDir()
+                        }}
+                    />
                 </div>
                 <div
                     style={{

@@ -81,3 +81,7 @@
 .pause {
     animation-play-state: paused;
 }
+
+.directory-list::-webkit-scrollbar {
+    display: none;
+}
