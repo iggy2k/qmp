@@ -202,6 +202,7 @@ function createWindow() {
         let UIColors = store.get('old_ui_colors')
         console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
+        settings.webContents.send('get-old-ui-colors-fm', UIColors)
     })
 
     // Restore colors when closing settings

@@ -6,10 +6,10 @@ import { IconAlertHexagon } from '@tabler/icons-react'
 function Settings() {
     const [tab, setTab] = useState('appearance')
 
-    const [background, setBackground] = useState('#000000')
-    const [accent, setAccent] = useState('#555555')
-    const [text, setText] = useState('#30F93D')
-    const [altText, setAltText] = useState('#30F93D')
+    const [background, setBackground] = useState('')
+    const [accent, setAccent] = useState('')
+    const [text, setText] = useState('')
+    const [altText, setAltText] = useState('')
 
     const [selected, setSelected] = useState('background')
 
@@ -39,7 +39,31 @@ function Settings() {
     }
 
     useEffect(() => {
-        setUIColors()
+        window.Main.send('get-old-ui-colors-tm', null)
+        window.Main.receive(
+            'get-old-ui-colors-fm',
+            (UIColors: {
+                background: string
+                accent: string
+                text: string
+                altText: string
+            }) => {
+                setBackground(UIColors.background)
+                setAccent(UIColors.accent)
+                setText(UIColors.text)
+                setAltText(UIColors.altText)
+            }
+        )
+    }, [])
+    useEffect(() => {
+        if (
+            background !== '' &&
+            accent !== '' &&
+            text !== '' &&
+            altText !== ''
+        ) {
+            setUIColors()
+        }
     }, [background, accent, text, altText])
 
     return (
