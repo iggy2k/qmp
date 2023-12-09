@@ -1244,7 +1244,7 @@ function App() {
                         style={{
                             color: LightenDarkenColor(colors[2], 200),
                         }}
-                        className={`no-drag min-h-[24px] max-h-[24px] w-[24px] m-1 ml-auto mr-1 flex-none ${
+                        className={`no-drag min-h-[24px] max-h-[24px] w-[24px] m-1 ml-auto flex-none ${
                             directories.length == 0
                                 ? 'animate-pulse transition-opacity'
                                 : ''
