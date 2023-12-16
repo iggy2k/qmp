@@ -282,7 +282,7 @@ function createWindow() {
 
         openFiles(file_list).then((files_data_array) => {
             window.webContents.send(
-                'add-dir-tm',
+                'add-dir-fm',
                 dir,
                 files_data_array,
                 file_list
@@ -355,6 +355,29 @@ function createWindow() {
         )
     })
 
+    window.on('will-resize', () => {
+        // console.log('resize')
+        window.webContents.send(
+            'get-height-from-main',
+            window.getBounds().height
+        )
+    })
+    window.on('resize', () => {
+        // console.log('resize')
+        window.webContents.send(
+            'get-height-from-main',
+            window.getBounds().height
+        )
+    })
+
+    window.on('resized', () => {
+        // console.log('resize')
+        window.webContents.send(
+            'get-height-from-main',
+            window.getBounds().height
+        )
+    })
+
     window.on('blur', () => {
         window.setOpacity(0.85)
     })
@@ -400,8 +423,6 @@ const template = [
                   submenu: [
                       { role: 'about' },
                       { type: 'separator' },
-                      { role: 'services' },
-                      { type: 'separator' },
                       { role: 'hide' },
                       { role: 'hideOthers' },
                       { role: 'unhide' },
@@ -413,55 +434,61 @@ const template = [
         : []),
     // { role: 'fileMenu' }
     {
-        label: 'File',
-        submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+        label: 'Folder',
+        submenu: [
+            {
+                label: 'Add a folder',
+                click: () => {
+                    const focusedWindow = BrowserWindow.getFocusedWindow()
+                    focusedWindow?.webContents.send('add-dir-from-menu', null)
+                },
+            },
+        ],
     },
     // { role: 'editMenu' }
-    {
-        label: 'Edit',
-        submenu: [
-            { role: 'undo' },
-            { role: 'redo' },
-            { type: 'separator' },
-            { role: 'cut' },
-            { role: 'copy' },
-            { role: 'paste' },
-            ...(isMac
-                ? [
-                      { role: 'pasteAndMatchStyle' },
-                      { role: 'delete' },
-                      { role: 'selectAll' },
-                      { type: 'separator' },
-                      {
-                          label: 'Speech',
-                          submenu: [
-                              { role: 'startSpeaking' },
-                              { role: 'stopSpeaking' },
-                          ],
-                      },
-                  ]
-                : [
-                      { role: 'delete' },
-                      { type: 'separator' },
-                      { role: 'selectAll' },
-                  ]),
-        ],
-    },
+    // {
+    //     label: 'Edit',
+    //     submenu: [
+    //         { role: 'undo' },
+    //         { role: 'redo' },
+    //         { type: 'separator' },
+    //         { role: 'cut' },
+    //         { role: 'copy' },
+    //         { role: 'paste' },
+    //         ...(isMac
+    //             ? [
+    //                   { role: 'pasteAndMatchStyle' },
+    //                   { role: 'delete' },
+    //                   { role: 'selectAll' },
+    //                   { type: 'separator' },
+    //                   {
+    //                       label: 'Speech',
+    //                       submenu: [
+    //                           { role: 'startSpeaking' },
+    //                           { role: 'stopSpeaking' },
+    //                       ],
+    //                   },
+    //               ]
+    //             : [
+    //                   { role: 'delete' },
+    //                   { type: 'separator' },
+    //                   { role: 'selectAll' },
+    //               ]),
+    //     ],
+    // },
     // { role: 'viewMenu' }
-    {
-        label: 'View',
-        submenu: [
-            { role: 'reload' },
-            { role: 'forceReload' },
-            { role: 'toggleDevTools' },
-            { type: 'separator' },
-            { role: 'resetZoom' },
-            // { role: 'zoomIn' },
-            // { role: 'zoomOut' },
-            { type: 'separator' },
-            { role: 'togglefullscreen' },
-        ],
-    },
+    // {
+    //     label: 'View',
+    //     submenu: [
+    //         { role: 'reload' },
+    //         { role: 'forceReload' },
+    //         { role: 'toggleDevTools' },
+    //         { type: 'separator' },
+    //         { role: 'resetZoom' },
+    //         { type: 'separator' },
+    //         { role: 'togglefullscreen' },
+    //     ],
+    // },
     // { role: 'windowMenu' }
     {
         label: 'Window',
@@ -478,16 +505,16 @@ const template = [
                 : [{ role: 'close' }]),
         ],
     },
-    {
-        role: 'help',
-        submenu: [
-            {
-                label: 'Learn More',
-                click: async () => {
-                    const { shell } = require('electron')
-                    await shell.openExternal('https://electronjs.org')
-                },
-            },
-        ],
-    },
+    // {
+    //     role: 'help',
+    //     submenu: [
+    //         {
+    //             label: 'Learn More',
+    //             click: async () => {
+    //                 const { shell } = require('electron')
+    //                 await shell.openExternal('https://electronjs.org')
+    //             },
+    //         },
+    //     ],
+    // },
 ] as Electron.MenuItemConstructorOptions[]

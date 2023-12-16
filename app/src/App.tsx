@@ -607,7 +607,7 @@ function App() {
         )
 
         window.Main.receive(
-            'add-dir-tm',
+            'add-dir-fm',
             (new_dir: string, filesData: any[], filesPaths: string[]) => {
                 setSwapDirs((swapDirs) => [new_dir, swapDirs[1]])
 
@@ -616,6 +616,10 @@ function App() {
                 setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
             }
         )
+
+        window.Main.receive('add-dir-from-menu', () => {
+            addDir()
+        })
 
         window.Main.receive(
             'open-dir-fm',
