@@ -80,10 +80,18 @@ function rreaddirSync(dir: string, allFiles: string[] = []) {
 }
 
 function createWindow() {
+    let oldSettings = store.get('settings') as {
+        useCover: boolean
+        movingColors: boolean
+        downloadCover: boolean
+        transparentInactive: boolean
+        bottomBar: boolean
+        framelessWindow: boolean
+    }
     const window = new BrowserWindow({
         height: 1,
         width: 1,
-        frame: false,
+        frame: !oldSettings.framelessWindow,
         show: false,
         resizable: true,
         fullscreenable: true,
@@ -203,6 +211,32 @@ function createWindow() {
         console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
         settings.webContents.send('get-old-ui-colors-fm', UIColors)
+    })
+
+    ipcMain.on(
+        'set-settings-tm',
+        (
+            _,
+            settings: {
+                useCover: boolean
+                movingColors: boolean
+                downloadCover: boolean
+                transparentInactive: boolean
+                bottomBar: boolean
+                framelessWindow: boolean
+            }
+        ) => {
+            console.log('set-settings-tm ' + JSON.stringify(settings))
+            store.set('settings', settings)
+            window.webContents.send('set-settings-fm', settings)
+        }
+    )
+
+    ipcMain.on('get-settings-tm', (_) => {
+        let oldSettings = store.get('settings')
+        console.log('get-settings-tm ' + JSON.stringify(oldSettings))
+        window.webContents.send('get-settings-fm', oldSettings)
+        settings.webContents.send('get-settings-fm', oldSettings)
     })
 
     // Restore colors when closing settings
@@ -379,7 +413,9 @@ function createWindow() {
     })
 
     window.on('blur', () => {
-        window.setOpacity(0.85)
+        if (oldSettings.framelessWindow) {
+            window.setOpacity(0.85)
+        }
     })
 
     window.on('focus', () => {

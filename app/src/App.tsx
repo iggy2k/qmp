@@ -70,16 +70,20 @@ function App() {
         altText: '#000000',
     })
 
-    const [oldUIColors, setOldUIColors] = useState<{
-        background: string
-        accent: string
-        text: string
-        altText: string
+    const [settings, setSettings] = useState<{
+        useCover: boolean
+        movingColors: boolean
+        downloadCover: boolean
+        transparentInactive: boolean
+        bottomBar: boolean
+        framelessWindow: boolean
     }>({
-        background: '#000000',
-        accent: '#000000',
-        text: '#000000',
-        altText: '#000000',
+        useCover: false,
+        movingColors: false,
+        downloadCover: false,
+        transparentInactive: false,
+        bottomBar: false,
+        framelessWindow: false,
     })
 
     // Current track data states
@@ -129,7 +133,7 @@ function App() {
                             ? UIColors.background + '20'
                             : '',
                 }}
-                className="hover:bg-black/20 transition-opacity duration-300 flex flex-row p-[1px] text-center rounded-md"
+                className="hover:bg-black/20 hover:px-1 transition-all duration-100 flex flex-row p-[1px] text-center rounded-md"
                 onClick={() => {
                     openFile(swapTracks[0][index].file, true, index)
                 }}
@@ -497,7 +501,9 @@ function App() {
             <List
                 ref={listRef}
                 className={`list scroll-smooth`}
-                height={electronWindowHeight - 165}
+                height={
+                    electronWindowHeight - 133 - (settings.bottomBar ? 32 : 0)
+                }
                 itemCount={swapTracks[0] ? swapTracks[0].length : 0}
                 itemSize={30}
                 width={'100%'}
@@ -561,6 +567,7 @@ function App() {
         audio.ontimeupdate = updateProgress
         window.Main.send('restore-session-tm', null)
         window.Main.send('get-old-ui-colors-tm', null)
+        window.Main.send('get-settings-tm', null)
         window.Main.receive(
             'get-old-ui-colors-fm',
             (UIColors: {
@@ -572,6 +579,33 @@ function App() {
                 setUIColors(UIColors)
             }
         )
+        window.Main.receive(
+            'set-settings-fm',
+            (newSettings: {
+                useCover: boolean
+                movingColors: boolean
+                downloadCover: boolean
+                transparentInactive: boolean
+                bottomBar: boolean
+                framelessWindow: boolean
+            }) => {
+                setSettings(newSettings)
+            }
+        )
+        window.Main.receive(
+            'get-settings-fm',
+            (newSettings: {
+                useCover: boolean
+                movingColors: boolean
+                downloadCover: boolean
+                transparentInactive: boolean
+                bottomBar: boolean
+                framelessWindow: boolean
+            }) => {
+                setSettings(newSettings)
+            }
+        )
+
         window.Main.receive(
             'restore-session-fm',
             (
@@ -685,31 +719,39 @@ function App() {
             className="h-[100vh] flex flex-col overflow-y-hidden"
             style={{ backgroundColor: UIColors.background + '70' }}
         >
-            <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
-                <div
-                    className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
-                    onClick={() => {
-                        window.Main.Close()
-                    }}
-                ></div>
-                <div
-                    className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
-                    onClick={() => {
-                        window.Main.Minimize()
-                    }}
-                ></div>
-            </div>
+            {settings.framelessWindow && (
+                <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
+                    <div
+                        className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
+                        onClick={() => {
+                            window.Main.Close()
+                        }}
+                    ></div>
+                    <div
+                        className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
+                        onClick={() => {
+                            window.Main.Minimize()
+                        }}
+                    ></div>
+                </div>
+            )}
             <div>
                 <div
-                    style={{
-                        backgroundImage: `
+                    style={
+                        settings.useCover
+                            ? {
+                                  backgroundImage: `
                             radial-gradient(ellipse at top left, ${colors[0]}50  50%, transparent 80%),
                             radial-gradient(ellipse at bottom  left, ${colors[1]}50  50% , transparent 80%),
                             radial-gradient(ellipse at top    right, ${colors[2]}50 50% , transparent 80%),
                             radial-gradient(ellipse at bottom right, ${colors[3]}50  50% , transparent 80%)`,
-                    }}
-                    className={`bg-[#333333] drag ${
-                        play ? 'animate-spin' : 'animate-spin pause'
+                              }
+                            : { backgroundColor: UIColors.background }
+                    }
+                    className={`bg-[#333333] h-[105px] drag ${
+                        play && settings.movingColors
+                            ? 'animate-spin'
+                            : 'animate-spin pause'
                     }`}
                 >
                     <div className="flex">
@@ -725,12 +767,16 @@ function App() {
                                 "
                                         src={currSong ? currSong.cover : ''}
                                         onClick={() => {
-                                            currSong
+                                            currSong && settings.downloadCover
                                                 ? downloadCover(currSong.cover)
                                                 : null
                                         }}
                                         alt=""
-                                        title="Click to download the cover art"
+                                        title={
+                                            settings.downloadCover
+                                                ? 'Click to download the cover art'
+                                                : ''
+                                        }
                                     />
                                 ) : (
                                     <IconMusic
@@ -1202,10 +1248,15 @@ function App() {
                     </div>
                 </div>
                 <div
-                    className="h-[32px] flex-none place-items-center px-1 drag flex flex-row"
-                    style={{ backgroundColor: UIColors.background }}
+                    className="h-[36px] flex-none place-items-center px-1 drag flex flex-row"
+                    style={{
+                        backgroundColor: LightenDarkenColor(
+                            UIColors.background,
+                            -20
+                        ),
+                    }}
                 >
-                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap w-[100%-24px] directory-list">
+                    <div className="py-1 flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap w-[100%-24px] directory-list">
                         {directories.map((dir: string, index: number) => {
                             return (
                                 <div className="" key={index}>
@@ -1260,54 +1311,62 @@ function App() {
                 </div>
                 <div
                     style={{
-                        height: electronWindowHeight - 165,
+                        height:
+                            electronWindowHeight -
+                            133 -
+                            (settings.bottomBar ? 32 : 0),
                     }}
-                    className="overflow-y-auto flex-1 flex-grow overflow-x-hidden"
+                    className="overflow-y-auto flex-1 flex-grow overflow-x-hidden h-[55px] bottom-bar"
                 >
                     {FileList}
                 </div>
-                <div
-                    className="drag min-h-[16px] flex-none place-items-center p-2"
-                    style={{
-                        backgroundColor: UIColors.background,
-                        color: UIColors.altText,
-                    }}
-                >
-                    <div className="flex flex-row">
-                        <p className="text-left text-xs ml-1 min-w-[35%] .rtl-grid overflow-hidden inline-block whitespace-nowrapflex-1">
-                            {' '}
-                            {swapDirs[0] || 'No directory loaded'}
-                        </p>
-                        <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap flex-1">
-                            {swapTracks[0].length > 0
-                                ? secondsToDhms(
-                                      swapTracks[0]
-                                          .map(function (song) {
-                                              return song.duration
-                                          })
-                                          .reduce(
-                                              (acc: number, curr: number) => {
-                                                  return acc + curr
-                                              },
-                                              0
-                                          )
-                                  )
-                                : '0d 0h 0m 0s'}
-                        </p>
-                        <div className="mr-1 min-w-[35%] flex-none inline-block ">
-                            <p
-                                title={swapDirs[0]}
-                                className="text-xs text-right overflow-hidden whitespace-nowrap text-ellipsis"
-                            >
-                                {swapTracks[0].length > 0
-                                    ? `${swapIndeces[0] + 1} / ${
-                                          swapTracks[0].length
-                                      }`
-                                    : '0 / 0'}
+                {settings.bottomBar && (
+                    <div
+                        className="drag h-[32px] flex-none place-items-center p-2"
+                        style={{
+                            backgroundColor: UIColors.background,
+                            color: UIColors.altText,
+                        }}
+                    >
+                        <div className="flex flex-row">
+                            <p className="text-left text-xs ml-1 min-w-[35%] .rtl-grid overflow-hidden inline-block whitespace-nowrapflex-1">
+                                {' '}
+                                {swapDirs[0] || 'No directory loaded'}
                             </p>
+                            <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap flex-1">
+                                {swapTracks[0].length > 0
+                                    ? secondsToDhms(
+                                          swapTracks[0]
+                                              .map(function (song) {
+                                                  return song.duration
+                                              })
+                                              .reduce(
+                                                  (
+                                                      acc: number,
+                                                      curr: number
+                                                  ) => {
+                                                      return acc + curr
+                                                  },
+                                                  0
+                                              )
+                                      )
+                                    : '0d 0h 0m 0s'}
+                            </p>
+                            <div className="mr-1 min-w-[35%] flex-none inline-block ">
+                                <p
+                                    title={swapDirs[0]}
+                                    className="text-xs text-right overflow-hidden whitespace-nowrap text-ellipsis"
+                                >
+                                    {swapTracks[0].length > 0
+                                        ? `${swapIndeces[0] + 1} / ${
+                                              swapTracks[0].length
+                                          }`
+                                        : '0 / 0'}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )

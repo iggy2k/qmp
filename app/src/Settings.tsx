@@ -13,6 +13,22 @@ function Settings() {
 
     const [selected, setSelected] = useState('background')
 
+    const [settings, setSettings] = useState<{
+        useCover: boolean | undefined
+        movingColors: boolean | undefined
+        downloadCover: boolean | undefined
+        transparentInactive: boolean | undefined
+        bottomBar: boolean | undefined
+        framelessWindow: boolean | undefined
+    }>({
+        useCover: undefined,
+        movingColors: undefined,
+        downloadCover: undefined,
+        transparentInactive: undefined,
+        bottomBar: undefined,
+        framelessWindow: undefined,
+    })
+
     const setRandomColors = () => {
         setBackground(randomHexColor())
         setAccent(randomHexColor())
@@ -40,6 +56,7 @@ function Settings() {
 
     useEffect(() => {
         window.Main.send('get-old-ui-colors-tm', null)
+        window.Main.send('get-settings-tm', null)
         window.Main.receive(
             'get-old-ui-colors-fm',
             (UIColors: {
@@ -54,6 +71,19 @@ function Settings() {
                 setAltText(UIColors.altText)
             }
         )
+        window.Main.receive(
+            'get-settings-fm',
+            (newSettings: {
+                useCover: boolean
+                movingColors: boolean
+                downloadCover: boolean
+                transparentInactive: boolean
+                bottomBar: boolean
+                framelessWindow: boolean
+            }) => {
+                setSettings(newSettings)
+            }
+        )
     }, [])
     useEffect(() => {
         if (
@@ -65,6 +95,20 @@ function Settings() {
             setUIColors()
         }
     }, [background, accent, text, altText])
+
+    useEffect(() => {
+        // alert(JSON.stringify(settings))
+        if (
+            settings.useCover !== undefined &&
+            settings.movingColors !== undefined &&
+            settings.downloadCover !== undefined &&
+            settings.transparentInactive !== undefined &&
+            settings.bottomBar !== undefined &&
+            settings.framelessWindow !== undefined
+        ) {
+            window.Main.send('set-settings-tm', settings)
+        }
+    }, [settings])
 
     return (
         <div className="bg-[#333333] h-[100vh] p-1 overflow-hidden drag">
@@ -116,9 +160,15 @@ function Settings() {
                             <input
                                 type="checkbox"
                                 id="use-cover"
-                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200  ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
 
 before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                                onChange={() => {
+                                    let oldSettings = { ...settings }
+                                    oldSettings.useCover = !oldSettings.useCover
+                                    setSettings(oldSettings)
+                                }}
+                                checked={settings.useCover}
                             />
                             <label
                                 className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
@@ -132,9 +182,16 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             <input
                                 type="checkbox"
                                 id="move-colors"
-                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200  ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
 
 before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                                onChange={() => {
+                                    let oldSettings = { ...settings }
+                                    oldSettings.movingColors =
+                                        !oldSettings.movingColors
+                                    setSettings(oldSettings)
+                                }}
+                                checked={settings.movingColors}
                             />
                             <label
                                 className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
@@ -148,9 +205,16 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             <input
                                 type="checkbox"
                                 id="download-cover"
-                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200  ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
 
 before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                                onChange={() => {
+                                    let oldSettings = { ...settings }
+                                    oldSettings.downloadCover =
+                                        !oldSettings.downloadCover
+                                    setSettings(oldSettings)
+                                }}
+                                checked={settings.downloadCover}
                             />
                             <label
                                 className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
@@ -164,9 +228,16 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             <input
                                 type="checkbox"
                                 id="transparent-inactive"
-                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200  ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
 
 before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                                onChange={() => {
+                                    let oldSettings = { ...settings }
+                                    oldSettings.transparentInactive =
+                                        !oldSettings.transparentInactive
+                                    setSettings(oldSettings)
+                                }}
+                                checked={settings.transparentInactive}
                             />
                             <label
                                 className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
@@ -183,9 +254,16 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             <input
                                 type="checkbox"
                                 id="bottom-bar"
-                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200  ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
 
 before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                                onChange={() => {
+                                    let oldSettings = { ...settings }
+                                    oldSettings.bottomBar =
+                                        !oldSettings.bottomBar
+                                    setSettings(oldSettings)
+                                }}
+                                checked={settings.bottomBar}
                             />
                             <label
                                 className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs
@@ -199,9 +277,16 @@ before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white check
                             <input
                                 type="checkbox"
                                 id="frameless"
-                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
+                                className="relative w-[1.77rem] h-4 bg-red-400  checked:bg-none checked:bg-green-600 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200  ring-1 ring-transparent focus:border-white/50 focus:ring-white/50 ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-green-600 dark:focus:ring-offset-gray-800
 
 before:inline-block before:w-3 before:h-3 before:mb-[1rem] before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+                                checked={settings.framelessWindow}
+                                onChange={() => {
+                                    let oldSettings = { ...settings }
+                                    oldSettings.framelessWindow =
+                                        !oldSettings.framelessWindow
+                                    setSettings(oldSettings)
+                                }}
                             />
                             <label
                                 className="align-items-center pl-[0.4rem] hover:cursor-pointer text-white text-xs

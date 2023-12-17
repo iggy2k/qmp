@@ -85,3 +85,7 @@
 .directory-list::-webkit-scrollbar {
     display: none;
 }
+
+.bottom-bar::-webkit-scrollbar {
+    display: none;
+}

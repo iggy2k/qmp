@@ -73,6 +73,10 @@ const api = {
             'set-old-ui-colors-fm',
             'get-old-ui-colors-tm',
             'get-old-ui-colors-fm',
+            'set-settings-tm',
+            'set-settings-fm',
+            'get-settings-tm',
+            'get-settings-fm',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -103,6 +107,10 @@ const api = {
             'set-old-ui-colors-fm',
             'get-old-ui-colors-tm',
             'get-old-ui-colors-fm',
+            'set-settings-tm',
+            'set-settings-fm',
+            'get-settings-tm',
+            'get-settings-fm',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`
