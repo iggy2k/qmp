@@ -327,9 +327,12 @@ function createWindow() {
     ipcMain.on('open-settings-tm', (_) => {
         console.log('opening settings at ' + url + '/settings')
         if (isDev) {
-            settings?.loadURL(url + '/settings')
+            settings?.loadURL(url + '#/settings')
         } else {
-            settings?.loadFile(url + '/settings')
+            // Why this works
+            settings.loadURL(`file://${url}#/settings`)
+            // While this doesn't????????????????/
+            // settings?.loadFile(url + '#/settings')
         }
         settings?.show()
     })
