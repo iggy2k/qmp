@@ -130,10 +130,10 @@ function App() {
                 style={{
                     backgroundColor:
                         index == swapIndeces[1] && swapDirs[0] == swapDirs[1]
-                            ? UIColors.background + '20'
+                            ? LightenDarkenColor(UIColors.background, -20)
                             : '',
                 }}
-                className="hover:bg-black/20 hover:px-1 transition-all duration-100 flex flex-row p-[1px] text-center rounded-md"
+                className="hover:bg-white/10 hover:px-1 transition-all duration-100 flex flex-row p-[1px] text-center rounded-md box-border"
                 onClick={() => {
                     openFile(swapTracks[0][index].file, true, index)
                 }}
@@ -350,6 +350,8 @@ function App() {
             setSwapTracks([[], []])
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.setLastOpenDir('')
+            setCurrSong({})
+            setAudioSource('')
         } else {
             // Directory that is both open and playing
             if (directories[idx] == swapDirs[0] && swapDirs[0] == swapDirs[1]) {
@@ -500,9 +502,9 @@ function App() {
         () => (
             <List
                 ref={listRef}
-                className={`list scroll-smooth`}
+                className={`scroll-smooth`}
                 height={
-                    electronWindowHeight - 133 - (settings.bottomBar ? 32 : 0)
+                    electronWindowHeight - 190 + (settings.bottomBar ? 20 : 50)
                 }
                 itemCount={swapTracks[0] ? swapTracks[0].length : 0}
                 itemSize={30}
@@ -511,7 +513,14 @@ function App() {
                 {Row}
             </List>
         ),
-        [swapTracks, swapIndeces, electronWindowHeight, swapDirs, UIColors]
+        [
+            swapTracks,
+            swapIndeces,
+            electronWindowHeight,
+            swapDirs,
+            UIColors,
+            settings,
+        ]
     )
 
     // Restore old dir and song after restore-session-fm is received
@@ -748,14 +757,14 @@ function App() {
                               }
                             : { backgroundColor: UIColors.background }
                     }
-                    className={`bg-[#333333] h-[105px] drag ${
+                    className={`bg-[#333333] h-[100px] drag ${
                         play && settings.movingColors
                             ? 'animate-spin'
                             : 'animate-spin pause'
                     }`}
                 >
                     <div className="flex">
-                        <div className="no-drag p-2 pl-2 pb-0">
+                        <div className="no-drag p-1 pb-0">
                             <div className="flex-none w-[64px] h-[64px]">
                                 {currSong && currSong.cover ? (
                                     <img
@@ -791,7 +800,7 @@ function App() {
                                 )}
                             </div>
                         </div>
-                        <div className="ml-1 mt-2 flex-1">
+                        <div className="ml-1 mt-1 flex-1">
                             <p
                                 style={{
                                     color: LightenDarkenColor(colors[3], 200),
@@ -832,7 +841,7 @@ function App() {
                                 </p>
                                 <p>{currSong && currSong.album}</p>
                             </div>
-                            <div className="w-full h-[20px] flex flex-row">
+                            <div className="w-full flex flex-row">
                                 <div
                                     className="no-drag w-[150px] flex-initial"
                                     id="track"
@@ -991,7 +1000,7 @@ function App() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-row justify-between mt-1 mx-2">
+                    <div className="flex flex-row justify-between mt-1 mx-1">
                         <div className="flex">
                             {resized ? (
                                 <Bars3Icon
@@ -1001,7 +1010,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={collapse}
                                 />
                             ) : (
@@ -1012,7 +1021,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={collapse}
                                 />
                             )}
@@ -1021,7 +1030,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colors[2], 200),
                                 }}
-                                className="no-drag h-[20px] m-1"
+                                className="no-drag h-[20px] m-0.5"
                             />
                             {onTop ? (
                                 <IconPinFilled
@@ -1031,7 +1040,7 @@ function App() {
                                             150
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={alwaysOnTop}
                                 />
                             ) : (
@@ -1042,7 +1051,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={alwaysOnTop}
                                 />
                             )}
@@ -1050,7 +1059,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colors[2], 200),
                                 }}
-                                className="no-drag h-[20px] m-1"
+                                className="no-drag h-[20px] m-0.5"
                                 onClick={() => {
                                     openSettings()
                                 }}
@@ -1065,7 +1074,7 @@ function App() {
                                             150
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onMouseDown={() => {
                                         setRepeat(!repeat)
                                     }}
@@ -1078,7 +1087,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onMouseDown={() => {
                                         setRepeat(!repeat)
                                     }}
@@ -1088,7 +1097,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colors[2], 200),
                                 }}
-                                className="no-drag h-[20px] m-1"
+                                className="no-drag h-[20px] m-0.5"
                                 onClick={() => {
                                     let rand_idx = Math.floor(
                                         Math.random() * swapTracks[1].length
@@ -1120,7 +1129,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={() => togglePlay()}
                                 />
                             ) : (
@@ -1131,7 +1140,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={() => togglePlay()}
                                 />
                             )}
@@ -1139,7 +1148,7 @@ function App() {
                                 style={{
                                     color: LightenDarkenColor(colors[2], 200),
                                 }}
-                                className="no-drag h-[20px] m-1"
+                                className="no-drag h-[20px] m-0.5"
                                 onClick={() => {
                                     let rand_idx = Math.floor(
                                         Math.random() * swapTracks[1].length
@@ -1169,7 +1178,7 @@ function App() {
                                             150
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={() => setShuffle(false)}
                                 />
                             ) : (
@@ -1180,7 +1189,7 @@ function App() {
                                             200
                                         ),
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                     onClick={() => setShuffle(true)}
                                 />
                             )}
@@ -1197,7 +1206,7 @@ function App() {
                                     onClick={() => {
                                         setVolume(preMuteVolume)
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                 />
                             ) : volume < 0.5 ? (
                                 <IconVolume2
@@ -1210,7 +1219,7 @@ function App() {
                                     onClick={() => {
                                         mute()
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                 />
                             ) : (
                                 <IconVolume
@@ -1223,7 +1232,7 @@ function App() {
                                     onClick={() => {
                                         mute()
                                     }}
-                                    className="no-drag h-[20px] m-1"
+                                    className="no-drag h-[20px] m-0.5"
                                 />
                             )}
 
@@ -1248,7 +1257,7 @@ function App() {
                     </div>
                 </div>
                 <div
-                    className="h-[36px] flex-none place-items-center px-1 drag flex flex-row"
+                    className="h-[35px] flex-none place-items-center px-1 drag flex flex-row"
                     style={{
                         backgroundColor: LightenDarkenColor(
                             UIColors.background,
@@ -1256,7 +1265,7 @@ function App() {
                         ),
                     }}
                 >
-                    <div className="py-1 flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap w-[100%-24px] directory-list">
+                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list">
                         {directories.map((dir: string, index: number) => {
                             return (
                                 <div className="" key={index}>
@@ -1299,7 +1308,7 @@ function App() {
                         style={{
                             color: LightenDarkenColor(colors[2], 200),
                         }}
-                        className={`no-drag min-h-[24px] max-h-[24px] w-[24px] m-1 ml-auto flex-none ${
+                        className={`no-drag h-[24px] w-[24px] m-0.5 ml-auto flex-none ${
                             directories.length == 0
                                 ? 'animate-pulse transition-opacity'
                                 : ''
@@ -1309,31 +1318,22 @@ function App() {
                         }}
                     />
                 </div>
-                <div
-                    style={{
-                        height:
-                            electronWindowHeight -
-                            133 -
-                            (settings.bottomBar ? 32 : 0),
-                    }}
-                    className="overflow-y-auto flex-1 flex-grow overflow-x-hidden h-[55px] bottom-bar"
-                >
+                <div className="overflow-y-hide flex-1 flex-grow mt-1">
                     {FileList}
                 </div>
                 {settings.bottomBar && (
                     <div
-                        className="drag h-[32px] flex-none place-items-center p-2"
+                        className="drag flex-none place-items-center p-2"
                         style={{
-                            backgroundColor: UIColors.background,
+                            backgroundColor: LightenDarkenColor(
+                                UIColors.background,
+                                -20
+                            ),
                             color: UIColors.altText,
                         }}
                     >
                         <div className="flex flex-row">
-                            <p className="text-left text-xs ml-1 min-w-[35%] .rtl-grid overflow-hidden inline-block whitespace-nowrapflex-1">
-                                {' '}
-                                {swapDirs[0] || 'No directory loaded'}
-                            </p>
-                            <p className="text-center text-xs mx-1 overflow-hidden inline-block whitespace-nowrap flex-1">
+                            <p className="text-left text-xs mx-1 w-[33%] overflow-hidden inline-block whitespace-nowrap flex-1">
                                 {swapTracks[0].length > 0
                                     ? secondsToDhms(
                                           swapTracks[0]
@@ -1352,14 +1352,23 @@ function App() {
                                       )
                                     : '0d 0h 0m 0s'}
                             </p>
-                            <div className="mr-1 min-w-[35%] flex-none inline-block ">
+                            <div className="mr-1 w-[33%] flex-none inline-block ">
+                                <p className="text-xs text-center overflow-hidden whitespace-nowrap text-ellipsis">
+                                    {`${play ? 'Playing' : 'Paused'} ${
+                                        swapDirs[0] == swapDirs[1]
+                                            ? 'current'
+                                            : 'other'
+                                    } folder`}
+                                </p>
+                            </div>
+                            <div className="mr-1 w-[33%] flex-none inline-block ">
                                 <p
                                     title={swapDirs[0]}
                                     className="text-xs text-right overflow-hidden whitespace-nowrap text-ellipsis"
                                 >
                                     {swapTracks[0].length > 0
-                                        ? `${swapIndeces[0] + 1} / ${
-                                              swapTracks[0].length
+                                        ? `${swapIndeces[1] + 1} / ${
+                                              swapTracks[1].length
                                           }`
                                         : '0 / 0'}
                                 </p>

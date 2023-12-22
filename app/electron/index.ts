@@ -7,6 +7,7 @@ import {
     screen,
     dialog,
     Menu,
+    shell,
 } from 'electron'
 import isDev from 'electron-is-dev'
 import * as mm from 'music-metadata'
@@ -15,7 +16,7 @@ import * as fs from 'fs'
 import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
-const WIN_HEIGHT_MIN = 102
+
 const WIN_HEIGHT_MAX = 600
 
 const WIN_WIDTH_MIN = 450
@@ -88,13 +89,14 @@ function createWindow() {
         bottomBar: boolean
         framelessWindow: boolean
     }
+    const WIN_HEIGHT_MIN = 100 + (!oldSettings.framelessWindow ? 30 : 0)
     const window = new BrowserWindow({
         height: 1,
         width: 1,
         frame: !oldSettings.framelessWindow,
         show: false,
         resizable: true,
-        fullscreenable: true,
+        fullscreenable: false,
         title: 'qmp',
         icon: '/Users/iggy/Documents/GitHub/qmp/app/public/drawing.png',
         minWidth: WIN_WIDTH_MIN,
@@ -115,7 +117,7 @@ function createWindow() {
         frame: true,
         show: false,
         resizable: false,
-        fullscreenable: true,
+        fullscreenable: false,
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true,
@@ -384,36 +386,22 @@ function createWindow() {
         store.set('all_dirs', filteredArray)
     })
 
-    window.on('will-resize', () => {
-        // console.log('resize')
-        window.webContents.send(
-            'get-height-from-main',
-            window.getBounds().height
-        )
-    })
-
-    window.on('will-resize', () => {
-        // console.log('resize')
-        window.webContents.send(
-            'get-height-from-main',
-            window.getBounds().height
-        )
-    })
+    // window.on('will-resize', (_, newBounds) => {
+    //     window.webContents.send('get-height-from-main', newBounds.height)
+    // })
     window.on('resize', () => {
-        // console.log('resize')
         window.webContents.send(
             'get-height-from-main',
             window.getBounds().height
         )
     })
 
-    window.on('resized', () => {
-        // console.log('resize')
-        window.webContents.send(
-            'get-height-from-main',
-            window.getBounds().height
-        )
-    })
+    // window.on('resized', () => {
+    //     window.webContents.send(
+    //         'get-height-from-main',
+    //         window.getBounds().height
+    //     )
+    // })
 
     window.on('blur', () => {
         if (oldSettings.framelessWindow) {
@@ -428,6 +416,10 @@ function createWindow() {
     settings?.on('close', function (evt) {
         evt.preventDefault()
         settings?.hide()
+    })
+
+    ipcMain.on('open-url', (_, url: string) => {
+        shell.openExternal(url)
     })
 }
 
