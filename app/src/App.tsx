@@ -1,12 +1,4 @@
-import React, {
-    useEffect,
-    useState,
-    useRef,
-    useCallback,
-    memo,
-    useMemo,
-    useLayoutEffect,
-} from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { prominent } from 'color.js'
 import {
     IconArrowsShuffle,
@@ -36,7 +28,6 @@ import {
 import { FixedSizeList as List } from 'react-window'
 
 import {
-    componentToHex,
     grayness,
     rgbToHex,
     LightenDarkenColor,
@@ -48,8 +39,9 @@ const AudioContext = window.AudioContext
 // var audioContext: AudioContext = null
 let track: any = null
 let gain: any = null
+
 const audio = new Audio()
-let loadOldSong = -1
+
 function App() {
     const [colors, setColors] = useState([
         '#000000',
@@ -90,17 +82,11 @@ function App() {
     const listRef = useRef<null | any>(null)
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
     const [electronWindowHeight, setElectronWindowHeight] = useState(450)
-
     const [swapTracks, setSwapTracks] = useState<any[][]>([[], []])
-
     const [directories, setDirectories] = useState<string[]>([])
-
     const [swapDirs, setSwapDirs] = useState<string[]>(['', ''])
-
     const [swapIndeces, setSwapIndeces] = useState<number[]>([-1, -1])
-
     const [currSong, setCurrSong] = useState<any>({})
-
     const [play, setPlay] = useState(false)
     const [currTime, setCurrTime] = useState(0)
     const [mouseDown, setMouseDown] = useState(false)
@@ -111,11 +97,9 @@ function App() {
     const [onTop, setOnTop] = useState(false)
     const [resized, setResized] = useState(false)
     const [repeat, setRepeat] = useState(false)
-
     const [sessionRestored, setSessionRestored] = useState(false)
     const [lastFile, setLastFile] = useState('')
     const [lastIndex, setLastIndex] = useState(-1)
-
     const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
 
     const Row = ({ index, style }: any) => (
@@ -233,9 +217,6 @@ function App() {
 
     // Switch to a new track
     const openFile = (file: string, setSameDir: boolean, index: number) => {
-        console.log(
-            `openFile(file: ${file}, setSameDir: ${setSameDir}), index: ${index}`
-        )
         if (swapDirs[0] == swapDirs[1]) {
             setCurrSong(swapTracks[0][index])
             setAudioSource(file)
@@ -336,7 +317,6 @@ function App() {
             })
     }
 
-    // Hmm... What can this be?
     const mute = () => {
         setPreMuteVolume(volume)
         setVolume(0)
@@ -398,8 +378,8 @@ function App() {
     }
 
     // Open a directory via dialog window
-    const openCertainDir = (path: string, changeIndex: boolean) => {
-        window.Main.send('open-dir-tm', [path, changeIndex])
+    const openCertainDir = (path: string, setIndexToZero: boolean) => {
+        window.Main.send('open-dir-tm', [path, setIndexToZero])
     }
 
     // Load all supported audio files from
@@ -558,8 +538,8 @@ function App() {
         }
     }, [swapTracks])
 
+    // Handle change of index in the playing directory
     useEffect(() => {
-        console.log(`swapIndeces = ${swapIndeces}`)
         if (listRef.current && !resized && swapDirs[0] == swapDirs[1]) {
             listRef.current.scrollToItem(swapIndeces[1], 'smart')
         }
@@ -623,14 +603,10 @@ function App() {
                 past_dirs: string[],
                 last_index: number
             ) => {
-                console.log(
-                    `restore-session-fm * ${last_open_dir} \n ${last_file} \n ${past_dirs} * `
-                )
                 past_dirs && setDirectories(past_dirs)
                 last_open_dir && openCertainDir(last_open_dir, true)
                 last_file && setLastFile(last_file)
                 last_index && setLastIndex(last_index)
-                // last_file && openFile(last_file, true, last_index)
             }
         )
         window.Main.receive('get-height-from-main', (height: number) => {
@@ -651,8 +627,8 @@ function App() {
 
         window.Main.receive(
             'add-dir-fm',
-            (new_dir: string, filesData: any[], filesPaths: string[]) => {
-                setSwapDirs((swapDirs) => [new_dir, swapDirs[1]])
+            (newDirectory: string, filesData: any[], filesPaths: string[]) => {
+                setSwapDirs((swapDirs) => [newDirectory, swapDirs[1]])
 
                 let newSongs = unpackFilesData(filesData, filesPaths)
 
@@ -667,27 +643,20 @@ function App() {
         window.Main.receive(
             'open-dir-fm',
             (
-                new_dir: string,
+                newDirectory: string,
                 filesData: any[],
                 filesPaths: string[],
-                changeIndex: boolean
+                setIndexToZero: boolean
             ) => {
-                console.log(`open-dir-fm(
-                    ${new_dir}
-                    \${filesData}
-                    ${filesPaths}
-                    ${changeIndex})`)
-                setSwapDirs((swapDirs) => [new_dir, swapDirs[1]])
+                setSwapDirs((swapDirs) => [newDirectory, swapDirs[1]])
 
                 let newSongs = unpackFilesData(filesData, filesPaths)
 
                 setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
 
-                if (changeIndex) {
-                    console.log('change swapIndeces[0] to 0')
+                if (setIndexToZero) {
                     setSwapIndeces((swapIndeces) => [0, swapIndeces[1]])
                 } else {
-                    console.log('no change in swapIndeces[0]')
                     setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
                 }
             }
@@ -698,15 +667,12 @@ function App() {
         }
     }, [])
 
+    // Update dynamic colors
     useEffect(() => {
         updateColors()
-        currSong &&
-            console.log(
-                'updateColors for ' +
-                    (currSong.name ? currSong.name : currSong.file)
-            )
     }, [currSong])
 
+    // Bad progressbar handling. TODO: use some standard progress bar
     useEffect(() => {
         if (progress === 800 && !repeat) {
             if (shuffle) {

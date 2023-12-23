@@ -1,0 +1,10 @@
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# App artifacts
+app/release
+app/src/out
+app/node_modules
+app/main

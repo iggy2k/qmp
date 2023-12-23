@@ -5,14 +5,11 @@ import { IconAlertHexagon } from '@tabler/icons-react'
 
 function Settings() {
     const [tab, setTab] = useState('appearance')
-
     const [background, setBackground] = useState('')
     const [accent, setAccent] = useState('')
     const [text, setText] = useState('')
     const [altText, setAltText] = useState('')
-
     const [selected, setSelected] = useState('background')
-
     const [settings, setSettings] = useState<{
         useCover: boolean | undefined
         movingColors: boolean | undefined
@@ -97,7 +94,6 @@ function Settings() {
     }, [background, accent, text, altText])
 
     useEffect(() => {
-        // alert(JSON.stringify(settings))
         if (
             settings.useCover !== undefined &&
             settings.movingColors !== undefined &&

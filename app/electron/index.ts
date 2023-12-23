@@ -12,13 +12,10 @@ import {
 import isDev from 'electron-is-dev'
 import * as mm from 'music-metadata'
 import * as fs from 'fs'
-// import path from 'path'
 import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
-
 const WIN_HEIGHT_MAX = 600
-
 const WIN_WIDTH_MIN = 450
 const WIN_WIDTH_MAX = 800
 const HTML5_AUDIO = [
@@ -32,14 +29,17 @@ const HTML5_AUDIO = [
     'flac',
     'webm',
     'ogg',
-] // Incomplete
+] // Incomplete, still covers 99.9% use cases
 var resized = true
 const store = new Store()
+
+const DEBUG = false
 
 if ((store.get('all_dirs') as string[]).length < 1) {
     store.set('all_dirs', [])
 }
-console.log('\nUserdata: ' + app.getPath('userData') + '\n')
+
+DEBUG && console.log('\nUserdata: ' + app.getPath('userData') + '\n')
 
 function checkExension(file: string) {
     return (
@@ -65,7 +65,7 @@ function openFiles(files: string[]) {
             return [results, covers]
         })
         .catch((e) => {
-            console.log('openFiles: ' + e)
+            DEBUG && console.log('openFiles: ' + e)
         })
 }
 
@@ -187,7 +187,7 @@ function createWindow() {
                 altText: string
             }
         ) => {
-            console.log('set-ui-colors-tm ' + JSON.stringify(UIColors))
+            DEBUG && console.log('set-ui-colors-tm ' + JSON.stringify(UIColors))
             window.webContents.send('set-ui-colors-fm', UIColors)
         }
     )
@@ -203,14 +203,15 @@ function createWindow() {
                 altText: string
             }
         ) => {
-            console.log('set-old-ui-colors-tm ' + JSON.stringify(UIColors))
+            DEBUG &&
+                console.log('set-old-ui-colors-tm ' + JSON.stringify(UIColors))
             store.set('old_ui_colors', UIColors)
         }
     )
 
     ipcMain.on('get-old-ui-colors-tm', (_) => {
         let UIColors = store.get('old_ui_colors')
-        console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
+        DEBUG && console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
         settings.webContents.send('get-old-ui-colors-fm', UIColors)
     })
@@ -228,7 +229,7 @@ function createWindow() {
                 framelessWindow: boolean
             }
         ) => {
-            console.log('set-settings-tm ' + JSON.stringify(settings))
+            DEBUG && console.log('set-settings-tm ' + JSON.stringify(settings))
             store.set('settings', settings)
             window.webContents.send('set-settings-fm', settings)
         }
@@ -236,7 +237,7 @@ function createWindow() {
 
     ipcMain.on('get-settings-tm', (_) => {
         let oldSettings = store.get('settings')
-        console.log('get-settings-tm ' + JSON.stringify(oldSettings))
+        DEBUG && console.log('get-settings-tm ' + JSON.stringify(oldSettings))
         window.webContents.send('get-settings-fm', oldSettings)
         settings.webContents.send('get-settings-fm', oldSettings)
     })
@@ -244,12 +245,12 @@ function createWindow() {
     // Restore colors when closing settings
     settings?.on('close', (_) => {
         let UIColors = store.get('old_ui_colors')
-        console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
+        DEBUG && console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
     })
 
     ipcMain.on('open-dir-tm', (_, args: any[]) => {
-        console.log('open-dir-tm ' + args)
+        DEBUG && console.log('open-dir-tm ' + args)
         let dir = args[0]
         let changeIndex = args[1]
 
@@ -272,24 +273,24 @@ function createWindow() {
     })
 
     ipcMain.on('set-old-file', (_, file: string) => {
-        console.log('set-old-file ' + file)
+        DEBUG && console.log('set-old-file ' + file)
         file ? store.set('last_file', file) : store.delete('last_file')
     })
 
     ipcMain.on('set-old-index', (_, index: number) => {
-        console.log('set-old-index ' + index)
+        DEBUG && console.log('set-old-index ' + index)
         index ? store.set('last_index', index) : store.delete('last_index')
     })
 
     ipcMain.on('set-last-open-dir', (_, dir: string) => {
-        console.log('set-last-open-dir ' + dir)
+        DEBUG && console.log('set-last-open-dir ' + dir)
         dir !== ''
             ? store.set('last_open_dir', dir)
             : store.delete('last_open_dir')
     })
 
     ipcMain.on('add-dir-tm', (_) => {
-        console.log('add-dir-tm')
+        DEBUG && console.log('add-dir-tm')
         let dirpath = dialog.showOpenDialogSync(window, {
             properties: ['openDirectory'],
             defaultPath: '',
@@ -327,7 +328,7 @@ function createWindow() {
     })
 
     ipcMain.on('open-settings-tm', (_) => {
-        console.log('opening settings at ' + url + '/settings')
+        DEBUG && console.log('opening settings at ' + url + '/settings')
         if (isDev) {
             settings?.loadURL(url + '#/settings')
         } else {
@@ -359,9 +360,10 @@ function createWindow() {
         let last_index = store.get('last_index')
         let past_dirs = store.get('all_dirs') as string[]
 
-        console.log(
-            `last_open_dir = ${last_open_dir} \n last_file = ${last_file} \n past_dirs = ${past_dirs} \n last_index = ${last_index}`
-        )
+        DEBUG &&
+            console.log(
+                `last_open_dir = ${last_open_dir} \n last_file = ${last_file} \n past_dirs = ${past_dirs} \n last_index = ${last_index}`
+            )
 
         window.webContents.send(
             'restore-session-fm',
@@ -375,20 +377,17 @@ function createWindow() {
     ipcMain.on('remove-dir', (_, dir: string) => {
         let obj = store.get('all_dirs') as string[]
 
-        console.log(`before removing ${dir} = ${obj}`)
+        DEBUG && console.log(`before removing ${dir} = ${obj}`)
 
         var filteredArray = obj.filter(function (e) {
             return e !== dir
         })
 
-        console.log(`after removing ${dir} = ${filteredArray}`)
+        DEBUG && console.log(`after removing ${dir} = ${filteredArray}`)
 
         store.set('all_dirs', filteredArray)
     })
 
-    // window.on('will-resize', (_, newBounds) => {
-    //     window.webContents.send('get-height-from-main', newBounds.height)
-    // })
     window.on('resize', () => {
         window.webContents.send(
             'get-height-from-main',
@@ -396,12 +395,12 @@ function createWindow() {
         )
     })
 
-    // window.on('resized', () => {
-    //     window.webContents.send(
-    //         'get-height-from-main',
-    //         window.getBounds().height
-    //     )
-    // })
+    window.on('resized', () => {
+        window.webContents.send(
+            'get-height-from-main',
+            window.getBounds().height
+        )
+    })
 
     window.on('blur', () => {
         if (oldSettings.framelessWindow) {
@@ -446,14 +445,11 @@ ipcMain.on('message', (event: IpcMainEvent, message: any) => {
 const isMac = process.platform === 'darwin'
 
 const template = [
-    // { role: 'appMenu' }
     ...(isMac
         ? [
               {
                   label: app.name,
                   submenu: [
-                      { role: 'about' },
-                      { type: 'separator' },
                       { role: 'hide' },
                       { role: 'hideOthers' },
                       { role: 'unhide' },
@@ -463,7 +459,6 @@ const template = [
               },
           ]
         : []),
-    // { role: 'fileMenu' }
     {
         label: 'Folder',
         submenu: [
@@ -476,56 +471,10 @@ const template = [
             },
         ],
     },
-    // { role: 'editMenu' }
-    // {
-    //     label: 'Edit',
-    //     submenu: [
-    //         { role: 'undo' },
-    //         { role: 'redo' },
-    //         { type: 'separator' },
-    //         { role: 'cut' },
-    //         { role: 'copy' },
-    //         { role: 'paste' },
-    //         ...(isMac
-    //             ? [
-    //                   { role: 'pasteAndMatchStyle' },
-    //                   { role: 'delete' },
-    //                   { role: 'selectAll' },
-    //                   { type: 'separator' },
-    //                   {
-    //                       label: 'Speech',
-    //                       submenu: [
-    //                           { role: 'startSpeaking' },
-    //                           { role: 'stopSpeaking' },
-    //                       ],
-    //                   },
-    //               ]
-    //             : [
-    //                   { role: 'delete' },
-    //                   { type: 'separator' },
-    //                   { role: 'selectAll' },
-    //               ]),
-    //     ],
-    // },
-    // { role: 'viewMenu' }
-    // {
-    //     label: 'View',
-    //     submenu: [
-    //         { role: 'reload' },
-    //         { role: 'forceReload' },
-    //         { role: 'toggleDevTools' },
-    //         { type: 'separator' },
-    //         { role: 'resetZoom' },
-    //         { type: 'separator' },
-    //         { role: 'togglefullscreen' },
-    //     ],
-    // },
-    // { role: 'windowMenu' }
     {
         label: 'Window',
         submenu: [
             { role: 'minimize' },
-            { role: 'zoom' },
             ...(isMac
                 ? [
                       { type: 'separator' },
@@ -536,16 +485,4 @@ const template = [
                 : [{ role: 'close' }]),
         ],
     },
-    // {
-    //     role: 'help',
-    //     submenu: [
-    //         {
-    //             label: 'Learn More',
-    //             click: async () => {
-    //                 const { shell } = require('electron')
-    //                 await shell.openExternal('https://electronjs.org')
-    //             },
-    //         },
-    //     ],
-    // },
 ] as Electron.MenuItemConstructorOptions[]
