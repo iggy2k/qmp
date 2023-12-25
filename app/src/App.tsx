@@ -721,9 +721,9 @@ function App() {
                             radial-gradient(ellipse at top    right, ${colors[2]}50 50% , transparent 80%),
                             radial-gradient(ellipse at bottom right, ${colors[3]}50  50% , transparent 80%)`,
                               }
-                            : { backgroundColor: UIColors.background }
+                            : {}
                     }
-                    className={`bg-[#333333] h-[100px] drag ${
+                    className={`h-[100px] drag ${
                         play && settings.movingColors
                             ? 'animate-spin'
                             : 'animate-spin pause'
