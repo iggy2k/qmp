@@ -2,7 +2,7 @@
 
 A compact, pretty, and cross-platform music player.
 
-# What is it
+# What is it 🐵
 
 It is a music player that is:
 
@@ -11,22 +11,28 @@ It is a music player that is:
 - Customizable
 - Cross-platform
 
-# What it is <u>not</u>
+# What it is <u>not</u> 🙈
 
 - A lightweight player (using electron guarantees a 300-500Mb binary size)
 - A low-RAM player (once again because electron)
 - An online/remote audio player
 
-# Why make it
+# Why make it ❔
 
 I liked the Ionica UI and features. Yet, it is MacOS only, has features I do not need, and requires paying for the full feature set. So I wanted to make something just as simple & minimalistic but at the same time cross-platform, fully free, and customizable to my liking.
 
-# Development Status
+# Screenshots
+
+<p align="center">
+  <img src="./images/themes.png" width="768"/>
+</p>
+
+# Development Status 🚥
 
 Status: In progress (see feature roadmap below)\
 Progress: Minimal set of features is done - app is more or less usable
 
-# Feature roadmap
+# Feature roadmap 🚧
 
 ### Basic Features
 
@@ -74,7 +80,7 @@ Progress: Minimal set of features is done - app is more or less usable
 - Anything that would make the UI cluttered / unintuitive
   - Self-explanatory
 
-# Tech used
+# Tech used 🛠️
 
 - Electron
 - ReactJS
@@ -83,7 +89,7 @@ Progress: Minimal set of features is done - app is more or less usable
 - Vite
 - Prettier
 
-# Related projects & apps
+# Related projects & apps 🔗
 
 - [Dopamine](https://github.com/digimezzo/dopamine)
 - [DuskPlayer](https://github.com/Aveek-Saha/DuskPlayer)
