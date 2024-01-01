@@ -16,8 +16,12 @@ import Store from 'electron-store'
 
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MAX = 600
-const WIN_WIDTH_MIN = 450
-const WIN_WIDTH_MAX = 800
+// const WIN_WIDTH_MIN = 450
+// const WIN_WIDTH_MAX = 800
+
+const WIN_WIDTH_MIN = 800
+const WIN_WIDTH_MAX = 1200
+
 const HTML5_AUDIO = [
     'wav',
     'mpeg',
@@ -143,7 +147,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH_MIN, WIN_HEIGHT, true)
-        // window?.webContents.openDevTools()
+        window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {
@@ -272,6 +276,10 @@ function createWindow() {
         })
     })
 
+    ipcMain.on('set-audio-output-tm', (_, deviceId: string) => {
+        window.webContents.send('set-audio-output-fm', deviceId)
+    })
+
     ipcMain.on('set-old-file', (_, file: string) => {
         DEBUG && console.log('set-old-file ' + file)
         file ? store.set('last_file', file) : store.delete('last_file')
@@ -337,6 +345,7 @@ function createWindow() {
             // While this doesn't????????????????/
             // settings?.loadFile(url + '#/settings')
         }
+        // settings?.webContents.openDevTools()
         settings?.show()
     })
 

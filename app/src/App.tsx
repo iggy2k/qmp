@@ -40,7 +40,14 @@ const AudioContext = window.AudioContext
 let track: any = null
 let gain: any = null
 
-const audio = new Audio()
+const audio = new Audio() as HTMLAudioElement & {
+    setSinkId(deviceId: string): void
+}
+
+async function setAudioOutput(deviceId: string) {
+    await audio.setSinkId(deviceId)
+    console.log(`Audio is being played on ${deviceId}`)
+}
 
 function App() {
     const [colors, setColors] = useState([
@@ -557,6 +564,11 @@ function App() {
         window.Main.send('restore-session-tm', null)
         window.Main.send('get-old-ui-colors-tm', null)
         window.Main.send('get-settings-tm', null)
+
+        window.Main.receive('set-audio-output-fm', (deviceId: string) => {
+            setAudioOutput(deviceId)
+        })
+
         window.Main.receive(
             'get-old-ui-colors-fm',
             (UIColors: {

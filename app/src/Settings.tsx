@@ -5,6 +5,10 @@ import { IconAlertHexagon } from '@tabler/icons-react'
 
 function Settings() {
     const [tab, setTab] = useState('appearance')
+
+    const [mediaDevices, setMediaDevices] = useState<Object>({})
+    const [refrashMediaDevices, setRefreshMediaDevices] = useState(false)
+
     const [background, setBackground] = useState('')
     const [accent, setAccent] = useState('')
     const [text, setText] = useState('')
@@ -49,6 +53,10 @@ function Settings() {
             text: text,
             altText: altText,
         })
+    }
+
+    const setAudioOutput = (deviceId: string) => {
+        window.Main.send('set-audio-output-tm', deviceId)
     }
 
     useEffect(() => {
@@ -106,6 +114,38 @@ function Settings() {
         }
     }, [settings])
 
+    useEffect(() => {
+        if (!navigator.mediaDevices?.enumerateDevices) {
+            console.log('enumerateDevices() not supported.')
+        } else {
+            navigator.mediaDevices
+                .enumerateDevices()
+                .then((devices: MediaDeviceInfo[]) => {
+                    devices.forEach((device) => {
+                        console.log(
+                            `${device.kind}: ${device.label} id = ${device.deviceId}`
+                        )
+                        if (
+                            device.kind == 'audiooutput' &&
+                            !Object.keys(mediaDevices).includes(device.deviceId)
+                        ) {
+                            setMediaDevices((mediaDevices) => ({
+                                ...mediaDevices,
+                                [device.deviceId]: device.label,
+                            }))
+                        }
+                    })
+                })
+                .catch((err) => {
+                    console.error(`${err.name}: ${err.message}`)
+                })
+        }
+    }, [refrashMediaDevices])
+
+    useEffect(() => {
+        console.log(mediaDevices)
+    }, [mediaDevices])
+
     return (
         <div className="bg-[#333333] h-[100vh] p-1 overflow-hidden drag">
             <div className="grid grid-cols-3 gap-3 mt-2 bg-black/10 rounded-md m-1 mb-3 h-[30px]">
@@ -138,15 +178,15 @@ function Settings() {
                 <div
                     className={`no-drag text-center text-[#bfbfbf] p-1 rounded-md text-sm h-[30px]
          ${
-             tab == 'misc'
+             tab == 'audio'
                  ? 'transition duration-300 border-[#f08665] border-b-[1px] '
                  : ' hover:bg-black/10 transition duration-300'
          }`}
                     onClick={() => {
-                        setTab('misc')
+                        setTab('audio')
                     }}
                 >
-                    <p>Misc.</p>
+                    <p>Audio</p>
                 </div>
             </div>
             {tab == 'appearance' ? (
@@ -425,7 +465,7 @@ border-[#f08665] border-b-[1px] hover:bg-black/10 transition-colors duration-300
                         </div>
                     </div>
                 </div>
-            ) : tab == 'misc' ? (
+            ) : tab == 'audio' ? (
                 <div className="text-white text-sm font-light">
                     <a
                         className="cursor-pointer hover:text-blue-400 transition-colors duration-300"
@@ -438,6 +478,30 @@ border-[#f08665] border-b-[1px] hover:bg-black/10 transition-colors duration-300
                     >
                         https://github.com/iggy2k/qmp
                     </a>
+                    <div
+                        className="no-drag text-center text-[#bfbfbf] p-2 rounded-md	
+border-[#f08665] border-b-[1px] hover:bg-black/10 transition-colors duration-300 h-[40px] w-[80px]"
+                        onClick={() => {
+                            setRefreshMediaDevices(!refrashMediaDevices)
+                        }}
+                    >
+                        <p>Refresh</p>
+                    </div>
+                    {Object.entries(mediaDevices).map(([k, v]) => (
+                        <div
+                            className="bg-white/20 mt-1"
+                            onClick={() => {
+                                setAudioOutput(k)
+                            }}
+                        >
+                            {k == 'default'
+                                ? 'Same as system'
+                                : v
+                                      .replace('(Virtual)', '')
+                                      .replace('(Built-in)', '')
+                                      .replace('(Bluetooth)', '')}
+                        </div>
+                    ))}
                 </div>
             ) : null}
         </div>
