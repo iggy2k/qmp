@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { prominent } from 'color.js'
+
 import {
     IconArrowsShuffle,
     IconRepeat,
@@ -21,7 +22,8 @@ import {
     AdjustmentsVerticalIcon,
     CogIcon,
     Bars3Icon,
-    ChevronDoubleUpIcon,
+    ChevronUpIcon,
+    ChevronDownIcon,
     FolderPlusIcon,
 } from '@heroicons/react/24/solid'
 
@@ -42,11 +44,13 @@ let gain: any = null
 
 const audio = new Audio() as HTMLAudioElement & {
     setSinkId(deviceId: string): void
+    sinkId: string
 }
 
 async function setAudioOutput(deviceId: string) {
     await audio.setSinkId(deviceId)
-    console.log(`Audio is being played on ${deviceId}`)
+    window.Main.send('get-audio-output-tm', audio.sinkId)
+    // console.log(`Audio is being played on ${deviceId}`)
 }
 
 function App() {
@@ -979,8 +983,39 @@ function App() {
                         </div>
                     </div>
                     <div className="flex flex-row justify-between mt-1 mx-1">
-                        <div className="flex">
-                            {resized ? (
+                        <div className="flex ">
+                            <div className="h-[30px] w-[30px]">
+                                <ChevronDownIcon
+                                    style={{
+                                        color: LightenDarkenColor(
+                                            colors[2],
+                                            200
+                                        ),
+                                    }}
+                                    className={`no-drag bg-red-400/0 origin-center m-0.5 ${
+                                        !resized
+                                            ? 'h-[20px] rotate-0 transition-transform duration-300 transform-gpu'
+                                            : 'rotate-180 h-0'
+                                    } `}
+                                    onClick={collapse}
+                                />
+
+                                <ChevronUpIcon
+                                    style={{
+                                        color: LightenDarkenColor(
+                                            colors[2],
+                                            200
+                                        ),
+                                    }}
+                                    className={`no-drag bg-red-400/0 origin-center m-0.5 ${
+                                        resized
+                                            ? 'h-[20px] rotate-0 transition-transform duration-300 transform-gpu'
+                                            : 'rotate-180 h-0'
+                                    } `}
+                                    onClick={collapse}
+                                />
+                            </div>
+                            {/* {resized && (
                                 <Bars3Icon
                                     style={{
                                         color: LightenDarkenColor(
@@ -991,18 +1026,7 @@ function App() {
                                     className="no-drag h-[20px] m-0.5"
                                     onClick={collapse}
                                 />
-                            ) : (
-                                <ChevronDoubleUpIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
-                                    className="no-drag h-[20px] m-0.5"
-                                    onClick={collapse}
-                                />
-                            )}
+                            )} */}
 
                             <AdjustmentsVerticalIcon
                                 style={{

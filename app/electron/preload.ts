@@ -80,6 +80,8 @@ const api = {
             'open-url',
             'set-audio-output-tm',
             'set-audio-output-fm',
+            'get-audio-output-tm',
+            'get-audio-output-fm',
         ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
@@ -117,6 +119,8 @@ const api = {
             'open-url',
             'set-audio-output-tm',
             'set-audio-output-fm',
+            'get-audio-output-tm',
+            'get-audio-output-fm',
         ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`

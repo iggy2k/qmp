@@ -280,6 +280,10 @@ function createWindow() {
         window.webContents.send('set-audio-output-fm', deviceId)
     })
 
+    ipcMain.on('get-audio-output-tm', (_, sinkId: string) => {
+        settings.webContents.send('get-audio-output-fm', sinkId)
+    })
+
     ipcMain.on('set-old-file', (_, file: string) => {
         DEBUG && console.log('set-old-file ' + file)
         file ? store.set('last_file', file) : store.delete('last_file')
@@ -345,7 +349,7 @@ function createWindow() {
             // While this doesn't????????????????/
             // settings?.loadFile(url + '#/settings')
         }
-        // settings?.webContents.openDevTools()
+        settings?.webContents.openDevTools()
         settings?.show()
     })
 

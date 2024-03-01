@@ -8,6 +8,7 @@ function Settings() {
 
     const [mediaDevices, setMediaDevices] = useState<Object>({})
     const [refrashMediaDevices, setRefreshMediaDevices] = useState(false)
+    const [currSinkId, setCurrSinkId] = useState('')
 
     const [background, setBackground] = useState('')
     const [accent, setAccent] = useState('')
@@ -76,6 +77,9 @@ function Settings() {
                 setAltText(UIColors.altText)
             }
         )
+        window.Main.receive('get-audio-output-fm', (sinkId: string) => {
+            setCurrSinkId(sinkId)
+        })
         window.Main.receive(
             'get-settings-fm',
             (newSettings: {
@@ -487,21 +491,32 @@ border-[#f08665] border-b-[1px] hover:bg-black/10 transition-colors duration-300
                     >
                         <p>Refresh</p>
                     </div>
-                    {Object.entries(mediaDevices).map(([k, v]) => (
-                        <div
-                            className="bg-white/20 mt-1"
-                            onClick={() => {
-                                setAudioOutput(k)
-                            }}
-                        >
-                            {k == 'default'
-                                ? 'Same as system'
-                                : v
-                                      .replace('(Virtual)', '')
-                                      .replace('(Built-in)', '')
-                                      .replace('(Bluetooth)', '')}
-                        </div>
-                    ))}
+                    {Object.entries(mediaDevices).map(([k, v]) => {
+                        let deviceName = v
+                            .replace('(Virtual)', '')
+                            .replace('(Built-in)', '')
+                            .replace('(Bluetooth)', '')
+                        if (k == 'default') {
+                            deviceName = 'Same as system'
+                        }
+                        if (k == currSinkId) {
+                            deviceName = '✓ ' + deviceName
+                        }
+                        return (
+                            <div
+                                className={`${
+                                    v == currSinkId
+                                        ? 'bg-red-400/50'
+                                        : 'bg-white/20'
+                                } mt-1`}
+                                onClick={() => {
+                                    setAudioOutput(k)
+                                }}
+                            >
+                                {deviceName}
+                            </div>
+                        )
+                    })}
                 </div>
             ) : null}
         </div>
