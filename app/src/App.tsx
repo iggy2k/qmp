@@ -983,51 +983,40 @@ function App() {
                         </div>
                     </div>
                     <div className="flex flex-row justify-between mt-1 mx-1">
-                        <div className="flex ">
-                            <div className="h-[30px] w-[30px]">
-                                <ChevronDownIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
-                                    className={`no-drag bg-red-400/0 origin-center m-0.5 ${
-                                        !resized
-                                            ? 'h-[20px] rotate-0 transition-transform duration-300 transform-gpu'
-                                            : 'rotate-180 h-0'
-                                    } `}
-                                    onClick={collapse}
-                                />
+                        <div className="flex">
+                            <div className="h-[20px] m-0.5">
+                                <div className="">
+                                    <ChevronDownIcon
+                                        style={{
+                                            color: LightenDarkenColor(
+                                                colors[2],
+                                                200
+                                            ),
+                                        }}
+                                        className={`no-drag origin-center ${
+                                            !resized
+                                                ? 'h-[20px] rotate-0 transition-transform duration-150'
+                                                : 'rotate-180 h-0'
+                                        } `}
+                                        onClick={collapse}
+                                    />
 
-                                <ChevronUpIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
-                                    className={`no-drag bg-red-400/0 origin-center m-0.5 ${
-                                        resized
-                                            ? 'h-[20px] rotate-0 transition-transform duration-300 transform-gpu'
-                                            : 'rotate-180 h-0'
-                                    } `}
-                                    onClick={collapse}
-                                />
+                                    <ChevronUpIcon
+                                        style={{
+                                            color: LightenDarkenColor(
+                                                colors[2],
+                                                200
+                                            ),
+                                        }}
+                                        className={`no-drag origin-center ${
+                                            resized
+                                                ? 'h-[20px] rotate-0 transition-transform duration-150'
+                                                : 'rotate-180 h-0 '
+                                        } `}
+                                        onClick={collapse}
+                                    />
+                                </div>
                             </div>
-                            {/* {resized && (
-                                <Bars3Icon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
-                                    className="no-drag h-[20px] m-0.5"
-                                    onClick={collapse}
-                                />
-                            )} */}
-
                             <AdjustmentsVerticalIcon
                                 style={{
                                     color: LightenDarkenColor(colors[2], 200),
