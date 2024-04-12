@@ -19,7 +19,7 @@ const WIN_HEIGHT_MAX = 600
 // const WIN_WIDTH_MIN = 450
 // const WIN_WIDTH_MAX = 800
 
-const WIN_WIDTH_MIN = 800
+const WIN_WIDTH_MIN = 400
 const WIN_WIDTH_MAX = 1200
 
 const HTML5_AUDIO = [
