@@ -35,6 +35,8 @@ import {
     secondsToDhmsShort,
 } from './helpers'
 
+const PROGRESS_BAR_PRECISION = 1000
+
 const AudioContext = window.AudioContext
 // var audioContext: AudioContext = null
 let track: any = null
@@ -282,14 +284,13 @@ function App() {
     // Update the fancy progressbar
     const updateProgress = () => {
         if (audio) {
+            console.log('updateProgress', audio.currentTime / audio.duration)
             let frac = audio.currentTime / audio.duration
             if (frac !== Infinity) {
-                let new_progress = Math.trunc(frac * 800)
-                let new_time = Math.trunc(frac * 100)
-                if (new_progress !== Infinity && !Number.isNaN(new_progress)) {
-                    setProgress(new_progress)
-                    setCurrTime(new_time)
-                }
+                let new_progress = Math.trunc(frac * PROGRESS_BAR_PRECISION)
+                console.log('new_progress', new_progress)
+                setProgress(new_progress)
+                setCurrTime(audio.currentTime)
                 if (frac == 1 && play) {
                     togglePlay()
                 }
@@ -386,6 +387,20 @@ function App() {
             relative_pos !== Infinity
         ) {
             setSeek(relative_pos)
+        }
+    }
+
+    const seekTime = (new_progress: number) => {
+        // alert(new_progress)
+        if (!audio) {
+            return
+        }
+        if (
+            new_progress >= 0 &&
+            new_progress <= audio.duration &&
+            !Number.isNaN(new_progress)
+        ) {
+            setSeek(new_progress)
         }
     }
 
@@ -566,6 +581,7 @@ function App() {
     // Normal way of using react with listeners
     useEffect(() => {
         audio.ontimeupdate = updateProgress
+
         window.Main.send('restore-session-tm', null)
         window.Main.send('get-old-ui-colors-tm', null)
         window.Main.send('get-settings-tm', null)
@@ -691,19 +707,19 @@ function App() {
 
     // Bad progressbar handling. TODO: use some standard progress bar
     useEffect(() => {
-        if (progress === 800 && !repeat) {
-            if (shuffle) {
-                let rand_idx = Math.floor(Math.random() * swapTracks[1].length)
-                openFile(swapTracks[1][rand_idx].file, false, rand_idx)
-            } else {
-                openFile(
-                    swapTracks[1][(swapIndeces[1] + 1) % swapTracks[1].length]
-                        .file,
-                    false,
-                    (swapIndeces[1] + 1) % swapTracks[1].length
-                )
-            }
-        }
+        // if (progress === 800 && !repeat) {
+        //     if (shuffle) {
+        //         let rand_idx = Math.floor(Math.random() * swapTracks[1].length)
+        //         openFile(swapTracks[1][rand_idx].file, false, rand_idx)
+        //     } else {
+        //         openFile(
+        //             swapTracks[1][(swapIndeces[1] + 1) % swapTracks[1].length]
+        //                 .file,
+        //             false,
+        //             (swapIndeces[1] + 1) % swapTracks[1].length
+        //         )
+        //     }
+        // }
     }, [progress])
 
     return (
@@ -825,161 +841,40 @@ function App() {
                                 <p>{currSong && currSong.album}</p>
                             </div>
                             <div className="w-full flex flex-row">
-                                <div
-                                    className="no-drag w-[150px] flex-initial"
-                                    id="track"
-                                    // This id value needed as using e.target can target the child
-                                    // latter being the track knob which has its own bounds.
-                                    // This causes unexpected bahaviour
-                                    onMouseMove={(e) => {
-                                        relativeCoords(e, false)
+                                <Slider
+                                    defaultValue={[0]}
+                                    value={[progress]}
+                                    className="no-drag bg-inherit w-[calc(100%_-_125px)]"
+                                    min={0}
+                                    max={PROGRESS_BAR_PRECISION}
+                                    step={0.001}
+                                    onValueChange={(num) => {
+                                        if (audio) {
+                                            let userInputProgress = num[0]
+                                            let userInputTime = Math.trunc(
+                                                (userInputProgress /
+                                                    PROGRESS_BAR_PRECISION) *
+                                                    audio.duration
+                                            )
+
+                                            if (
+                                                !Number.isNaN(userInputTime) &&
+                                                userInputTime !== Infinity
+                                            ) {
+                                                setProgress(userInputProgress)
+                                                setCurrTime(userInputTime)
+                                                setSeek(userInputTime)
+                                            }
+                                        }
                                     }}
-                                    onClick={(e) => {
-                                        relativeCoords(e, true)
-                                    }}
-                                    onMouseDown={() => setMouseDown(true)}
-                                    onMouseLeave={() => setMouseDown(false)}
-                                    onMouseUp={() => setMouseDown(false)}
-                                >
-                                    <svg
-                                        width="150"
-                                        height="20"
-                                        viewBox="0 0 800 80"
-                                        className="no-drag clip1 absolute bg-transparent rounded-md"
-                                        style={{
-                                            clipPath: `inset(0 ${
-                                                100 - currTime
-                                            }% 0 0)`,
-                                        }}
-                                    >
-                                        {play ? (
-                                            <defs>
-                                                <path
-                                                    style={{
-                                                        stroke: LightenDarkenColor(
-                                                            colors[2],
-                                                            200
-                                                        ),
-                                                    }}
-                                                    fill="none"
-                                                    id="sign-wave"
-                                                    d="
-     M0 50
-     C 40 10, 60 10, 100 50 C 140 90, 160 90, 200 50
-     C 240 10, 260 10, 300 50 C 340 90, 360 90, 400 50
-     C 440 10, 460 10, 500 50 C 540 90, 560 90, 600 50
-     C 640 10, 660 10, 700 50 C 740 90, 760 90, 800 50
-     C 840 10, 860 10, 900 50 C 940 90, 960 90, 1000 50
-     C 1040 10, 1060 10, 1100 50 C 1140 90, 1160 90, 1200 50
-     "
-                                                    strokeWidth="12"
-                                                />
-                                            </defs>
-                                        ) : (
-                                            <defs>
-                                                <path
-                                                    style={{
-                                                        stroke: LightenDarkenColor(
-                                                            colors[2],
-                                                            200
-                                                        ),
-                                                    }}
-                                                    fill="none"
-                                                    id="sign-wave"
-                                                    d="
-     M0 50
-     L 1200 50
-     "
-                                                    strokeWidth="12"
-                                                />
-                                            </defs>
-                                        )}
-                                        <use href="#sign-wave" x="0" y="0">
-                                            <animate
-                                                attributeName="x"
-                                                from="0"
-                                                to="-200"
-                                                dur="6s"
-                                                repeatCount="indefinite"
-                                            />
-                                        </use>
-                                    </svg>
-                                    <svg
-                                        width="150"
-                                        height="20"
-                                        viewBox="0 0 800 80"
-                                        className="clip1 absolute bg-transparent rounded-md"
-                                        style={{
-                                            clipPath: `inset(0 0 0 ${currTime}%)`,
-                                        }}
-                                    >
-                                        <defs>
-                                            <path
-                                                style={{
-                                                    stroke: LightenDarkenColor(
-                                                        colors[2],
-                                                        200
-                                                    ),
-                                                }}
-                                                opacity={0.5}
-                                                fill="none"
-                                                id="sign-wave2"
-                                                d="
-     M0 50
-     L 1200 50
-     "
-                                                strokeWidth="12"
-                                            />
-                                        </defs>
-                                        <use href="#sign-wave2" x="0" y="0">
-                                            <animate
-                                                attributeName="x"
-                                                from="0"
-                                                to="-200"
-                                                dur="6s"
-                                                repeatCount="indefinite"
-                                            />
-                                        </use>
-                                    </svg>
-                                    <svg
-                                        width="150"
-                                        height="20"
-                                        className="clip1 absolute"
-                                        viewBox="0 0 800 80"
-                                    >
-                                        <ellipse
-                                            cx={progress}
-                                            cy="50"
-                                            rx="20"
-                                            ry="40"
-                                            style={{
-                                                fill: mouseDown
-                                                    ? LightenDarkenColor(
-                                                          colors[2],
-                                                          200
-                                                      )
-                                                    : LightenDarkenColor(
-                                                          colors[2],
-                                                          150
-                                                      ),
-                                            }}
-                                        />
-                                    </svg>
-                                </div>
-                                <div
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
-                                    className="text-xs mr-2 flex-1 text-right"
-                                >
+                                />
+
+                                <p className="text-xs mr-2 flex-1 text-right font-light">
                                     {secondsToDhmsShort(audio.currentTime)}
                                     &nbsp;/&nbsp;
                                     {currSong &&
                                         secondsToDhmsShort(currSong.duration)}
-                                </div>
+                                </p>
                             </div>
                         </div>
                     </div>
