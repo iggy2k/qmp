@@ -19,7 +19,7 @@ const WIN_HEIGHT_MAX = 600
 // const WIN_WIDTH_MIN = 450
 // const WIN_WIDTH_MAX = 800
 
-const WIN_WIDTH_MIN = 400
+const WIN_WIDTH_MIN = 800
 const WIN_WIDTH_MAX = 1200
 
 const HTML5_AUDIO = [
@@ -147,7 +147,7 @@ function createWindow() {
         let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH_MIN, WIN_HEIGHT, true)
-        window?.webContents.openDevTools()
+        // window?.webContents.openDevTools()
     }, 100)
 
     ipcMain.on('resize', () => {

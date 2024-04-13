@@ -17,36 +17,11 @@ import {
     SpeakerLoudIcon,
     SpeakerModerateIcon,
     SpeakerOffIcon,
+    FilePlusIcon,
 } from '@radix-ui/react-icons'
 
 import { Badge } from '../components/ui/badge'
 import { Separator } from '../components/ui/separator'
-
-import {
-    IconArrowsShuffle,
-    IconRepeat,
-    IconRepeatOff,
-    IconArrowsRight,
-    IconPin,
-    IconPinFilled,
-    IconVolume,
-    IconVolume2,
-    IconVolume3,
-    IconMusic,
-} from '@tabler/icons-react'
-
-import {
-    // PauseIcon,
-    // PlayIcon,
-    ForwardIcon,
-    BackwardIcon,
-    AdjustmentsVerticalIcon,
-    CogIcon,
-    Bars3Icon,
-    // ChevronUpIcon,
-    // ChevronDownIcon,
-    FolderPlusIcon,
-} from '@heroicons/react/24/solid'
 
 import { FixedSizeList as List } from 'react-window'
 
@@ -1313,7 +1288,7 @@ function App() {
                             )
                         })}
                     </div>
-                    <FolderPlusIcon
+                    <FilePlusIcon
                         style={{
                             color: LightenDarkenColor(colors[2], 200),
                         }}
