@@ -247,7 +247,6 @@ function App() {
         }
 
         setProgress(0)
-        setCurrTime(0)
         setSwapIndeces((swapIndeces) => [swapIndeces[0], index])
 
         window.Main.setLastOpenDir(swapDirs[0])
@@ -284,13 +283,11 @@ function App() {
     // Update the fancy progressbar
     const updateProgress = () => {
         if (audio) {
-            console.log('updateProgress', audio.currentTime / audio.duration)
             let frac = audio.currentTime / audio.duration
             if (frac !== Infinity) {
                 let new_progress = Math.trunc(frac * PROGRESS_BAR_PRECISION)
                 console.log('new_progress', new_progress)
                 setProgress(new_progress)
-                setCurrTime(audio.currentTime)
                 if (frac == 1 && play) {
                     togglePlay()
                 }
@@ -369,39 +366,6 @@ function App() {
         // Update directory for session restore
         window.Main.RemoveDir(directories[idx])
         setDirectories(directories.filter((dir) => dir !== directories[idx]))
-    }
-
-    // Get seek time from mouse position on the track
-    const relativeCoords = (e: any, click: boolean) => {
-        if (!audio) {
-            return
-        }
-        e.stopPropagation()
-        let elem = document.getElementById('track')
-        var bounds = elem!.getBoundingClientRect()
-        var x = e.clientX - bounds.left
-        var relative_pos = (audio.duration / 150) * x
-        if (
-            (mouseDown || click) &&
-            !Number.isNaN(relative_pos) &&
-            relative_pos !== Infinity
-        ) {
-            setSeek(relative_pos)
-        }
-    }
-
-    const seekTime = (new_progress: number) => {
-        // alert(new_progress)
-        if (!audio) {
-            return
-        }
-        if (
-            new_progress >= 0 &&
-            new_progress <= audio.duration &&
-            !Number.isNaN(new_progress)
-        ) {
-            setSeek(new_progress)
-        }
     }
 
     // Open a directory via dialog window
@@ -707,19 +671,19 @@ function App() {
 
     // Bad progressbar handling. TODO: use some standard progress bar
     useEffect(() => {
-        // if (progress === 800 && !repeat) {
-        //     if (shuffle) {
-        //         let rand_idx = Math.floor(Math.random() * swapTracks[1].length)
-        //         openFile(swapTracks[1][rand_idx].file, false, rand_idx)
-        //     } else {
-        //         openFile(
-        //             swapTracks[1][(swapIndeces[1] + 1) % swapTracks[1].length]
-        //                 .file,
-        //             false,
-        //             (swapIndeces[1] + 1) % swapTracks[1].length
-        //         )
-        //     }
-        // }
+        if (progress === PROGRESS_BAR_PRECISION && !repeat) {
+            if (shuffle) {
+                let rand_idx = Math.floor(Math.random() * swapTracks[1].length)
+                openFile(swapTracks[1][rand_idx].file, false, rand_idx)
+            } else {
+                openFile(
+                    swapTracks[1][(swapIndeces[1] + 1) % swapTracks[1].length]
+                        .file,
+                    false,
+                    (swapIndeces[1] + 1) % swapTracks[1].length
+                )
+            }
+        }
     }, [progress])
 
     return (
@@ -862,7 +826,6 @@ function App() {
                                                 userInputTime !== Infinity
                                             ) {
                                                 setProgress(userInputProgress)
-                                                setCurrTime(userInputTime)
                                                 setSeek(userInputTime)
                                             }
                                         }
