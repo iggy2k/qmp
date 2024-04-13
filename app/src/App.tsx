@@ -22,6 +22,8 @@ import {
 
 import { Badge } from '../components/ui/badge'
 import { Separator } from '../components/ui/separator'
+import { Slider } from '../components/ui/slider'
+import { cn } from '../lib/utils'
 
 import { FixedSizeList as List } from 'react-window'
 
@@ -124,7 +126,7 @@ function App() {
                             ? LightenDarkenColor(UIColors.background, -20)
                             : '',
                 }}
-                className="hover:bg-white/10 hover:px-1 transition-all duration-100 flex flex-row p-[1px] text-center rounded-md box-border"
+                className="hover:px-1 transition-all duration-100 flex flex-row p-[1px] text-center rounded-md box-border"
                 onClick={() => {
                     openFile(swapTracks[0][index].file, true, index)
                 }}
@@ -136,19 +138,21 @@ function App() {
                         alt=""
                     />
                 ) : (
-                    <ImageIcon className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] text-white" />
+                    <ImageIcon className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]" />
                 )}
 
                 <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
                     {swapTracks[0][index] && swapTracks[0][index].name ? (
                         <div className="flex flex-row">
-                            <p style={{ color: UIColors.text }}>
+                            <p
+                            // style={{ color: UIColors.text }}
+                            >
                                 {swapTracks[0][index].name &&
                                     swapTracks[0][index].name.replace('\\', '')}
                             </p>
                             <p
                                 className="ml-1"
-                                style={{ color: UIColors.text + '90' }}
+                                // style={{ color: UIColors.text + '90' }}
                             >
                                 {swapTracks[0][index].author &&
                                     swapTracks[0][index].author.replace(
@@ -158,7 +162,7 @@ function App() {
                             </p>
                             <p
                                 className="ml-1"
-                                style={{ color: UIColors.text + '80' }}
+                                // style={{ color: UIColors.text + '80' }}
                             >
                                 {swapTracks[0][index].album &&
                                     swapTracks[0][index].album.replace(
@@ -168,8 +172,9 @@ function App() {
                             </p>
                         </div>
                     ) : (
-                        <p style={{ color: UIColors.text }}>
-                            {' '}
+                        <p
+                        // style={{ color: UIColors.text }}
+                        >
                             {swapTracks[0][index] &&
                                 swapTracks[0][index].file
                                     .split('/')
@@ -190,10 +195,10 @@ function App() {
                         <div
                             className="rounded-md px-1 font-mono
                         "
-                            style={{
-                                color: UIColors.altText,
-                                backgroundColor: UIColors.background,
-                            }}
+                            // style={{
+                            //     color: UIColors.altText,
+                            //     backgroundColor: UIColors.background,
+                            // }}
                         >
                             {swapTracks[0][index] &&
                                 secondsToDhmsShort(
@@ -703,8 +708,8 @@ function App() {
 
     return (
         <div
-            className="h-[100vh] flex flex-col overflow-y-hidden"
-            style={{ backgroundColor: UIColors.background + '70' }}
+            className="h-[100vh] flex flex-col overflow-y-hidden bg-background"
+            // style={{ backgroundColor: UIColors.background + '70' }}
         >
             {settings.framelessWindow && (
                 <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
@@ -767,12 +772,12 @@ function App() {
                                     />
                                 ) : (
                                     <ImageIcon
-                                        style={{
-                                            color: LightenDarkenColor(
-                                                colors[2],
-                                                200
-                                            ),
-                                        }}
+                                        // style={{
+                                        //     color: LightenDarkenColor(
+                                        //         colors[2],
+                                        //         200
+                                        //     ),
+                                        // }}
                                         className="drag ml-[0.15rem] w-[64px] h-[64px] rounded-[10px]"
                                     />
                                 )}
@@ -780,10 +785,10 @@ function App() {
                         </div>
                         <div className="ml-1 mt-1 flex-1">
                             <p
-                                style={{
-                                    color: LightenDarkenColor(colors[3], 200),
-                                }}
-                                className="no-drag text-[#a1918c] text-sm"
+                                // style={{
+                                //     color: LightenDarkenColor(colors[3], 200),
+                                // }}
+                                className="no-drag text-sm"
                             >
                                 {currSong &&
                                     currSong.file &&
@@ -793,9 +798,9 @@ function App() {
                                         .replace(/\.[^/.]+$/, '')}
                             </p>
                             <div
-                                style={{
-                                    color: LightenDarkenColor(colors[2], 200),
-                                }}
+                                // style={{
+                                //     color: LightenDarkenColor(colors[2], 200),
+                                // }}
                                 className="drag grid grid-flow-col auto-cols-max text-sm"
                             >
                                 <p>
@@ -962,12 +967,12 @@ function App() {
                                     </svg>
                                 </div>
                                 <div
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     className="text-xs mr-2 flex-1 text-right"
                                 >
                                     {secondsToDhmsShort(audio.currentTime)}
@@ -983,12 +988,12 @@ function App() {
                             <div className="h-[24px] m-0.5">
                                 <div className="">
                                     <TriangleDownIcon
-                                        style={{
-                                            color: LightenDarkenColor(
-                                                colors[2],
-                                                200
-                                            ),
-                                        }}
+                                        // style={{
+                                        //     color: LightenDarkenColor(
+                                        //         colors[2],
+                                        //         200
+                                        //     ),
+                                        // }}
                                         className={`no-drag origin-center ${
                                             resized
                                                 ? 'h-[24px] w-[24px] rotate-0 transition-transform duration-150'
@@ -998,12 +1003,12 @@ function App() {
                                     />
 
                                     <TriangleUpIcon
-                                        style={{
-                                            color: LightenDarkenColor(
-                                                colors[2],
-                                                200
-                                            ),
-                                        }}
+                                        // style={{
+                                        //     color: LightenDarkenColor(
+                                        //         colors[2],
+                                        //         200
+                                        //     ),
+                                        // }}
                                         className={`no-drag origin-center ${
                                             !resized
                                                 ? 'h-[24px] w-[24px] rotate-0 transition-transform duration-150'
@@ -1014,35 +1019,35 @@ function App() {
                                 </div>
                             </div>
                             <MixerVerticalIcon
-                                style={{
-                                    color: LightenDarkenColor(colors[2], 200),
-                                }}
+                                // style={{
+                                //     color: LightenDarkenColor(colors[2], 200),
+                                // }}
                                 className="no-drag h-[24px] m-0.5"
                             />
                             {onTop ? (
                                 <DrawingPinFilledIcon
-                                    style={{
-                                        color: LightenDarkenColor(colors[2], 0),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(colors[2], 0),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={alwaysOnTop}
                                 />
                             ) : (
                                 <DrawingPinIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={alwaysOnTop}
                                 />
                             )}
                             <GearIcon
-                                style={{
-                                    color: LightenDarkenColor(colors[2], 200),
-                                }}
+                                // style={{
+                                //     color: LightenDarkenColor(colors[2], 200),
+                                // }}
                                 className="no-drag h-[24px] m-0.5"
                                 onClick={() => {
                                     openSettings()
@@ -1052,12 +1057,12 @@ function App() {
                         <div className="flex">
                             {repeat ? (
                                 <LoopIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onMouseDown={() => {
                                         setRepeat(!repeat)
@@ -1065,9 +1070,9 @@ function App() {
                                 />
                             ) : (
                                 <LoopIcon
-                                    style={{
-                                        color: LightenDarkenColor(colors[2], 0),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(colors[2], 0),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onMouseDown={() => {
                                         setRepeat(!repeat)
@@ -1075,9 +1080,9 @@ function App() {
                                 />
                             )}
                             <TrackPreviousIcon
-                                style={{
-                                    color: LightenDarkenColor(colors[2], 200),
-                                }}
+                                // style={{
+                                //     color: LightenDarkenColor(colors[2], 200),
+                                // }}
                                 className="no-drag h-[24px] m-0.5"
                                 onClick={() => {
                                     let rand_idx = Math.floor(
@@ -1104,31 +1109,31 @@ function App() {
                             />
                             {play ? (
                                 <PauseIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={() => togglePlay()}
                                 />
                             ) : (
                                 <PlayIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={() => togglePlay()}
                                 />
                             )}
                             <TrackNextIcon
-                                style={{
-                                    color: LightenDarkenColor(colors[2], 200),
-                                }}
+                                // style={{
+                                //     color: LightenDarkenColor(colors[2], 200),
+                                // }}
                                 className="no-drag h-[24px] m-0.5"
                                 onClick={() => {
                                     let rand_idx = Math.floor(
@@ -1153,12 +1158,12 @@ function App() {
                             />
                             {shuffle ? (
                                 <ShuffleIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={() => setShuffle(false)}
                                 />
@@ -1175,12 +1180,12 @@ function App() {
                         <div className="flex">
                             {volume == 0 ? (
                                 <SpeakerOffIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     onClick={() => {
                                         setVolume(preMuteVolume)
                                     }}
@@ -1188,12 +1193,12 @@ function App() {
                                 />
                             ) : volume < 0.5 ? (
                                 <SpeakerModerateIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     onClick={() => {
                                         mute()
                                     }}
@@ -1201,97 +1206,103 @@ function App() {
                                 />
                             ) : (
                                 <SpeakerLoudIcon
-                                    style={{
-                                        color: LightenDarkenColor(
-                                            colors[2],
-                                            200
-                                        ),
-                                    }}
+                                    // style={{
+                                    //     color: LightenDarkenColor(
+                                    //         colors[2],
+                                    //         200
+                                    //     ),
+                                    // }}
                                     onClick={() => {
                                         mute()
                                     }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 mr-1.5"
                                 />
                             )}
-
-                            <input
-                                style={{
-                                    accentColor: LightenDarkenColor(
-                                        colors[2],
-                                        200
-                                    ),
-                                }}
+                            <Slider
+                                defaultValue={[0.5]}
+                                value={[volume]}
                                 className="no-drag bg-inherit w-[100px]"
-                                type="range"
-                                min="0"
-                                value={volume}
-                                step="0.01"
-                                max="1"
-                                onChange={(e) =>
-                                    setVolume(parseFloat(e.target.value))
-                                }
-                            ></input>
+                                min={0}
+                                max={1.0}
+                                step={0.01}
+                                onValueChange={(num) => setVolume(num[0])}
+                            />
                         </div>
                     </div>
                 </div>
                 <div
-                    className="h-[35px] flex-none place-items-center px-1 drag flex flex-row"
-                    style={{
-                        backgroundColor: LightenDarkenColor(
-                            UIColors.background,
-                            -20
-                        ),
-                    }}
+                    className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-muted-foreground"
+                    // style={{
+                    //     backgroundColor: LightenDarkenColor(
+                    //         UIColors.background,
+                    //         -20
+                    //     ),
+                    // }}
                 >
-                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list">
+                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list ">
                         {directories.map((dir: string, index: number) => {
                             return (
-                                <div key={index}>
-                                    <div className="">
-                                        <Badge
-                                            style={{
-                                                backgroundColor:
-                                                    swapDirs[0] == dir
-                                                        ? UIColors.accent
-                                                        : UIColors.accent +
-                                                          '90',
+                                <div
+                                    key={index}
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        swapDirs[0] !== dir &&
+                                            openCertainDir(dir, true)
+                                    }}
+                                    className="no-drag"
+                                >
+                                    <Badge
+                                        // style={{
+                                        //     borderTop:
+                                        //         swapDirs[0] == dir
+                                        //             ? `1px solid secondary`
+                                        //             : ``,
+                                        //     borderBottom:
+                                        //         swapDirs[1] == dir
+                                        //             ? `1px solid ${UIColors.altText}`
+                                        //             : ``,
+                                        // }}
 
-                                                color: UIColors.altText,
-                                                borderBottom:
-                                                    swapDirs[1] == dir
-                                                        ? `2px solid ${UIColors.altText}`
-                                                        : ``,
-                                            }}
-                                            onClick={() => {
-                                                swapDirs[0] !== dir &&
-                                                    openCertainDir(dir, true)
-                                            }}
-                                            className="inline-block h-[24px] no-drag text-xs p-1"
-                                        >
+                                        variant={
+                                            swapDirs[0] == dir
+                                                ? 'secondary'
+                                                : swapDirs[1] == dir
+                                                ? 'default'
+                                                : true
+                                                ? 'default'
+                                                : true
+                                                ? null
+                                                : true
+                                                ? undefined
+                                                : 'destructive'
+                                        }
+                                    >
+                                        <p>
                                             {directories[index] &&
                                                 directories[index]
                                                     .split('/')
                                                     .reverse()[0]}
-
-                                            <div
-                                                className="pl-1 inline-block opacity-30 hover:opacity-100 transition-opacity"
-                                                onClick={(e) =>
-                                                    removeDir(e, index)
-                                                }
-                                            >
-                                                X
-                                            </div>
-                                        </Badge>
-                                    </div>
-                                    <Separator orientation="vertical" />
+                                        </p>
+                                        <Separator
+                                            className="text-black bg-black accent-black"
+                                            decorative={true}
+                                            orientation={'vertical'}
+                                        ></Separator>
+                                        <div
+                                            className="pl-1 inline-block opacity-30 hover:opacity-100 transition-opacity"
+                                            onClick={(e) => removeDir(e, index)}
+                                        >
+                                            X
+                                        </div>
+                                    </Badge>
                                 </div>
                             )
                         })}
                     </div>
                     <FilePlusIcon
-                        style={{
-                            color: LightenDarkenColor(colors[2], 200),
-                        }}
+                        // style={{
+                        //     color: LightenDarkenColor(colors[2], 200),
+                        // }}
                         className={`no-drag h-[24px] w-[24px] m-0.5 ml-auto flex-none ${
                             directories.length == 0
                                 ? 'animate-pulse transition-opacity'
@@ -1307,14 +1318,14 @@ function App() {
                 </div>
                 {settings.bottomBar && (
                     <div
-                        className="drag flex-none place-items-center p-2"
-                        style={{
-                            backgroundColor: LightenDarkenColor(
-                                UIColors.background,
-                                -20
-                            ),
-                            color: UIColors.altText,
-                        }}
+                        className="drag flex-none place-items-center p-2 bg-muted-foreground"
+                        // style={{
+                        //     backgroundColor: LightenDarkenColor(
+                        //         UIColors.background,
+                        //         -20
+                        //     ),
+                        //     color: UIColors.altText,
+                        // }}
                     >
                         <div className="flex flex-row">
                             <p className="text-left text-xs mx-1 w-[33%] overflow-hidden inline-block whitespace-nowrap flex-1">
