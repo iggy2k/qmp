@@ -20,8 +20,8 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #53535398;
-    border-radius: 8px;
+    background-color: #74747498;
+    border-radius: 4px;
 }
 
 .drag {
@@ -39,21 +39,12 @@
     animation-name: slidein;
     animation-timing-function: linear;
 }
-/* 
-@keyframes slidein {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0% 0 0);
-  }
-} */
 
 .rtl-grid {
     direction: rtl;
 }
 
-.animate-spin {
+.animate-bg-spin {
     /* background: linear-gradient(130deg, #ff7e00, #ffffff, #5cff00); */
     background-size: 400% 400%;
 

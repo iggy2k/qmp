@@ -93,7 +93,7 @@ function createWindow() {
         bottomBar: boolean
         framelessWindow: boolean
     }
-    const WIN_HEIGHT_MIN = 100 + (!oldSettings.framelessWindow ? 30 : 0)
+    const WIN_HEIGHT_MIN = 85 + (!oldSettings.framelessWindow ? 30 : 0)
     const window = new BrowserWindow({
         height: 1,
         width: 1,

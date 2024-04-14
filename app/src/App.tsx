@@ -17,10 +17,11 @@ import {
     SpeakerLoudIcon,
     SpeakerModerateIcon,
     SpeakerOffIcon,
-    FilePlusIcon,
+    PlusIcon,
 } from '@radix-ui/react-icons'
 
 import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
 import { Separator } from '../components/ui/separator'
 import { Slider } from '../components/ui/slider'
 import { cn } from '../lib/utils'
@@ -50,7 +51,6 @@ const audio = new Audio() as HTMLAudioElement & {
 async function setAudioOutput(deviceId: string) {
     await audio.setSinkId(deviceId)
     window.Main.send('get-audio-output-tm', audio.sinkId)
-    // console.log(`Audio is being played on ${deviceId}`)
 }
 
 function App() {
@@ -99,8 +99,6 @@ function App() {
     const [swapIndeces, setSwapIndeces] = useState<number[]>([-1, -1])
     const [currSong, setCurrSong] = useState<any>({})
     const [play, setPlay] = useState(false)
-    const [currTime, setCurrTime] = useState(0)
-    const [mouseDown, setMouseDown] = useState(false)
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(0.5)
     const [preMuteVolume, setPreMuteVolume] = useState(0.5)
@@ -117,18 +115,27 @@ function App() {
         <div
             style={style}
             key={index}
-            className={`overflow-auto h-7 px-2 ${index == 0 ? 'pt-1' : ''} ${
-                index == swapTracks[0].length - 1 ? 'pb-1' : ''
-            }`}
+            className={cn(
+                'hover:px-4 transition-all duration-100 overflow-auto h-7 px-2',
+                { 'pt-1': index == 0 },
+                { 'pb-1': index == swapTracks[0].length - 1 }
+            )}
         >
             <div
-                style={{
-                    backgroundColor:
-                        index == swapIndeces[1] && swapDirs[0] == swapDirs[1]
-                            ? LightenDarkenColor(UIColors.background, -20)
-                            : '',
-                }}
-                className="hover:px-1 transition-all duration-100 flex flex-row p-[1px] text-center rounded-md box-border"
+                className={cn(
+                    'flex flex-row p-[1px] text-center rounded-md box-border',
+                    {
+                        'bg-foreground text-background':
+                            index == swapIndeces[1] &&
+                            swapDirs[0] == swapDirs[1],
+                    },
+                    {
+                        'hover:bg-accent text-foreground': !(
+                            index == swapIndeces[1] &&
+                            swapDirs[0] == swapDirs[1]
+                        ),
+                    }
+                )}
                 onClick={() => {
                     openFile(swapTracks[0][index].file, true, index)
                 }}
@@ -145,7 +152,7 @@ function App() {
 
                 <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
                     {swapTracks[0][index] && swapTracks[0][index].name ? (
-                        <div className="flex flex-row">
+                        <div className="flex flex-row pt-[0.1rem]">
                             <p
                             // style={{ color: UIColors.text }}
                             >
@@ -197,10 +204,6 @@ function App() {
                         <div
                             className="rounded-md px-1 font-mono
                         "
-                            // style={{
-                            //     color: UIColors.altText,
-                            //     backgroundColor: UIColors.background,
-                            // }}
                         >
                             {swapTracks[0][index] &&
                                 secondsToDhmsShort(
@@ -475,7 +478,7 @@ function App() {
                 ref={listRef}
                 className={`scroll-smooth`}
                 height={
-                    electronWindowHeight - 190 + (settings.bottomBar ? 20 : 50)
+                    electronWindowHeight - 170 + (settings.bottomBar ? 20 : 50)
                 }
                 itemCount={swapTracks[0] ? swapTracks[0].length : 0}
                 itemSize={30}
@@ -720,15 +723,11 @@ function App() {
                               }
                             : {}
                     }
-                    className={`h-[100px] drag ${
-                        play && settings.movingColors
-                        // ? 'animate-spin'
-                        // : 'animate-spin pause'
-                    }`}
+                    className={`h-[85px] drag ${play && settings.movingColors}`}
                 >
                     <div className="flex">
-                        <div className="no-drag p-1 pb-0">
-                            <div className="flex-none w-[64px] h-[64px]">
+                        <div className="no-drag p-2 pb-0">
+                            <div className="flex-none w-[48px] h-[48px]">
                                 {currSong && currSong.cover ? (
                                     <img
                                         ref={trackCoverRef}
@@ -751,25 +750,12 @@ function App() {
                                         }
                                     />
                                 ) : (
-                                    <ImageIcon
-                                        // style={{
-                                        //     color: LightenDarkenColor(
-                                        //         colors[2],
-                                        //         200
-                                        //     ),
-                                        // }}
-                                        className="drag ml-[0.15rem] w-[64px] h-[64px] rounded-[10px]"
-                                    />
+                                    <ImageIcon className="drag ml-[0.15rem] w-[48px] h-[48px] rounded-[10px]" />
                                 )}
                             </div>
                         </div>
-                        <div className="ml-1 mt-1 flex-1">
-                            <p
-                                // style={{
-                                //     color: LightenDarkenColor(colors[3], 200),
-                                // }}
-                                className="no-drag text-sm"
-                            >
+                        <div className="ml-1 mt-2 flex-1">
+                            <p className="no-drag text-xs">
                                 {currSong &&
                                     currSong.file &&
                                     currSong.file
@@ -777,31 +763,7 @@ function App() {
                                         .reverse()[0]
                                         .replace(/\.[^/.]+$/, '')}
                             </p>
-                            <div
-                                // style={{
-                                //     color: LightenDarkenColor(colors[2], 200),
-                                // }}
-                                className="drag grid grid-flow-col auto-cols-max text-sm"
-                            >
-                                <p>
-                                    {currSong
-                                        ? currSong.name
-                                            ? currSong.name
-                                                  .split('/')
-                                                  .reverse()[0]
-                                                  .replace(/\.[^/.]+$/, '')
-                                            : currSong.file
-                                            ? currSong.file
-                                                  .split('/')
-                                                  .reverse()[0]
-                                                  .replace(/\.[^/.]+$/, '')
-                                            : ''
-                                        : ''}
-                                </p>
-                                <p>
-                                    &nbsp;{!currSong || '-'}
-                                    &nbsp;
-                                </p>
+                            <div className="drag grid grid-flow-col auto-cols-max text-xs">
                                 <p>{currSong && currSong.album}</p>
                             </div>
                             <div className="w-full flex flex-row">
@@ -832,7 +794,7 @@ function App() {
                                     }}
                                 />
 
-                                <p className="text-xs mr-2 flex-1 text-right font-light">
+                                <p className="text-xs mr-2 flex-1 text-right font-light pr-1">
                                     {secondsToDhmsShort(audio.currentTime)}
                                     &nbsp;/&nbsp;
                                     {currSong &&
@@ -841,17 +803,11 @@ function App() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-row justify-between mt-1 mx-1">
+                    <div className="flex flex-row justify-between mt-1 mx-1 pr-2">
                         <div className="flex">
                             <div className="h-[24px] m-0.5">
                                 <div className="">
                                     <TriangleDownIcon
-                                        // style={{
-                                        //     color: LightenDarkenColor(
-                                        //         colors[2],
-                                        //         200
-                                        //     ),
-                                        // }}
                                         className={`no-drag origin-center ${
                                             resized
                                                 ? 'h-[24px] w-[24px] rotate-0 transition-transform duration-150'
@@ -861,12 +817,6 @@ function App() {
                                     />
 
                                     <TriangleUpIcon
-                                        // style={{
-                                        //     color: LightenDarkenColor(
-                                        //         colors[2],
-                                        //         200
-                                        //     ),
-                                        // }}
                                         className={`no-drag origin-center ${
                                             !resized
                                                 ? 'h-[24px] w-[24px] rotate-0 transition-transform duration-150'
@@ -876,36 +826,19 @@ function App() {
                                     />
                                 </div>
                             </div>
-                            <MixerVerticalIcon
-                                // style={{
-                                //     color: LightenDarkenColor(colors[2], 200),
-                                // }}
-                                className="no-drag h-[24px] m-0.5"
-                            />
+                            <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
                             {onTop ? (
                                 <DrawingPinFilledIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(colors[2], 0),
-                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={alwaysOnTop}
                                 />
                             ) : (
                                 <DrawingPinIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={alwaysOnTop}
                                 />
                             )}
                             <GearIcon
-                                // style={{
-                                //     color: LightenDarkenColor(colors[2], 200),
-                                // }}
                                 className="no-drag h-[24px] m-0.5"
                                 onClick={() => {
                                     openSettings()
@@ -915,32 +848,20 @@ function App() {
                         <div className="flex">
                             {repeat ? (
                                 <LoopIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 text-foreground"
                                     onMouseDown={() => {
                                         setRepeat(!repeat)
                                     }}
                                 />
                             ) : (
                                 <LoopIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(colors[2], 0),
-                                    // }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 text-ring"
                                     onMouseDown={() => {
                                         setRepeat(!repeat)
                                     }}
                                 />
                             )}
                             <TrackPreviousIcon
-                                // style={{
-                                //     color: LightenDarkenColor(colors[2], 200),
-                                // }}
                                 className="no-drag h-[24px] m-0.5"
                                 onClick={() => {
                                     let rand_idx = Math.floor(
@@ -967,31 +888,16 @@ function App() {
                             />
                             {play ? (
                                 <PauseIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={() => togglePlay()}
                                 />
                             ) : (
                                 <PlayIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
                                     className="no-drag h-[24px] m-0.5"
                                     onClick={() => togglePlay()}
                                 />
                             )}
                             <TrackNextIcon
-                                // style={{
-                                //     color: LightenDarkenColor(colors[2], 200),
-                                // }}
                                 className="no-drag h-[24px] m-0.5"
                                 onClick={() => {
                                     let rand_idx = Math.floor(
@@ -1016,21 +922,12 @@ function App() {
                             />
                             {shuffle ? (
                                 <ShuffleIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 text-foreground"
                                     onClick={() => setShuffle(false)}
                                 />
                             ) : (
                                 <ShuffleIcon
-                                    style={{
-                                        color: LightenDarkenColor(colors[2], 0),
-                                    }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 text-ring"
                                     onClick={() => setShuffle(true)}
                                 />
                             )}
@@ -1038,38 +935,20 @@ function App() {
                         <div className="flex">
                             {volume == 0 ? (
                                 <SpeakerOffIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
                                     onClick={() => {
                                         setVolume(preMuteVolume)
                                     }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 mr-1.5"
                                 />
                             ) : volume < 0.5 ? (
                                 <SpeakerModerateIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
                                     onClick={() => {
                                         mute()
                                     }}
-                                    className="no-drag h-[24px] m-0.5"
+                                    className="no-drag h-[24px] m-0.5 mr-1.5"
                                 />
                             ) : (
                                 <SpeakerLoudIcon
-                                    // style={{
-                                    //     color: LightenDarkenColor(
-                                    //         colors[2],
-                                    //         200
-                                    //     ),
-                                    // }}
                                     onClick={() => {
                                         mute()
                                     }}
@@ -1088,16 +967,8 @@ function App() {
                         </div>
                     </div>
                 </div>
-                <div
-                    className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-muted-foreground"
-                    // style={{
-                    //     backgroundColor: LightenDarkenColor(
-                    //         UIColors.background,
-                    //         -20
-                    //     ),
-                    // }}
-                >
-                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list ">
+                <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-secondary-foreground">
+                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
                         {directories.map((dir: string, index: number) => {
                             return (
                                 <div
@@ -1110,30 +981,18 @@ function App() {
                                     className="no-drag"
                                 >
                                     <Badge
-                                        // style={{
-                                        //     borderTop:
-                                        //         swapDirs[0] == dir
-                                        //             ? `1px solid secondary`
-                                        //             : ``,
-                                        //     borderBottom:
-                                        //         swapDirs[1] == dir
-                                        //             ? `1px solid ${UIColors.altText}`
-                                        //             : ``,
-                                        // }}
-
-                                        variant={
-                                            swapDirs[0] == dir
-                                                ? 'secondary'
-                                                : swapDirs[1] == dir
-                                                ? 'default'
-                                                : true
-                                                ? 'default'
-                                                : true
-                                                ? null
-                                                : true
-                                                ? undefined
-                                                : 'destructive'
-                                        }
+                                        className={cn(
+                                            '',
+                                            {
+                                                'bg-foreground text-background':
+                                                    swapDirs[0] == dir,
+                                            },
+                                            {
+                                                'bg-muted-foreground text-background':
+                                                    swapDirs[1] == dir,
+                                            }
+                                        )}
+                                        variant={'secondary'}
                                     >
                                         <p>
                                             {directories[index] &&
@@ -1157,34 +1016,27 @@ function App() {
                             )
                         })}
                     </div>
-                    <FilePlusIcon
-                        // style={{
-                        //     color: LightenDarkenColor(colors[2], 200),
-                        // }}
-                        className={`no-drag h-[24px] w-[24px] m-0.5 ml-auto flex-none ${
-                            directories.length == 0
-                                ? 'animate-pulse transition-opacity'
-                                : ''
-                        }`}
+
+                    <Button
+                        className="h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background"
+                        size="icon"
                         onClick={() => {
                             addDir()
                         }}
-                    />
+                    >
+                        <PlusIcon
+                            className={cn(``, {
+                                'animate-pulse transition-opacity':
+                                    directories.length == 0,
+                            })}
+                        />
+                    </Button>
                 </div>
-                <div className="overflow-y-hide flex-1 flex-grow mt-1">
+                <div className="overflow-y-hide flex-1 flex-grow">
                     {FileList}
                 </div>
                 {settings.bottomBar && (
-                    <div
-                        className="drag flex-none place-items-center p-2 bg-muted-foreground"
-                        // style={{
-                        //     backgroundColor: LightenDarkenColor(
-                        //         UIColors.background,
-                        //         -20
-                        //     ),
-                        //     color: UIColors.altText,
-                        // }}
-                    >
+                    <div className="drag flex-none place-items-center p-2 bg-secondary-foreground text-background">
                         <div className="flex flex-row">
                             <p className="text-left text-xs mx-1 w-[33%] overflow-hidden inline-block whitespace-nowrap flex-1">
                                 {swapTracks[0].length > 0
