@@ -36,6 +36,26 @@ import {
     secondsToDhmsShort,
 } from './helpers'
 
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragOverlay,
+} from '@dnd-kit/core'
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+
+import { SortableItem } from '../components/ui/SortableItem'
+
+import { FixedSizeList } from 'react-window'
+
 const PROGRESS_BAR_PRECISION = 1000
 
 const AudioContext = window.AudioContext
@@ -54,6 +74,49 @@ async function setAudioOutput(deviceId: string) {
 }
 
 function App() {
+    const [activeId, setActiveId] = useState<string | null>(null)
+
+    useEffect(() => {
+        console.log(activeId)
+    }, [activeId])
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            // Alternative. Works worse than distance prop in practice
+            // activationConstraint: { delay: 100, tolerance: 0 },
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
+
+    function handleDragEnd(event: any) {
+        const { active, over }: any = event
+        if (active.id !== over.id) {
+            setSwapTracks((swapTracks) => {
+                const oldIndex = swapTracks[0]
+                    .map((track) => {
+                        return track.file
+                    })
+                    .indexOf(active.id)
+                const newIndex = swapTracks[0]
+                    .map((track) => {
+                        return track.file
+                    })
+                    .indexOf(over.id)
+
+                return [
+                    arrayMove(swapTracks[0], oldIndex, newIndex),
+                    swapTracks[1],
+                ]
+            })
+        }
+        setActiveId(null)
+    }
+
     const [colors, setColors] = useState([
         '#000000',
         '#000000',
@@ -110,115 +173,6 @@ function App() {
     const [lastFile, setLastFile] = useState('')
     const [lastIndex, setLastIndex] = useState(-1)
     const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
-
-    const Row = ({ index, style }: any) => (
-        <div
-            style={style}
-            key={index}
-            className={cn(
-                'hover:px-4 transition-all duration-100 overflow-auto h-7 px-2',
-                { 'pt-1': index == 0 },
-                { 'pb-1': index == swapTracks[0].length - 1 }
-            )}
-        >
-            <div
-                className={cn(
-                    'flex flex-row p-[1px] text-center rounded-md box-border',
-                    {
-                        'bg-foreground text-background':
-                            index == swapIndeces[1] &&
-                            swapDirs[0] == swapDirs[1],
-                    },
-                    {
-                        'hover:bg-accent text-foreground': !(
-                            index == swapIndeces[1] &&
-                            swapDirs[0] == swapDirs[1]
-                        ),
-                    }
-                )}
-                onClick={() => {
-                    openFile(swapTracks[0][index].file, true, index)
-                }}
-            >
-                {swapTracks[0][index] && swapTracks[0][index].cover ? (
-                    <img
-                        className="w-[24px] h-[24px] rounded-lg flex-none"
-                        src={swapTracks[0][index].cover}
-                        alt=""
-                    />
-                ) : (
-                    <ImageIcon className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]" />
-                )}
-
-                <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {swapTracks[0][index] && swapTracks[0][index].name ? (
-                        <div className="flex flex-row pt-[0.1rem]">
-                            <p
-                            // style={{ color: UIColors.text }}
-                            >
-                                {swapTracks[0][index].name &&
-                                    swapTracks[0][index].name.replace('\\', '')}
-                            </p>
-                            <p
-                                className="ml-1"
-                                // style={{ color: UIColors.text + '90' }}
-                            >
-                                {swapTracks[0][index].author &&
-                                    swapTracks[0][index].author.replace(
-                                        '\\',
-                                        ''
-                                    )}
-                            </p>
-                            <p
-                                className="ml-1"
-                                // style={{ color: UIColors.text + '80' }}
-                            >
-                                {swapTracks[0][index].album &&
-                                    swapTracks[0][index].album.replace(
-                                        '\\',
-                                        ''
-                                    )}
-                            </p>
-                        </div>
-                    ) : (
-                        <p
-                        // style={{ color: UIColors.text }}
-                        >
-                            {swapTracks[0][index] &&
-                                swapTracks[0][index].file
-                                    .split('/')
-                                    .reverse()[0]
-                                    .replace(/\.[^/.]+$/, '')}
-                        </p>
-                    )}
-                </div>
-
-                <div className="flex place-items-center ml-auto">
-                    <div
-                        style={{
-                            fontSize: '0.65rem',
-                            lineHeight: '1.1rem',
-                        }}
-                        className="p-[0.1rem] grid grid-flow-col text-xs font-mono rounded-md"
-                    >
-                        <div
-                            className="rounded-md px-1 font-mono
-                        "
-                        >
-                            {swapTracks[0][index] &&
-                                secondsToDhmsShort(
-                                    swapTracks[0][index].duration
-                                ).replace(' : ', ':')}
-                            &nbsp;|&nbsp;
-                            {swapTracks[0][index]
-                                ? swapTracks[0][index].format
-                                : '🎵'}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
 
     const setAudioSource = (filePath: string) => {
         if (filePath) {
@@ -470,32 +424,6 @@ function App() {
     const openSettings = () => {
         window.Main.send('open-settings-tm', null)
     }
-
-    // Currently open directory track list
-    const FileList = useMemo(
-        () => (
-            <List
-                ref={listRef}
-                className={`scroll-smooth`}
-                height={
-                    electronWindowHeight - 170 + (settings.bottomBar ? 20 : 50)
-                }
-                itemCount={swapTracks[0] ? swapTracks[0].length : 0}
-                itemSize={30}
-                width={'100%'}
-            >
-                {Row}
-            </List>
-        ),
-        [
-            swapTracks,
-            swapIndeces,
-            electronWindowHeight,
-            swapDirs,
-            UIColors,
-            settings,
-        ]
-    )
 
     // Restore old dir and song after restore-session-fm is received
     useEffect(() => {
@@ -1033,7 +961,74 @@ function App() {
                     </Button>
                 </div>
                 <div className="overflow-y-hide flex-1 flex-grow">
-                    {FileList}
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={({ active }: any) => {
+                            setActiveId(active.id)
+                        }}
+                        onDragEnd={handleDragEnd}
+                        onDragCancel={() => setActiveId(null)}
+                    >
+                        <SortableContext
+                            items={swapTracks[0].map((track) => {
+                                return track.file
+                            })}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {/* {swapTracks[0].map((track, idx) => (
+                                <SortableItem
+                                    key={track.file}
+                                    id={track.file}
+                                    index={idx}
+                                    swapTracks={swapTracks}
+                                    swapDirs={swapDirs}
+                                    swapIndeces={swapIndeces}
+                                    openFile={openFile}
+                                />
+
+                            ))} */}
+
+                            <FixedSizeList
+                                useIsScrolling
+                                ref={listRef}
+                                className={`scroll-smooth`}
+                                height={
+                                    electronWindowHeight -
+                                    170 +
+                                    (settings.bottomBar ? 20 : 50)
+                                }
+                                itemCount={
+                                    swapTracks[0] ? swapTracks[0].length : 0
+                                }
+                                itemSize={30}
+                                itemData={{
+                                    trackList: swapTracks[0],
+                                    openFile: openFile,
+                                    swapDirs: swapDirs,
+                                    swapIndeces: swapIndeces,
+                                }}
+                                width={'100%'}
+                            >
+                                {SortableItem}
+                            </FixedSizeList>
+                        </SortableContext>
+                        {/* Optional: Extra drag overlay */}
+                        {/* <DragOverlay>
+                            {activeId ? (
+                                <SortableItem
+                                    data={swapTracks[0]}
+                                    index={swapTracks[0]
+                                        .map((track) => {
+                                            return track.file
+                                        })
+                                        .indexOf(activeId)}
+                                >
+                                    DRAG
+                                </SortableItem>
+                            ) : null}
+                        </DragOverlay> */}
+                    </DndContext>
                 </div>
                 {settings.bottomBar && (
                     <div className="drag flex-none place-items-center p-2 bg-secondary-foreground text-background">
