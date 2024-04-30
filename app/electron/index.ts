@@ -39,8 +39,28 @@ const store = new Store()
 
 const DEBUG = false
 
-if ((store.get('all_dirs') as string[]).length < 1) {
+if (!store.get('all_dirs') || (store.get('all_dirs') as string[]).length < 1) {
     store.set('all_dirs', [])
+}
+
+if (!store.get('settings')) {
+    store.set('settings', {
+        useCover: false,
+        movingColors: false,
+        downloadCover: true,
+        transparentInactive: false,
+        bottomBar: true,
+        framelessWindow: true,
+    })
+}
+
+if (!store.get('old_ui_colors')) {
+    store.set('old_ui_colors', {
+        background: '#333333',
+        accent: '#333333',
+        text: '#333333',
+        altText: '#333333',
+    })
 }
 
 DEBUG && console.log('\nUserdata: ' + app.getPath('userData') + '\n')
@@ -371,6 +391,9 @@ function createWindow() {
         let last_open_dir = store.get('last_open_dir')
         let last_file = store.get('last_file')
         let last_index = store.get('last_index')
+        if (!last_open_dir || !last_file || !last_index) {
+            return
+        }
         let past_dirs = store.get('all_dirs') as string[]
 
         DEBUG &&

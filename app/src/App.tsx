@@ -605,7 +605,6 @@ function App() {
     return (
         <div className="h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
-
             <div
                 style={
                     settings.useCover
@@ -671,63 +670,70 @@ function App() {
                         )
                     })}
                 </div>
-
                 <Button
-                    className="h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background"
+                    className={cn(
+                        'h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                        {
+                            'animate-pulse transition-opacity duration-100':
+                                directories.length == 0,
+                        }
+                    )}
                     size="icon"
                     onClick={() => {
                         addDir()
                     }}
                 >
-                    <PlusIcon
-                        className={cn(``, {
-                            'animate-pulse transition-opacity':
-                                directories.length == 0,
-                        })}
-                    />
+                    <PlusIcon />
                 </Button>
             </div>
             <div className="overflow-y-hide flex-1 flex-grow">
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={({ active }: any) => {
-                        setActiveId(active.id)
-                    }}
-                    onDragEnd={handleDragEnd}
-                    onDragCancel={() => setActiveId(null)}
-                    modifiers={[restrictToVerticalAxis]}
-                >
-                    <SortableContext
-                        items={swapTracks[0].map((track) => {
-                            return track.file
-                        })}
-                        strategy={verticalListSortingStrategy}
+                {directories.length == 0 ? (
+                    <p className="text-foregound text-sm w-full text-center mt-2">
+                        {'Loaded tracks will show up here'}
+                    </p>
+                ) : (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={({ active }: any) => {
+                            setActiveId(active.id)
+                        }}
+                        onDragEnd={handleDragEnd}
+                        onDragCancel={() => setActiveId(null)}
+                        modifiers={[restrictToVerticalAxis]}
                     >
-                        <FixedSizeList
-                            useIsScrolling
-                            ref={listRef}
-                            className={`scroll-smooth`}
-                            height={
-                                electronWindowHeight -
-                                170 +
-                                (settings.bottomBar ? 20 : 50)
-                            }
-                            itemCount={swapTracks[0] ? swapTracks[0].length : 0}
-                            itemSize={30}
-                            itemData={{
-                                trackList: swapTracks[0],
-                                openFile: openFile,
-                                swapDirs: swapDirs,
-                                swapIndeces: swapIndeces,
-                            }}
-                            width={'100%'}
+                        <SortableContext
+                            items={swapTracks[0].map((track) => {
+                                return track.file
+                            })}
+                            strategy={verticalListSortingStrategy}
                         >
-                            {SortableItem}
-                        </FixedSizeList>
-                    </SortableContext>
-                    {/* Optional: Extra drag overlay */}
-                    {/* <DragOverlay>
+                            <FixedSizeList
+                                useIsScrolling
+                                ref={listRef}
+                                className={`scroll-smooth`}
+                                height={
+                                    electronWindowHeight -
+                                    170 +
+                                    (settings.bottomBar ? 20 : 50)
+                                }
+                                itemCount={
+                                    swapTracks[0] ? swapTracks[0].length : 0
+                                }
+                                itemSize={30}
+                                itemData={{
+                                    trackList: swapTracks[0],
+                                    openFile: openFile,
+                                    swapDirs: swapDirs,
+                                    swapIndeces: swapIndeces,
+                                }}
+                                width={'100%'}
+                            >
+                                {SortableItem}
+                            </FixedSizeList>
+                        </SortableContext>
+                        {/* Optional: Extra drag overlay */}
+                        {/* <DragOverlay>
                             {activeId ? (
                                 <SortableItem
                                     data={swapTracks[0]}
@@ -741,7 +747,8 @@ function App() {
                                 </SortableItem>
                             ) : null}
                         </DragOverlay> */}
-                </DndContext>
+                    </DndContext>
+                )}
             </div>
             {settings.bottomBar && (
                 <BottomBar

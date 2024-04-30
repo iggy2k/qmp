@@ -42,11 +42,17 @@ export function TrackArea({
                             }
                         />
                     ) : (
-                        <ImageIcon className="drag ml-[0.15rem] w-[48px] h-[48px] rounded-[10px]" />
+                        <ImageIcon className="drag ml-[0.1rem] w-[48px] h-[48px] rounded-[10px]" />
                     )}
                 </div>
             </div>
             <div className="ml-1 mt-2 flex-1">
+                {!currSong ||
+                    (currSong && !currSong.file && (
+                        <p className="no-drag text-xs">
+                            Track name will be here
+                        </p>
+                    ))}
                 <p className="no-drag text-xs">
                     {currSong &&
                         currSong.file &&
@@ -56,7 +62,11 @@ export function TrackArea({
                             .replace(/\.[^/.]+$/, '')}
                 </p>
                 <div className="drag grid grid-flow-col auto-cols-max text-xs">
-                    <p>{currSong && currSong.album}</p>
+                    {!currSong ||
+                        (currSong && !currSong.file && (
+                            <p>Album name will be here</p>
+                        ))}
+                    {currSong && currSong.album && <p>{currSong.album}</p>}
                 </div>
                 <div className="w-full flex flex-row">
                     <Slider
