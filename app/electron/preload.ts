@@ -7,6 +7,40 @@ declare global {
     }
 }
 
+const validChannels = [
+    'open-settings-fm',
+    'open-settings-tm',
+    'get-height-from-main',
+    'remove-dir',
+    'get-old-idx-tm',
+    'get-old-idx-fm',
+    'set-old-file',
+    'set-old-index',
+    'set-last-open-dir',
+    'restore-session-tm',
+    'restore-session-fm',
+    'add-dir-tm',
+    'add-dir-fm',
+    'add-dir-from-menu',
+    'open-dir-tm',
+    'open-dir-fm',
+    'set-ui-colors-tm',
+    'set-ui-colors-fm',
+    'set-old-ui-colors-tm',
+    'set-old-ui-colors-fm',
+    'get-old-ui-colors-tm',
+    'get-old-ui-colors-fm',
+    'set-settings-tm',
+    'set-settings-fm',
+    'get-settings-tm',
+    'get-settings-fm',
+    'open-url',
+    'set-audio-output-tm',
+    'set-audio-output-fm',
+    'get-audio-output-tm',
+    'get-audio-output-fm',
+]
+
 const api = {
     // meow vaga
     sendMessage: (message: string) => {
@@ -48,80 +82,18 @@ const api = {
     setOldIndex: (idx: number) => {
         ipcRenderer.send('set-old-index', idx)
     },
+    removeAllListeners: () => {
+        for (const channel of validChannels) {
+            ipcRenderer.removeAllListeners(channel)
+        }
+    },
     send: (channel: any, data: any) => {
         // whitelist channels
-        let validChannels = [
-            'open-settings-fm',
-            'open-settings-tm',
-            'get-height-from-main',
-            'remove-dir',
-            'get-old-idx-tm',
-            'get-old-idx-fm',
-            'set-old-file',
-            'set-old-index',
-            'set-last-open-dir',
-            'restore-session-tm',
-            'restore-session-fm',
-            'add-dir-tm',
-            'add-dir-fm',
-            'add-dir-from-menu',
-            'open-dir-tm',
-            'open-dir-fm',
-            'set-ui-colors-tm',
-            'set-ui-colors-fm',
-            'set-old-ui-colors-tm',
-            'set-old-ui-colors-fm',
-            'get-old-ui-colors-tm',
-            'get-old-ui-colors-fm',
-            'set-settings-tm',
-            'set-settings-fm',
-            'get-settings-tm',
-            'get-settings-fm',
-            'open-url',
-            'set-audio-output-tm',
-            'set-audio-output-fm',
-            'get-audio-output-tm',
-            'get-audio-output-fm',
-        ]
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
         }
     },
     receive: (channel: any, func: any) => {
-        let validChannels = [
-            'open-settings-fm',
-            'open-settings-tm',
-            'get-height-from-main',
-            'remove-dir',
-            'get-old-idx-tm',
-            'get-old-idx-fm',
-            'set-old-file',
-            'set-old-index',
-            'set-last-open-dir',
-            'restore-session-tm',
-            'restore-session-fm',
-            'restore-session-fm',
-            'add-dir-tm',
-            'add-dir-fm',
-            'add-dir-from-menu',
-            'open-dir-tm',
-            'open-dir-fm',
-            'set-ui-colors-tm',
-            'set-ui-colors-fm',
-            'set-old-ui-colors-tm',
-            'set-old-ui-colors-fm',
-            'get-old-ui-colors-tm',
-            'get-old-ui-colors-fm',
-            'set-settings-tm',
-            'set-settings-fm',
-            'get-settings-tm',
-            'get-settings-fm',
-            'open-url',
-            'set-audio-output-tm',
-            'set-audio-output-fm',
-            'get-audio-output-tm',
-            'get-audio-output-fm',
-        ]
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`
             ipcRenderer.on(channel, (_, ...args) => func(...args))

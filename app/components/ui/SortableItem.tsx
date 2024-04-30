@@ -19,7 +19,7 @@ export function SortableItem(props: any) {
     let openFile = data.openFile
 
     const { attributes, listeners, setNodeRef, transform, transition } =
-        useSortable({ id: trackData.file })
+        useSortable({ id: trackData.file, animateLayoutChanges: () => false })
 
     const style = {
         ...styleProp,

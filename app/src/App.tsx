@@ -26,7 +26,7 @@ import { Separator } from '../components/ui/separator'
 import { Slider } from '../components/ui/slider'
 import { cn } from '../lib/utils'
 
-import { FixedSizeList as List } from 'react-window'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 
 import {
     grayness,
@@ -53,6 +53,8 @@ import {
 } from '@dnd-kit/sortable'
 
 import { SortableItem } from '../components/ui/SortableItem'
+import { BottomBar } from '../components/ui/BottomBar'
+import { ControlsBar } from '../components/ui/ControlsBar'
 
 import { FixedSizeList } from 'react-window'
 
@@ -75,10 +77,6 @@ async function setAudioOutput(deviceId: string) {
 
 function App() {
     const [activeId, setActiveId] = useState<string | null>(null)
-
-    useEffect(() => {
-        console.log(activeId)
-    }, [activeId])
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -113,6 +111,15 @@ function App() {
                     swapTracks[1],
                 ]
             })
+            if (swapDirs[0] == swapDirs[1]) {
+                const newIndex = swapTracks[0]
+                    .map((track) => {
+                        return track.file
+                    })
+                    .indexOf(over.id)
+                console.log(newIndex)
+                setSwapIndeces((swapIndeces) => [swapIndeces[0], newIndex])
+            }
         }
         setActiveId(null)
     }
@@ -591,6 +598,7 @@ function App() {
         )
 
         return () => {
+            window.Main.removeAllListeners()
             audio.pause()
         }
     }, [])
@@ -731,169 +739,26 @@ function App() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-row justify-between mt-1 mx-1 pr-2">
-                        <div className="flex">
-                            <div className="h-[24px] m-0.5">
-                                <div className="">
-                                    <TriangleDownIcon
-                                        className={`no-drag origin-center ${
-                                            resized
-                                                ? 'h-[24px] w-[24px] rotate-0 transition-transform duration-150'
-                                                : 'rotate-[-180deg] h-0'
-                                        } `}
-                                        onClick={collapse}
-                                    />
-
-                                    <TriangleUpIcon
-                                        className={`no-drag origin-center ${
-                                            !resized
-                                                ? 'h-[24px] w-[24px] rotate-0 transition-transform duration-150'
-                                                : 'rotate-180 h-0 '
-                                        } `}
-                                        onClick={collapse}
-                                    />
-                                </div>
-                            </div>
-                            <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
-                            {onTop ? (
-                                <DrawingPinFilledIcon
-                                    className="no-drag h-[24px] m-0.5"
-                                    onClick={alwaysOnTop}
-                                />
-                            ) : (
-                                <DrawingPinIcon
-                                    className="no-drag h-[24px] m-0.5"
-                                    onClick={alwaysOnTop}
-                                />
-                            )}
-                            <GearIcon
-                                className="no-drag h-[24px] m-0.5"
-                                onClick={() => {
-                                    openSettings()
-                                }}
-                            />
-                        </div>
-                        <div className="flex">
-                            {repeat ? (
-                                <LoopIcon
-                                    className="no-drag h-[24px] m-0.5 text-foreground"
-                                    onMouseDown={() => {
-                                        setRepeat(!repeat)
-                                    }}
-                                />
-                            ) : (
-                                <LoopIcon
-                                    className="no-drag h-[24px] m-0.5 text-ring"
-                                    onMouseDown={() => {
-                                        setRepeat(!repeat)
-                                    }}
-                                />
-                            )}
-                            <TrackPreviousIcon
-                                className="no-drag h-[24px] m-0.5"
-                                onClick={() => {
-                                    let rand_idx = Math.floor(
-                                        Math.random() * swapTracks[1].length
-                                    )
-                                    shuffle
-                                        ? openFile(
-                                              swapTracks[1][rand_idx].file,
-                                              false,
-                                              rand_idx
-                                          )
-                                        : openFile(
-                                              swapTracks[1][
-                                                  swapIndeces[1] >= 1
-                                                      ? swapIndeces[1] - 1
-                                                      : swapTracks[1].length - 1
-                                              ].file,
-                                              false,
-                                              swapIndeces[1] >= 1
-                                                  ? swapIndeces[1] - 1
-                                                  : swapTracks[1].length - 1
-                                          )
-                                }}
-                            />
-                            {play ? (
-                                <PauseIcon
-                                    className="no-drag h-[24px] m-0.5"
-                                    onClick={() => togglePlay()}
-                                />
-                            ) : (
-                                <PlayIcon
-                                    className="no-drag h-[24px] m-0.5"
-                                    onClick={() => togglePlay()}
-                                />
-                            )}
-                            <TrackNextIcon
-                                className="no-drag h-[24px] m-0.5"
-                                onClick={() => {
-                                    let rand_idx = Math.floor(
-                                        Math.random() * swapTracks[1].length
-                                    )
-                                    shuffle
-                                        ? openFile(
-                                              swapTracks[1][rand_idx].file,
-                                              false,
-                                              rand_idx
-                                          )
-                                        : openFile(
-                                              swapTracks[1][
-                                                  (swapIndeces[1] + 1) %
-                                                      swapTracks[1].length
-                                              ].file,
-                                              false,
-                                              (swapIndeces[1] + 1) %
-                                                  swapTracks[1].length
-                                          )
-                                }}
-                            />
-                            {shuffle ? (
-                                <ShuffleIcon
-                                    className="no-drag h-[24px] m-0.5 text-foreground"
-                                    onClick={() => setShuffle(false)}
-                                />
-                            ) : (
-                                <ShuffleIcon
-                                    className="no-drag h-[24px] m-0.5 text-ring"
-                                    onClick={() => setShuffle(true)}
-                                />
-                            )}
-                        </div>
-                        <div className="flex">
-                            {volume == 0 ? (
-                                <SpeakerOffIcon
-                                    onClick={() => {
-                                        setVolume(preMuteVolume)
-                                    }}
-                                    className="no-drag h-[24px] m-0.5 mr-1.5"
-                                />
-                            ) : volume < 0.5 ? (
-                                <SpeakerModerateIcon
-                                    onClick={() => {
-                                        mute()
-                                    }}
-                                    className="no-drag h-[24px] m-0.5 mr-1.5"
-                                />
-                            ) : (
-                                <SpeakerLoudIcon
-                                    onClick={() => {
-                                        mute()
-                                    }}
-                                    className="no-drag h-[24px] m-0.5 mr-1.5"
-                                />
-                            )}
-                            <Slider
-                                defaultValue={[0.5]}
-                                value={[volume]}
-                                className="no-drag bg-inherit w-[100px]"
-                                min={0}
-                                max={1.0}
-                                step={0.01}
-                                onValueChange={(num) => setVolume(num[0])}
-                            />
-                        </div>
-                    </div>
+                    <ControlsBar
+                        resized={resized}
+                        collapse={collapse}
+                        onTop={onTop}
+                        alwaysOnTop={alwaysOnTop}
+                        openSettings={openSettings}
+                        repeat={repeat}
+                        setRepeat={setRepeat}
+                        swapTracks={swapTracks}
+                        swapIndeces={swapIndeces}
+                        shuffle={shuffle}
+                        setShuffle={setShuffle}
+                        openFile={openFile}
+                        play={play}
+                        togglePlay={togglePlay}
+                        volume={volume}
+                        setVolume={setVolume}
+                        preMuteVolume={preMuteVolume}
+                        mute={mute}
+                    />
                 </div>
                 <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-secondary-foreground">
                     <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
@@ -901,8 +766,7 @@ function App() {
                             return (
                                 <div
                                     key={index}
-                                    onClick={(e) => {
-                                        e.preventDefault()
+                                    onClick={() => {
                                         swapDirs[0] !== dir &&
                                             openCertainDir(dir, true)
                                     }}
@@ -969,6 +833,7 @@ function App() {
                         }}
                         onDragEnd={handleDragEnd}
                         onDragCancel={() => setActiveId(null)}
+                        modifiers={[restrictToVerticalAxis]}
                     >
                         <SortableContext
                             items={swapTracks[0].map((track) => {
@@ -976,19 +841,6 @@ function App() {
                             })}
                             strategy={verticalListSortingStrategy}
                         >
-                            {/* {swapTracks[0].map((track, idx) => (
-                                <SortableItem
-                                    key={track.file}
-                                    id={track.file}
-                                    index={idx}
-                                    swapTracks={swapTracks}
-                                    swapDirs={swapDirs}
-                                    swapIndeces={swapIndeces}
-                                    openFile={openFile}
-                                />
-
-                            ))} */}
-
                             <FixedSizeList
                                 useIsScrolling
                                 ref={listRef}
@@ -1031,50 +883,12 @@ function App() {
                     </DndContext>
                 </div>
                 {settings.bottomBar && (
-                    <div className="drag flex-none place-items-center p-2 bg-secondary-foreground text-background">
-                        <div className="flex flex-row">
-                            <p className="text-left text-xs mx-1 w-[33%] overflow-hidden inline-block whitespace-nowrap flex-1">
-                                {swapTracks[0].length > 0
-                                    ? secondsToDhms(
-                                          swapTracks[0]
-                                              .map(function (song) {
-                                                  return song.duration
-                                              })
-                                              .reduce(
-                                                  (
-                                                      acc: number,
-                                                      curr: number
-                                                  ) => {
-                                                      return acc + curr
-                                                  },
-                                                  0
-                                              )
-                                      )
-                                    : '0d 0h 0m 0s'}
-                            </p>
-                            <div className="mr-1 w-[33%] flex-none inline-block ">
-                                <p className="text-xs text-center overflow-hidden whitespace-nowrap text-ellipsis">
-                                    {`${play ? 'Playing' : 'Paused'} ${
-                                        swapDirs[0] == swapDirs[1]
-                                            ? 'current'
-                                            : 'other'
-                                    } folder`}
-                                </p>
-                            </div>
-                            <div className="mr-1 w-[33%] flex-none inline-block ">
-                                <p
-                                    title={swapDirs[0]}
-                                    className="text-xs text-right overflow-hidden whitespace-nowrap text-ellipsis"
-                                >
-                                    {swapTracks[0].length > 0
-                                        ? `${swapIndeces[1] + 1} / ${
-                                              swapTracks[1].length
-                                          }`
-                                        : '0 / 0'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <BottomBar
+                        play={play}
+                        swapTracks={swapTracks}
+                        swapDirs={swapDirs}
+                        swapIndeces={swapIndeces}
+                    />
                 )}
             </div>
         </div>
