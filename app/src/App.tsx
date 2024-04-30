@@ -1,40 +1,14 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { prominent } from 'color.js'
-import {
-    ShuffleIcon,
-    TrackNextIcon,
-    TrackPreviousIcon,
-    PlayIcon,
-    PauseIcon,
-    LoopIcon,
-    GearIcon,
-    DrawingPinFilledIcon,
-    DrawingPinIcon,
-    MixerVerticalIcon,
-    ImageIcon,
-    TriangleDownIcon,
-    TriangleUpIcon,
-    SpeakerLoudIcon,
-    SpeakerModerateIcon,
-    SpeakerOffIcon,
-    PlusIcon,
-} from '@radix-ui/react-icons'
+import { PlusIcon } from '@radix-ui/react-icons'
 
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { Separator } from '../components/ui/separator'
-import { Slider } from '../components/ui/slider'
+
 import { cn } from '../lib/utils'
 
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 
-import {
-    grayness,
-    rgbToHex,
-    LightenDarkenColor,
-    secondsToDhms,
-    secondsToDhmsShort,
-} from './helpers'
+import { grayness, rgbToHex } from './helpers'
 
 import {
     DndContext,
@@ -43,7 +17,6 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
-    DragOverlay,
 } from '@dnd-kit/core'
 import {
     arrayMove,
@@ -55,8 +28,10 @@ import {
 import { SortableItem } from '../components/ui/SortableItem'
 import { BottomBar } from '../components/ui/BottomBar'
 import { ControlsBar } from '../components/ui/ControlsBar'
-
+import { DirectoryBadge } from '../components/ui/DirectoryBadge'
 import { FixedSizeList } from 'react-window'
+import { CloseOrCollapse } from '../components/ui/CloseOrCollapse'
+import { TrackArea } from '../components/ui/TrackArea'
 
 const PROGRESS_BAR_PRECISION = 1000
 
@@ -250,7 +225,6 @@ function App() {
             let frac = audio.currentTime / audio.duration
             if (frac !== Infinity) {
                 let new_progress = Math.trunc(frac * PROGRESS_BAR_PRECISION)
-                console.log('new_progress', new_progress)
                 setProgress(new_progress)
                 if (frac == 1 && play) {
                     togglePlay()
@@ -598,7 +572,10 @@ function App() {
         )
 
         return () => {
+            // Unmount listeners on hot-reload when debugging app
+            // otherwise they keep adding making the app unusable
             window.Main.removeAllListeners()
+            // Pause on hot-reload
             audio.pause()
         }
     }, [])
@@ -626,247 +603,131 @@ function App() {
     }, [progress])
 
     return (
-        <div
-            className="h-[100vh] flex flex-col overflow-y-hidden bg-background"
-            // style={{ backgroundColor: UIColors.background + '70' }}
-        >
-            {settings.framelessWindow && (
-                <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
-                    <div
-                        className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
-                        onClick={() => {
-                            window.Main.Close()
-                        }}
-                    ></div>
-                    <div
-                        className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
-                        onClick={() => {
-                            window.Main.Minimize()
-                        }}
-                    ></div>
-                </div>
-            )}
-            <div>
-                <div
-                    style={
-                        settings.useCover
-                            ? {
-                                  backgroundImage: `
+        <div className="h-[100vh] flex flex-col overflow-y-hidden bg-background">
+            {settings.framelessWindow && <CloseOrCollapse />}
+
+            <div
+                style={
+                    settings.useCover
+                        ? {
+                              backgroundImage: `
                             radial-gradient(ellipse at top left, ${colors[0]}50  50%, transparent 80%),
                             radial-gradient(ellipse at bottom  left, ${colors[1]}50  50% , transparent 80%),
                             radial-gradient(ellipse at top    right, ${colors[2]}50 50% , transparent 80%),
                             radial-gradient(ellipse at bottom right, ${colors[3]}50  50% , transparent 80%)`,
-                              }
-                            : {}
-                    }
-                    className={`h-[85px] drag ${play && settings.movingColors}`}
+                          }
+                        : {}
+                }
+                className={`h-[85px] animate-bg-spin drag ${
+                    play && settings.movingColors
+                }`}
+            >
+                <TrackArea
+                    currSong={currSong}
+                    trackCoverRef={trackCoverRef}
+                    settings={settings}
+                    downloadCover={downloadCover}
+                    progress={progress}
+                    PROGRESS_BAR_PRECISION={PROGRESS_BAR_PRECISION}
+                    setProgress={setProgress}
+                    setSeek={setSeek}
+                    audio={audio}
+                />
+
+                <ControlsBar
+                    resized={resized}
+                    collapse={collapse}
+                    onTop={onTop}
+                    alwaysOnTop={alwaysOnTop}
+                    openSettings={openSettings}
+                    repeat={repeat}
+                    setRepeat={setRepeat}
+                    swapTracks={swapTracks}
+                    swapIndeces={swapIndeces}
+                    shuffle={shuffle}
+                    setShuffle={setShuffle}
+                    openFile={openFile}
+                    play={play}
+                    togglePlay={togglePlay}
+                    volume={volume}
+                    setVolume={setVolume}
+                    preMuteVolume={preMuteVolume}
+                    mute={mute}
+                />
+            </div>
+            <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-secondary-foreground">
+                <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
+                    {directories.map((dir: string, index: number) => {
+                        return (
+                            <DirectoryBadge
+                                key={dir}
+                                swapDirs={swapDirs}
+                                dir={dir}
+                                openCertainDir={openCertainDir}
+                                directories={directories}
+                                index={index}
+                                removeDir={removeDir}
+                            />
+                        )
+                    })}
+                </div>
+
+                <Button
+                    className="h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background"
+                    size="icon"
+                    onClick={() => {
+                        addDir()
+                    }}
                 >
-                    <div className="flex">
-                        <div className="no-drag p-2 pb-0">
-                            <div className="flex-none w-[48px] h-[48px]">
-                                {currSong && currSong.cover ? (
-                                    <img
-                                        ref={trackCoverRef}
-                                        className="no-drag ml-[0.1rem] rounded-lg duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-[
-                                transition-property: transform, shadow, opacity;
-                                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-                                transition-duration: 150ms;] 
-                                "
-                                        src={currSong ? currSong.cover : ''}
-                                        onClick={() => {
-                                            currSong && settings.downloadCover
-                                                ? downloadCover(currSong.cover)
-                                                : null
-                                        }}
-                                        alt=""
-                                        title={
-                                            settings.downloadCover
-                                                ? 'Click to download the cover art'
-                                                : ''
-                                        }
-                                    />
-                                ) : (
-                                    <ImageIcon className="drag ml-[0.15rem] w-[48px] h-[48px] rounded-[10px]" />
-                                )}
-                            </div>
-                        </div>
-                        <div className="ml-1 mt-2 flex-1">
-                            <p className="no-drag text-xs">
-                                {currSong &&
-                                    currSong.file &&
-                                    currSong.file
-                                        .split('/')
-                                        .reverse()[0]
-                                        .replace(/\.[^/.]+$/, '')}
-                            </p>
-                            <div className="drag grid grid-flow-col auto-cols-max text-xs">
-                                <p>{currSong && currSong.album}</p>
-                            </div>
-                            <div className="w-full flex flex-row">
-                                <Slider
-                                    defaultValue={[0]}
-                                    value={[progress]}
-                                    className="no-drag bg-inherit w-[calc(100%_-_125px)]"
-                                    min={0}
-                                    max={PROGRESS_BAR_PRECISION}
-                                    step={0.001}
-                                    onValueChange={(num) => {
-                                        if (audio) {
-                                            let userInputProgress = num[0]
-                                            let userInputTime = Math.trunc(
-                                                (userInputProgress /
-                                                    PROGRESS_BAR_PRECISION) *
-                                                    audio.duration
-                                            )
-
-                                            if (
-                                                !Number.isNaN(userInputTime) &&
-                                                userInputTime !== Infinity
-                                            ) {
-                                                setProgress(userInputProgress)
-                                                setSeek(userInputTime)
-                                            }
-                                        }
-                                    }}
-                                />
-
-                                <p className="text-xs mr-2 flex-1 text-right font-light pr-1">
-                                    {secondsToDhmsShort(audio.currentTime)}
-                                    &nbsp;/&nbsp;
-                                    {currSong &&
-                                        secondsToDhmsShort(currSong.duration)}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <ControlsBar
-                        resized={resized}
-                        collapse={collapse}
-                        onTop={onTop}
-                        alwaysOnTop={alwaysOnTop}
-                        openSettings={openSettings}
-                        repeat={repeat}
-                        setRepeat={setRepeat}
-                        swapTracks={swapTracks}
-                        swapIndeces={swapIndeces}
-                        shuffle={shuffle}
-                        setShuffle={setShuffle}
-                        openFile={openFile}
-                        play={play}
-                        togglePlay={togglePlay}
-                        volume={volume}
-                        setVolume={setVolume}
-                        preMuteVolume={preMuteVolume}
-                        mute={mute}
-                    />
-                </div>
-                <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-secondary-foreground">
-                    <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
-                        {directories.map((dir: string, index: number) => {
-                            return (
-                                <div
-                                    key={index}
-                                    onClick={() => {
-                                        swapDirs[0] !== dir &&
-                                            openCertainDir(dir, true)
-                                    }}
-                                    className="no-drag"
-                                >
-                                    <Badge
-                                        className={cn(
-                                            '',
-                                            {
-                                                'bg-foreground text-background':
-                                                    swapDirs[0] == dir,
-                                            },
-                                            {
-                                                'bg-muted-foreground text-background':
-                                                    swapDirs[1] == dir,
-                                            }
-                                        )}
-                                        variant={'secondary'}
-                                    >
-                                        <p>
-                                            {directories[index] &&
-                                                directories[index]
-                                                    .split('/')
-                                                    .reverse()[0]}
-                                        </p>
-                                        <Separator
-                                            className="text-black bg-black accent-black"
-                                            decorative={true}
-                                            orientation={'vertical'}
-                                        ></Separator>
-                                        <div
-                                            className="pl-1 inline-block opacity-30 hover:opacity-100 transition-opacity"
-                                            onClick={(e) => removeDir(e, index)}
-                                        >
-                                            X
-                                        </div>
-                                    </Badge>
-                                </div>
-                            )
+                    <PlusIcon
+                        className={cn(``, {
+                            'animate-pulse transition-opacity':
+                                directories.length == 0,
                         })}
-                    </div>
-
-                    <Button
-                        className="h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background"
-                        size="icon"
-                        onClick={() => {
-                            addDir()
-                        }}
+                    />
+                </Button>
+            </div>
+            <div className="overflow-y-hide flex-1 flex-grow">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={({ active }: any) => {
+                        setActiveId(active.id)
+                    }}
+                    onDragEnd={handleDragEnd}
+                    onDragCancel={() => setActiveId(null)}
+                    modifiers={[restrictToVerticalAxis]}
+                >
+                    <SortableContext
+                        items={swapTracks[0].map((track) => {
+                            return track.file
+                        })}
+                        strategy={verticalListSortingStrategy}
                     >
-                        <PlusIcon
-                            className={cn(``, {
-                                'animate-pulse transition-opacity':
-                                    directories.length == 0,
-                            })}
-                        />
-                    </Button>
-                </div>
-                <div className="overflow-y-hide flex-1 flex-grow">
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={({ active }: any) => {
-                            setActiveId(active.id)
-                        }}
-                        onDragEnd={handleDragEnd}
-                        onDragCancel={() => setActiveId(null)}
-                        modifiers={[restrictToVerticalAxis]}
-                    >
-                        <SortableContext
-                            items={swapTracks[0].map((track) => {
-                                return track.file
-                            })}
-                            strategy={verticalListSortingStrategy}
+                        <FixedSizeList
+                            useIsScrolling
+                            ref={listRef}
+                            className={`scroll-smooth`}
+                            height={
+                                electronWindowHeight -
+                                170 +
+                                (settings.bottomBar ? 20 : 50)
+                            }
+                            itemCount={swapTracks[0] ? swapTracks[0].length : 0}
+                            itemSize={30}
+                            itemData={{
+                                trackList: swapTracks[0],
+                                openFile: openFile,
+                                swapDirs: swapDirs,
+                                swapIndeces: swapIndeces,
+                            }}
+                            width={'100%'}
                         >
-                            <FixedSizeList
-                                useIsScrolling
-                                ref={listRef}
-                                className={`scroll-smooth`}
-                                height={
-                                    electronWindowHeight -
-                                    170 +
-                                    (settings.bottomBar ? 20 : 50)
-                                }
-                                itemCount={
-                                    swapTracks[0] ? swapTracks[0].length : 0
-                                }
-                                itemSize={30}
-                                itemData={{
-                                    trackList: swapTracks[0],
-                                    openFile: openFile,
-                                    swapDirs: swapDirs,
-                                    swapIndeces: swapIndeces,
-                                }}
-                                width={'100%'}
-                            >
-                                {SortableItem}
-                            </FixedSizeList>
-                        </SortableContext>
-                        {/* Optional: Extra drag overlay */}
-                        {/* <DragOverlay>
+                            {SortableItem}
+                        </FixedSizeList>
+                    </SortableContext>
+                    {/* Optional: Extra drag overlay */}
+                    {/* <DragOverlay>
                             {activeId ? (
                                 <SortableItem
                                     data={swapTracks[0]}
@@ -880,17 +741,16 @@ function App() {
                                 </SortableItem>
                             ) : null}
                         </DragOverlay> */}
-                    </DndContext>
-                </div>
-                {settings.bottomBar && (
-                    <BottomBar
-                        play={play}
-                        swapTracks={swapTracks}
-                        swapDirs={swapDirs}
-                        swapIndeces={swapIndeces}
-                    />
-                )}
+                </DndContext>
             </div>
+            {settings.bottomBar && (
+                <BottomBar
+                    play={play}
+                    swapTracks={swapTracks}
+                    swapDirs={swapDirs}
+                    swapIndeces={swapIndeces}
+                />
+            )}
         </div>
     )
 }

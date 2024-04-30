@@ -1,9 +1,4 @@
 import React from 'react'
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { cn } from '../../lib/utils'
-
-import { ImageIcon } from '@radix-ui/react-icons'
 import { secondsToDhms } from '../../src/helpers'
 
 export function BottomBar({ play, swapTracks, swapDirs, swapIndeces }: any) {
