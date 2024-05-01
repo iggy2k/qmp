@@ -41,9 +41,9 @@ export function SortableItem(props: any) {
         >
             <div
                 className={cn(
-                    'flex flex-row p-[1px] text-center rounded-md box-border hover:bg-accent text-foreground',
+                    'flex flex-row p-[1px] text-center rounded-md box-border hover:bg-accent transition-colors duration-100 text-foreground',
                     {
-                        'bg-foreground text-background hover:bg-foreground':
+                        'bg-foreground text-background transition-colors duration-100 hover:bg-foreground':
                             index == swapIndeces[1] &&
                             swapDirs[0] == swapDirs[1],
                     }

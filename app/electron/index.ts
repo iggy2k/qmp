@@ -14,11 +14,13 @@ import * as mm from 'music-metadata'
 import * as fs from 'fs'
 import Store from 'electron-store'
 
+import sharp from 'sharp'
+
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MAX = 600
+
 // const WIN_WIDTH_MIN = 450
 // const WIN_WIDTH_MAX = 800
-
 const WIN_WIDTH_MIN = 800
 const WIN_WIDTH_MAX = 1200
 
@@ -72,25 +74,44 @@ function checkExension(file: string) {
     )
 }
 
-function openFiles(files: string[]) {
+async function processAsync(md: any) {
+    let data
+    if (mm.selectCover(md!.common.picture)) {
+        data = mm.selectCover(md!.common.picture)?.data
+    } else {
+        data = null
+    }
+    if (!data) {
+        return null
+    }
+    return sharp(data)
+        .resize(48, 48)
+        .toFormat('jpeg')
+        .jpeg({
+            quality: 100,
+            chromaSubsampling: '4:4:4',
+            force: true, // <----- add this parameter
+        })
+        .toBuffer()
+        .then((res) => {
+            // console.log(`data:image/jpeg;base64,${res}`)
+            return `data:image/jpeg;base64,${res.toString('base64')}`
+        })
+}
+
+async function openFiles(files: string[]) {
     const promises = []
     for (let i = 0; i < files.length; i++) {
         promises.push(mm.parseFile(files[i]))
     }
-    return Promise.all(promises)
-        .then((results) => {
-            const covers = results.map((md) =>
-                mm.selectCover(md!.common.picture)
-                    ? `data:image/jpeg;base64,${mm
-                          .selectCover(md!.common.picture)
-                          ?.data.toString('base64')}`
-                    : null
-            )
-            return [results, covers]
-        })
-        .catch((e) => {
-            DEBUG && console.log('openFiles: ' + e)
-        })
+
+    var res1 = await Promise.all(promises)
+
+    var res2 = res1.map((i) => processAsync(i))
+
+    var res3 = await Promise.all(res2)
+
+    return [res1, res3]
 }
 
 function rreaddirSync(dir: string, allFiles: string[] = []) {
@@ -349,14 +370,18 @@ function createWindow() {
             return
         }
 
-        openFiles(file_list).then((files_data_array) => {
-            window.webContents.send(
-                'add-dir-fm',
-                dir,
-                files_data_array,
-                file_list
-            )
-        })
+        openFiles(file_list)
+            .then((files_data_array) => {
+                window.webContents.send(
+                    'add-dir-fm',
+                    dir,
+                    files_data_array,
+                    file_list
+                )
+            })
+            .catch((e: any) => {
+                console.log(e)
+            })
     })
 
     ipcMain.on('open-settings-tm', (_) => {

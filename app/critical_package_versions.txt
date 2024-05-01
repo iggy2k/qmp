@@ -1,0 +1,5 @@
+"sharp": "^0.32.2"
+Later versions spit "Error: Could not load the "sharp" module using the darwin-arm64 runtime" regardless of the node version.
+
+"music-metadata": "7.13"
+Later versions can not be imported

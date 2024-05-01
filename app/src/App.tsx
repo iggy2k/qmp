@@ -710,6 +710,7 @@ function App() {
                         >
                             <FixedSizeList
                                 useIsScrolling
+                                overscanCount={10}
                                 ref={listRef}
                                 className={`scroll-smooth`}
                                 height={
