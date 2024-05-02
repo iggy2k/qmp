@@ -160,3 +160,9 @@
             'calt' 1;
     }
 }
+
+#svg {
+    polyline {
+        stroke-linecap: round;
+    }
+}
