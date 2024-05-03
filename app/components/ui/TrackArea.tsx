@@ -24,11 +24,11 @@ export function TrackArea({
 
     useEffect(() => {
         var analyser: any, audioContext, sourceNode, stream
+        let freqArray: any
+        let nextFreqArray: any
 
         var svgNS = svgRef.current.namespaceURI
         var g = document.createElementNS(svgNS, 'g')
-
-        let smoothedFftValue = 0
 
         var width = 100,
             height = 32,
@@ -54,14 +54,20 @@ export function TrackArea({
                 var filter = audioContext.createBiquadFilter()
 
                 // This way we only apply filter to the analyzer but not the destination
-                sourceNode.connect(filter)
-                filter.connect(analyser)
-                sourceNode.connect(audioContext.destination)
 
-                filter.type = 'lowpass' // Low-pass filter. See BiquadFilterNode docs
-                filter.frequency.value = 1000 // Set cutoff to 440 HZ
+                sourceNode.connect(analyser)
+                analyser.connect(audioContext.destination)
+
+                // sourceNode.connect(filter)
+                // filter.connect(analyser)
+                // sourceNode.connect(audioContext.destination)
+                // filter.type = 'lowpass' // Low-pass filter. See BiquadFilterNode docs
+                // filter.frequency.value = 1000 // Set cutoff to 440 HZ
 
                 audio.play()
+
+                freqArray = new Uint8Array(analyser.frequencyBinCount)
+                nextFreqArray = freqArray
                 update()
             })
         }
@@ -80,10 +86,7 @@ export function TrackArea({
             var polyline = document.createElementNS(svgNS, 'polyline')
             // using power to increase highs and decrease lows
 
-            let delta = freqValue - smoothedFftValue
-            smoothedFftValue = smoothedFftValue + delta * 0.05
-            // freqValue = smoothedFftValue
-            console.log(freqValue, smoothedFftValue)
+            // console.log(freqValue, smoothedFftValue)
 
             freqRatio = freqValue / 255
             let throttledRatio = (freqValue - choke) / (255 - choke)
@@ -124,11 +127,39 @@ export function TrackArea({
         svgRef.current.setAttribute('viewBox', '0 0 ' + width + ' ' + height)
         svgRef.current.appendChild(g)
 
+        let frame = 0
+        let framesToInterpolate = 5
+        let magicConst = 1 / framesToInterpolate
+
         function update() {
+            if (audio.paused) {
+                return
+            }
             g.remove()
             g = document.createElementNS(svgNS, 'g')
-            var freqArray = new Uint8Array(analyser.frequencyBinCount)
-            analyser.getByteTimeDomainData(freqArray)
+
+            frame = (frame + 1) % (framesToInterpolate + 1)
+
+            if (frame === framesToInterpolate) {
+                nextFreqArray = new Uint8Array(analyser.frequencyBinCount)
+                analyser.getByteTimeDomainData(nextFreqArray)
+            } else {
+                for (var i = 0; i < freqArray.length; i++) {
+                    if (freqArray[i] > nextFreqArray[i]) {
+                        freqArray[i] -=
+                            (freqArray[i] - nextFreqArray[i]) *
+                            magicConst *
+                            (frame + 1)
+                    } else if (freqArray[i] < nextFreqArray[i]) {
+                        freqArray[i] +=
+                            (nextFreqArray[i] - freqArray[i]) *
+                            magicConst *
+                            (frame + 1)
+                    }
+                }
+            }
+
+            console.log(nextFreqArray, freqArray)
 
             for (var i = 0; i < freqArray.length; i++) {
                 var v = freqArray[i]
