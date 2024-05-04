@@ -15,93 +15,77 @@ export function TrackArea({
     setSeek,
     audio,
 }: any) {
-    // AudioContext and analyser integration from Ali Görkem's
-    // Pen "Audio Visualizer #3"
-    // https://codepen.io/agorkem/pen/PwyNOg/
-    // thanks dewd!
-
     const svgRef = useRef<null | any>(null)
 
     useEffect(() => {
-        var analyser: any, audioContext, sourceNode, stream
+        // Source:
+        // https://codepen.io/agorkem/pen/PwyNOg/
+        console.log('started')
+        let analyser: AnalyserNode | undefined
+        let audioContext: AudioContext | undefined
+        let sourceNode: MediaElementAudioSourceNode | undefined
         let freqArray: any
         let nextFreqArray: any
+        let animation = 0
+        let svgNS = svgRef.current.namespaceURI
+        let g = document.createElementNS(svgNS, 'g')
 
-        var svgNS = svgRef.current.namespaceURI
-        var g = document.createElementNS(svgNS, 'g')
+        let frame = 0
+        let framesToInterpolate = 4
+        let magicConst = 1 / framesToInterpolate
 
-        var width = 100,
-            height = 32,
-            maxHeight = Math.max(height * 0.3, 100),
-            fftSize = 64, // 512
-            tilt = 0,
-            choke = 110,
-            c = 0
+        let width = 96
+        let height = 32
+        let maxHeight = Math.max(height * 0.3, 64)
+        let fftSize = 64
+        let tilt = 0
+        let choke = 80
 
-        setup()
+        if (!(analyser && audioContext && sourceNode)) {
+            audioSetup()
+        }
 
-        function setup() {
-            audio.addEventListener('canplay', function () {
-                document.body.className += 'loaded'
-                audioContext = new AudioContext()
-                analyser = analyser || audioContext.createAnalyser()
-                analyser.minDecibels = -90
-                analyser.maxDecibels = -10
-                analyser.smoothingTimeConstant = 0.8 //0.75;
-                analyser.fftSize = fftSize
+        function audioSetup() {
+            audioContext = new AudioContext()
+            analyser = analyser || audioContext.createAnalyser()
+            analyser.minDecibels = -90
+            analyser.maxDecibels = -10
+            analyser.smoothingTimeConstant = 1.0 //0.75;
+            analyser.fftSize = fftSize
 
-                sourceNode = audioContext.createMediaElementSource(audio)
-                var filter = audioContext.createBiquadFilter()
+            sourceNode = audioContext.createMediaElementSource(audio)
+            sourceNode.connect(analyser)
+            analyser.connect(audioContext.destination)
 
-                // This way we only apply filter to the analyzer but not the destination
+            // This way we only apply filter to the analyzer but not the destination
+            // var filter = audioContext.createBiquadFilter()
+            // sourceNode.connect(filter)
+            // filter.connect(analyser)
+            // sourceNode.connect(audioContext.destination)
+            // filter.type = 'lowpass'
+            // filter.frequency.value = 1000
 
-                sourceNode.connect(analyser)
-                analyser.connect(audioContext.destination)
-
-                // sourceNode.connect(filter)
-                // filter.connect(analyser)
-                // sourceNode.connect(audioContext.destination)
-                // filter.type = 'lowpass' // Low-pass filter. See BiquadFilterNode docs
-                // filter.frequency.value = 1000 // Set cutoff to 440 HZ
-
-                audio.play()
-
-                freqArray = new Uint8Array(analyser.frequencyBinCount)
-                nextFreqArray = freqArray
-                update()
-            })
+            freqArray = new Uint8Array(analyser.frequencyBinCount)
+            nextFreqArray = freqArray
+            update()
         }
 
         function shape(
             g: any,
             freqValue: any,
             freqSequence: any,
-            freqCount: any,
-            colorSequence: any
+            freqCount: any
         ) {
             let freqRatio = freqSequence / freqCount
             let x = (width - tilt * 2) * freqRatio + tilt
             let y = height / 2
 
             var polyline = document.createElementNS(svgNS, 'polyline')
-            // using power to increase highs and decrease lows
-
-            // console.log(freqValue, smoothedFftValue)
-
-            freqRatio = freqValue / 255
             let throttledRatio = (freqValue - choke) / (255 - choke)
-            let strokeWidth = (width / freqCount) * throttledRatio + 1
+            // let strokeWidth = (width / freqCount) * throttledRatio + 1
+            let strokeWidth = 2
             let throttledY = Math.max(throttledRatio, 0) * maxHeight
-            // color
             let color = '#000000'
-            // 'hsl(' +
-            // (freqSequence / 2 + Math.floor(colorSequence)) +
-            // ', ' +
-            // 100 +
-            // '%,' +
-            // freqRatio * 80 +
-            // '%' +
-            // ')'
 
             var loc_x = x - strokeWidth / 2,
                 loc_y1 = y - throttledY / 2,
@@ -122,17 +106,18 @@ export function TrackArea({
             g.appendChild(polyline)
         }
 
-        svgRef.current.setAttribute('width', width + 'px')
-        svgRef.current.setAttribute('height', height + 'px')
-        svgRef.current.setAttribute('viewBox', '0 0 ' + width + ' ' + height)
-        svgRef.current.appendChild(g)
-
-        let frame = 0
-        let framesToInterpolate = 5
-        let magicConst = 1 / framesToInterpolate
+        if (svgRef.current) {
+            svgRef.current.setAttribute('width', width + 'px')
+            svgRef.current.setAttribute('height', height + 'px')
+            svgRef.current.setAttribute(
+                'viewBox',
+                '0 0 ' + width + ' ' + height
+            )
+            svgRef.current.appendChild(g)
+        }
 
         function update() {
-            if (audio.paused) {
+            if (!analyser) {
                 return
             }
             g.remove()
@@ -143,6 +128,11 @@ export function TrackArea({
             if (frame === framesToInterpolate) {
                 nextFreqArray = new Uint8Array(analyser.frequencyBinCount)
                 analyser.getByteTimeDomainData(nextFreqArray)
+
+                for (var i = 0; i < freqArray.length; i++) {
+                    var v = freqArray[i]
+                    shape(g, v, i + 1, freqArray.length)
+                }
             } else {
                 for (var i = 0; i < freqArray.length; i++) {
                     if (freqArray[i] > nextFreqArray[i]) {
@@ -156,21 +146,15 @@ export function TrackArea({
                             magicConst *
                             (frame + 1)
                     }
+                    shape(g, freqArray[i], i + 1, freqArray.length)
                 }
             }
 
-            console.log(nextFreqArray, freqArray)
-
-            for (var i = 0; i < freqArray.length; i++) {
-                var v = freqArray[i]
-                shape(g, v, i + 1, freqArray.length, c)
-            }
             svgRef.current.appendChild(g)
-
-            c += 0.5
-
-            requestAnimationFrame(update)
+            animation = requestAnimationFrame(update)
         }
+
+        return () => {}
     }, [])
 
     return (
