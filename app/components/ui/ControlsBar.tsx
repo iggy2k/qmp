@@ -40,7 +40,7 @@ export function ControlsBar({
     mute,
 }: any) {
     return (
-        <div className="flex flex-row justify-between mt-1 mx-1 pr-2">
+        <div className="flex flex-row justify-between mt-1 mx-1 pr-2  text-ring">
             <div className="flex">
                 <div className="h-[24px] m-0.5">
                     <div className="">
@@ -85,14 +85,14 @@ export function ControlsBar({
             <div className="flex">
                 {repeat ? (
                     <LoopIcon
-                        className="no-drag h-[24px] m-0.5 text-foreground"
+                        className="no-drag h-[24px] m-0.5"
                         onMouseDown={() => {
                             setRepeat(!repeat)
                         }}
                     />
                 ) : (
                     <LoopIcon
-                        className="no-drag h-[24px] m-0.5 text-ring"
+                        className="no-drag h-[24px] m-0.5 text-ring/60"
                         onMouseDown={() => {
                             setRepeat(!repeat)
                         }}
@@ -158,12 +158,12 @@ export function ControlsBar({
                 />
                 {shuffle ? (
                     <ShuffleIcon
-                        className="no-drag h-[24px] m-0.5 text-foreground"
+                        className="no-drag h-[24px] m-0.5 text-ring"
                         onClick={() => setShuffle(false)}
                     />
                 ) : (
                     <ShuffleIcon
-                        className="no-drag h-[24px] m-0.5 text-ring"
+                        className="no-drag h-[24px] m-0.5 text-ring/60"
                         onClick={() => setShuffle(true)}
                     />
                 )}

@@ -101,9 +101,12 @@ export function TrackArea({
             }
 
             polyline.setAttribute('stroke-width', strokeWidth.toString())
-            polyline.setAttribute('stroke', color)
+            polyline.setAttribute(
+                'stroke',
+                getComputedStyle(svgRef.current).getPropertyValue('color')
+            )
             polyline.setAttribute('points', points.join(' '))
-            g.appendChild(polyline)
+            g && g.appendChild(polyline)
         }
 
         if (svgRef.current) {
@@ -187,7 +190,7 @@ export function TrackArea({
                     )}
                 </div>
             </div>
-            <div className="ml-1 mt-2 flex-1">
+            <div className="ml-1 mt-2 flex-1 text-foreground">
                 <div className="flex flex-row">
                     <div>
                         {!currSong ||
@@ -216,7 +219,8 @@ export function TrackArea({
                     </div>
                     <svg
                         id="svg"
-                        className="ml-auto mr-3 bg-white"
+                        // !!! text-primary is referenced to draw visualizer
+                        className="ml-auto mr-3 bg-transparent text-primary"
                         ref={svgRef}
                     ></svg>
                 </div>

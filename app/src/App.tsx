@@ -35,11 +35,6 @@ import { TrackArea } from '../components/ui/TrackArea'
 
 const PROGRESS_BAR_PRECISION = 1000
 
-const AudioContext = window.AudioContext
-// var audioContext: AudioContext = null
-let track: any = null
-let gain: any = null
-
 const audio = new Audio() as HTMLAudioElement & {
     setSinkId(deviceId: string): void
     sinkId: string
@@ -603,7 +598,7 @@ function App() {
     }, [progress])
 
     return (
-        <div className="h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className="yellow h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
@@ -654,7 +649,7 @@ function App() {
                     mute={mute}
                 />
             </div>
-            <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-secondary-foreground">
+            <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">
                 <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
                     {directories.map((dir: string, index: number) => {
                         return (

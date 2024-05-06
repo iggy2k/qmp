@@ -3,7 +3,7 @@ import { secondsToDhms } from '../../src/helpers'
 
 export function BottomBar({ play, swapTracks, swapDirs, swapIndeces }: any) {
     return (
-        <div className="drag flex-none place-items-center p-2 bg-secondary-foreground text-background">
+        <div className="drag flex-none place-items-center p-2 bg-background text-foreground">
             <div className="flex flex-row">
                 <p className="text-left text-xs mx-1 w-[33%] overflow-hidden inline-block whitespace-nowrap flex-1">
                     {swapTracks[0].length > 0
