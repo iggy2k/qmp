@@ -28,20 +28,21 @@ export function TrackArea({
         let g = document.createElementNS(svgNS, 'g')
 
         let frame = 0
-        let framesToInterpolate = 6
+        let framesToInterpolate = 4
         let magicConst = 1 / framesToInterpolate
         let animation = 0
         let width = 96
         let height = 32
-        let maxHeight = Math.max(height * 0.3, 64)
-        let choke = 80
+        let maxHeight = Math.max(height * 0.3, 48)
+        let choke = 70
 
-        audio.addEventListener('canplay', () => {
-            freqArray = new Uint8Array(analyser?.frequencyBinCount || 0)
-            nextFreqArray = freqArray
-            update()
-        })
+        // audio.addEventListener('canplay', () => {
 
+        // })
+
+        freqArray = new Uint8Array(analyser?.frequencyBinCount || 0)
+        nextFreqArray = freqArray
+        update()
         function shape(
             g: any,
             freqValue: any,
@@ -55,7 +56,7 @@ export function TrackArea({
             var polyline = document.createElementNS(svgNS, 'polyline')
             let throttledRatio = (freqValue - choke) / (255 - choke)
             // let strokeWidth = (width / freqCount) * throttledRatio + 1
-            let strokeWidth = 1
+            let strokeWidth = 2
             let throttledY = Math.max(throttledRatio, 0) * maxHeight
             let fallback_color = '#000000'
 

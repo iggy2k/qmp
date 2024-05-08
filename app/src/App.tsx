@@ -616,7 +616,7 @@ function App() {
     }, [progress])
 
     return (
-        <div className="yellow h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className=" h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
