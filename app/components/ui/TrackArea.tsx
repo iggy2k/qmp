@@ -14,61 +14,33 @@ export function TrackArea({
     setProgress,
     setSeek,
     audio,
+    analyser,
 }: any) {
     const svgRef = useRef<null | any>(null)
 
     useEffect(() => {
         // Source:
         // https://codepen.io/agorkem/pen/PwyNOg/
-        console.log('started')
-        let analyser: AnalyserNode | undefined
-        let audioContext: AudioContext | undefined
-        let sourceNode: MediaElementAudioSourceNode | undefined
-        let freqArray: any
-        let nextFreqArray: any
-        let animation = 0
+
+        let freqArray: Uint8Array
+        let nextFreqArray: Uint8Array
         let svgNS = svgRef.current.namespaceURI
         let g = document.createElementNS(svgNS, 'g')
 
         let frame = 0
-        let framesToInterpolate = 4
+        let framesToInterpolate = 6
         let magicConst = 1 / framesToInterpolate
-
+        let animation = 0
         let width = 96
         let height = 32
         let maxHeight = Math.max(height * 0.3, 64)
-        let fftSize = 64
-        let tilt = 0
         let choke = 80
 
-        if (!(analyser && audioContext && sourceNode)) {
-            audioSetup()
-        }
-
-        function audioSetup() {
-            audioContext = new AudioContext()
-            analyser = analyser || audioContext.createAnalyser()
-            analyser.minDecibels = -90
-            analyser.maxDecibels = -10
-            analyser.smoothingTimeConstant = 1.0 //0.75;
-            analyser.fftSize = fftSize
-
-            sourceNode = audioContext.createMediaElementSource(audio)
-            sourceNode.connect(analyser)
-            analyser.connect(audioContext.destination)
-
-            // This way we only apply filter to the analyzer but not the destination
-            // var filter = audioContext.createBiquadFilter()
-            // sourceNode.connect(filter)
-            // filter.connect(analyser)
-            // sourceNode.connect(audioContext.destination)
-            // filter.type = 'lowpass'
-            // filter.frequency.value = 1000
-
-            freqArray = new Uint8Array(analyser.frequencyBinCount)
+        audio.addEventListener('canplay', () => {
+            freqArray = new Uint8Array(analyser?.frequencyBinCount || 0)
             nextFreqArray = freqArray
             update()
-        }
+        })
 
         function shape(
             g: any,
@@ -77,20 +49,20 @@ export function TrackArea({
             freqCount: any
         ) {
             let freqRatio = freqSequence / freqCount
-            let x = (width - tilt * 2) * freqRatio + tilt
+            let x = width * freqRatio
             let y = height / 2
 
             var polyline = document.createElementNS(svgNS, 'polyline')
             let throttledRatio = (freqValue - choke) / (255 - choke)
             // let strokeWidth = (width / freqCount) * throttledRatio + 1
-            let strokeWidth = 2
+            let strokeWidth = 1
             let throttledY = Math.max(throttledRatio, 0) * maxHeight
-            let color = '#000000'
+            let fallback_color = '#000000'
 
             var loc_x = x - strokeWidth / 2,
                 loc_y1 = y - throttledY / 2,
                 loc_y2 = y + throttledY / 2,
-                x_offset = tilt * throttledRatio
+                x_offset = throttledRatio
 
             if (throttledRatio > 0) {
                 var point_1 = loc_x - x_offset + ',' + loc_y1,
@@ -101,10 +73,14 @@ export function TrackArea({
             }
 
             polyline.setAttribute('stroke-width', strokeWidth.toString())
-            polyline.setAttribute(
-                'stroke',
-                getComputedStyle(svgRef.current).getPropertyValue('color')
-            )
+            if (getComputedStyle(svgRef.current).getPropertyValue('color')) {
+                polyline.setAttribute(
+                    'stroke',
+                    getComputedStyle(svgRef.current).getPropertyValue('color')
+                )
+            } else {
+                polyline.setAttribute('stroke', fallback_color)
+            }
             polyline.setAttribute('points', points.join(' '))
             g && g.appendChild(polyline)
         }

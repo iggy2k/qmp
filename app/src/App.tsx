@@ -40,6 +40,24 @@ const audio = new Audio() as HTMLAudioElement & {
     sinkId: string
 }
 
+const audioContext = new AudioContext()
+let analyser = audioContext.createAnalyser()
+analyser.minDecibels = -90
+analyser.maxDecibels = -10
+analyser.smoothingTimeConstant = 1.0 //0.75;
+analyser.fftSize = 128
+let sourceNode = audioContext.createMediaElementSource(audio)
+sourceNode.connect(analyser)
+analyser.connect(audioContext.destination)
+
+// This way we only apply filter to the analyzer but not the destination
+// var filter = audioContext.createBiquadFilter()
+// sourceNode.connect(filter)
+// filter.connect(analyser)
+// sourceNode.connect(audioContext.destination)
+// filter.type = 'lowpass'
+// filter.frequency.value = 1000
+
 async function setAudioOutput(deviceId: string) {
     await audio.setSinkId(deviceId)
     window.Main.send('get-audio-output-tm', audio.sinkId)
@@ -626,6 +644,7 @@ function App() {
                     setProgress={setProgress}
                     setSeek={setSeek}
                     audio={audio}
+                    analyser={analyser}
                 />
 
                 <ControlsBar
