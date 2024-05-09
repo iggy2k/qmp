@@ -47,7 +47,19 @@ analyser.maxDecibels = -10
 analyser.smoothingTimeConstant = 1.0 //0.75;
 analyser.fftSize = 128
 let sourceNode = audioContext.createMediaElementSource(audio)
-sourceNode.connect(analyser)
+
+var from = 300
+var to = 1000
+var geometricMean = Math.sqrt(from * to)
+
+var filter = audioContext.createBiquadFilter()
+filter.type = 'peaking'
+filter.frequency.value = geometricMean
+filter.Q.value = geometricMean / (to - from)
+filter.gain.value = 0
+
+sourceNode.connect(filter)
+filter.connect(analyser)
 analyser.connect(audioContext.destination)
 
 // This way we only apply filter to the analyzer but not the destination
@@ -168,6 +180,8 @@ function App() {
     const [lastFile, setLastFile] = useState('')
     const [lastIndex, setLastIndex] = useState(-1)
     const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
+
+    const [filter1Gain, setFilter1Gain] = useState(0)
 
     const setAudioSource = (filePath: string) => {
         if (filePath) {
@@ -615,8 +629,13 @@ function App() {
         }
     }, [progress])
 
+    // Update dynamic colors
+    useEffect(() => {
+        filter.gain.value = filter1Gain
+    }, [filter1Gain])
+
     return (
-        <div className=" h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className="red h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
@@ -666,6 +685,8 @@ function App() {
                     setVolume={setVolume}
                     preMuteVolume={preMuteVolume}
                     mute={mute}
+                    setFilter1Gain={setFilter1Gain}
+                    filter1Gain={filter1Gain}
                 />
             </div>
             <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">

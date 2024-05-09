@@ -134,7 +134,11 @@ export function TrackArea({
             animation = requestAnimationFrame(update)
         }
 
-        return () => {}
+        return () => {
+            // nextFreqArray = new Uint8Array(0)
+            update()
+            cancelAnimationFrame(animation)
+        }
     }, [])
 
     return (

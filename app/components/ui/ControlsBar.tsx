@@ -1,6 +1,8 @@
 import React from 'react'
 import { Slider } from './slider'
-
+import { Popover, PopoverContent, PopoverTrigger } from './popover'
+import { Button } from './button'
+import { Label } from './label'
 import {
     ShuffleIcon,
     TrackNextIcon,
@@ -38,6 +40,8 @@ export function ControlsBar({
     setVolume,
     preMuteVolume,
     mute,
+    filter1Gain,
+    setFilter1Gain,
 }: any) {
     return (
         <div className="flex flex-row justify-between mt-1 mx-1 pr-2  text-ring">
@@ -63,7 +67,26 @@ export function ControlsBar({
                         />
                     </div>
                 </div>
-                <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 h-80">
+                        <div className="">
+                            <Slider
+                                defaultValue={[0]}
+                                value={[filter1Gain]}
+                                className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
+                                min={-12}
+                                max={12}
+                                step={0.25}
+                                orientation="vertical"
+                                onValueChange={(num) => setFilter1Gain(num[0])}
+                            />
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
                 {onTop ? (
                     <DrawingPinFilledIcon
                         className="no-drag h-[24px] m-0.5"
