@@ -40,8 +40,9 @@ export function ControlsBar({
     setVolume,
     preMuteVolume,
     mute,
-    filter1Gain,
-    setFilter1Gain,
+    filterGains,
+    setFilterGains,
+    filters,
 }: any) {
     return (
         <div className="flex flex-row justify-between mt-1 mx-1 pr-2  text-ring">
@@ -71,18 +72,30 @@ export function ControlsBar({
                     <PopoverTrigger asChild>
                         <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 h-80">
-                        <div className="">
-                            <Slider
-                                defaultValue={[0]}
-                                value={[filter1Gain]}
-                                className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
-                                min={-12}
-                                max={12}
-                                step={0.25}
-                                orientation="vertical"
-                                onValueChange={(num) => setFilter1Gain(num[0])}
-                            />
+                    <PopoverContent className="w-[400px] h-80">
+                        <div className="flex flex-row gap-x-3">
+                            {filters &&
+                                filters.map((filter: any, idx: number) => {
+                                    return (
+                                        <Slider
+                                            key={'filter ' + idx}
+                                            defaultValue={[
+                                                filters[idx].gain.value,
+                                            ]}
+                                            // value={[filterGains[idx]]}
+                                            className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
+                                            min={-20}
+                                            max={20}
+                                            step={0.01}
+                                            orientation="vertical"
+                                            onValueChange={(num) => {
+                                                let newGain = filterGains
+                                                newGain[idx] = num[0]
+                                                setFilterGains(newGain)
+                                            }}
+                                        />
+                                    )
+                                })}
                         </div>
                     </PopoverContent>
                 </Popover>

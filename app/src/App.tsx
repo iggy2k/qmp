@@ -48,27 +48,45 @@ analyser.smoothingTimeConstant = 1.0 //0.75;
 analyser.fftSize = 128
 let sourceNode = audioContext.createMediaElementSource(audio)
 
-var from = 300
-var to = 1000
-var geometricMean = Math.sqrt(from * to)
+let filters: BiquadFilterNode[] = []
 
-var filter = audioContext.createBiquadFilter()
-filter.type = 'peaking'
-filter.frequency.value = geometricMean
-filter.Q.value = geometricMean / (to - from)
-filter.gain.value = 0
+let freqs = [
+    { start: 8, end: 32 },
+    { start: 32, end: 64 },
+    { start: 64, end: 128 },
+    { start: 128, end: 256 },
+    { start: 256, end: 512 },
+    { start: 512, end: 1024 },
+    { start: 1024, end: 2048 },
+    { start: 2048, end: 4096 },
+    { start: 4096, end: 8192 },
+    { start: 8192, end: 16384 },
+    { start: 16384, end: 20000 },
+]
 
-sourceNode.connect(filter)
-filter.connect(analyser)
+for (let freq of freqs) {
+    let filter = audioContext.createBiquadFilter()
+    filter.type = 'peaking'
+    let geometricMean = Math.sqrt(freq.start * freq.end)
+    filter.frequency.value = geometricMean
+    filter.Q.value = geometricMean / (freq.end - freq.start)
+    filter.gain.value = 0
+    filters.push(filter)
+}
+
+console.log(filters)
+
+for (let i = 0; i <= filters.length; i++) {
+    if (i === 0) {
+        sourceNode.connect(filters[i])
+    } else if (i === filters.length) {
+        filters[i - 1].connect(analyser)
+    } else {
+        filters[i - 1].connect(filters[i])
+    }
+}
+
 analyser.connect(audioContext.destination)
-
-// This way we only apply filter to the analyzer but not the destination
-// var filter = audioContext.createBiquadFilter()
-// sourceNode.connect(filter)
-// filter.connect(analyser)
-// sourceNode.connect(audioContext.destination)
-// filter.type = 'lowpass'
-// filter.frequency.value = 1000
 
 async function setAudioOutput(deviceId: string) {
     await audio.setSinkId(deviceId)
@@ -181,7 +199,9 @@ function App() {
     const [lastIndex, setLastIndex] = useState(-1)
     const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
 
-    const [filter1Gain, setFilter1Gain] = useState(0)
+    const [filterGains, setFilterGains] = useState<number[]>([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ])
 
     const setAudioSource = (filePath: string) => {
         if (filePath) {
@@ -631,8 +651,14 @@ function App() {
 
     // Update dynamic colors
     useEffect(() => {
-        filter.gain.value = filter1Gain
-    }, [filter1Gain])
+        console.log(filterGains)
+        for (let i = 0; i < filterGains.length; i++) {
+            if (filters[i]) {
+                filters[i].gain.value = filterGains[i]
+                console.log(filters[i].gain.value)
+            }
+        }
+    }, [JSON.stringify(filterGains)])
 
     return (
         <div className="red h-[100vh] flex flex-col overflow-y-hidden bg-background">
@@ -685,8 +711,9 @@ function App() {
                     setVolume={setVolume}
                     preMuteVolume={preMuteVolume}
                     mute={mute}
-                    setFilter1Gain={setFilter1Gain}
-                    filter1Gain={filter1Gain}
+                    setFilterGains={setFilterGains}
+                    filterGains={filterGains}
+                    filters={filters}
                 />
             </div>
             <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">
