@@ -1,8 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Slider } from './slider'
-import { Popover, PopoverContent, PopoverTrigger } from './popover'
-import { Button } from './button'
-import { Label } from './label'
 import {
     ShuffleIcon,
     TrackNextIcon,
@@ -13,13 +10,14 @@ import {
     GearIcon,
     DrawingPinFilledIcon,
     DrawingPinIcon,
-    MixerVerticalIcon,
     TriangleDownIcon,
     TriangleUpIcon,
     SpeakerLoudIcon,
     SpeakerModerateIcon,
     SpeakerOffIcon,
 } from '@radix-ui/react-icons'
+import { cn } from '@/lib/utils'
+import { Equalizer } from './Equalizer'
 
 export function ControlsBar({
     resized,
@@ -43,7 +41,9 @@ export function ControlsBar({
     filterGains,
     setFilterGains,
     filters,
+    freqs,
 }: any) {
+    const [refreshEq, setRefreshEq] = useState(false)
     return (
         <div className="flex flex-row justify-between mt-1 mx-1 pr-2  text-ring">
             <div className="flex">
@@ -68,37 +68,15 @@ export function ControlsBar({
                         />
                     </div>
                 </div>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] h-80">
-                        <div className="flex flex-row gap-x-3">
-                            {filters &&
-                                filters.map((filter: any, idx: number) => {
-                                    return (
-                                        <Slider
-                                            key={'filter ' + idx}
-                                            defaultValue={[
-                                                filters[idx].gain.value,
-                                            ]}
-                                            // value={[filterGains[idx]]}
-                                            className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
-                                            min={-20}
-                                            max={20}
-                                            step={0.01}
-                                            orientation="vertical"
-                                            onValueChange={(num) => {
-                                                let newGain = filterGains
-                                                newGain[idx] = num[0]
-                                                setFilterGains(newGain)
-                                            }}
-                                        />
-                                    )
-                                })}
-                        </div>
-                    </PopoverContent>
-                </Popover>
+
+                <Equalizer
+                    filterGains={filterGains}
+                    setFilterGains={setFilterGains}
+                    filters={filters}
+                    freqs={freqs}
+                    setRefreshEq={setRefreshEq}
+                    refreshEq={refreshEq}
+                />
 
                 {onTop ? (
                     <DrawingPinFilledIcon
@@ -228,7 +206,7 @@ export function ControlsBar({
                     />
                 )}
                 <Slider
-                    defaultValue={[0.5]}
+                    defaultValue={[0.1]}
                     value={[volume]}
                     className="no-drag bg-inherit w-[100px]"
                     min={0}

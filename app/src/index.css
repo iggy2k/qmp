@@ -210,3 +210,10 @@
         stroke-linecap: round;
     }
 }
+
+@layer utilities {
+    .text-nano {
+        font-size: 0.5rem;
+        line-height: 0.75rem;
+    }
+}

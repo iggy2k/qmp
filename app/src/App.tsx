@@ -51,17 +51,17 @@ let sourceNode = audioContext.createMediaElementSource(audio)
 let filters: BiquadFilterNode[] = []
 
 let freqs = [
-    { start: 8, end: 32 },
+    { start: 0, end: 32 },
     { start: 32, end: 64 },
-    { start: 64, end: 128 },
-    { start: 128, end: 256 },
-    { start: 256, end: 512 },
-    { start: 512, end: 1024 },
-    { start: 1024, end: 2048 },
-    { start: 2048, end: 4096 },
-    { start: 4096, end: 8192 },
-    { start: 8192, end: 16384 },
-    { start: 16384, end: 20000 },
+    { start: 64, end: 125 },
+    { start: 125, end: 250 },
+    { start: 250, end: 500 },
+    { start: 500, end: 1000 },
+    { start: 1000, end: 2000 },
+    { start: 2000, end: 4000 },
+    { start: 4000, end: 8000 },
+    { start: 8000, end: 16000 },
+    { start: 16000, end: 20000 },
 ]
 
 for (let freq of freqs) {
@@ -188,8 +188,8 @@ function App() {
     const [currSong, setCurrSong] = useState<any>({})
     const [play, setPlay] = useState(false)
     const [progress, setProgress] = useState(0)
-    const [volume, setVolume] = useState(0.5)
-    const [preMuteVolume, setPreMuteVolume] = useState(0.5)
+    const [volume, setVolume] = useState(0.1)
+    const [preMuteVolume, setPreMuteVolume] = useState(0.1)
     const [shuffle, setShuffle] = useState(false)
     const [onTop, setOnTop] = useState(false)
     const [resized, setResized] = useState(false)
@@ -200,7 +200,9 @@ function App() {
     const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
 
     const [filterGains, setFilterGains] = useState<number[]>([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ...filters.map((_) => {
+            return 0
+        }),
     ])
 
     const setAudioSource = (filePath: string) => {
@@ -661,7 +663,7 @@ function App() {
     }, [JSON.stringify(filterGains)])
 
     return (
-        <div className="red h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className="h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
@@ -714,6 +716,7 @@ function App() {
                     setFilterGains={setFilterGains}
                     filterGains={filterGains}
                     filters={filters}
+                    freqs={freqs}
                 />
             </div>
             <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">
