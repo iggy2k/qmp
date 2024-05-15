@@ -653,17 +653,16 @@ function App() {
 
     // Update dynamic colors
     useEffect(() => {
-        console.log(filterGains)
+        console.log('filterGains')
         for (let i = 0; i < filterGains.length; i++) {
             if (filters[i]) {
                 filters[i].gain.value = filterGains[i]
-                console.log(filters[i].gain.value)
             }
         }
     }, [JSON.stringify(filterGains)])
 
     return (
-        <div className="h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className="red h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={

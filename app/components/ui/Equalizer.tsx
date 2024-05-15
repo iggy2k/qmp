@@ -11,15 +11,17 @@ export function Equalizer({
     setFilterGains,
     filters,
     freqs,
-    refreshEq,
-    setRefreshEq,
 }: any) {
+    useEffect(() => {
+        console.log('Equalizer')
+    }, [])
     return (
         <Popover>
             <PopoverTrigger asChild>
                 <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
             </PopoverTrigger>
-            <PopoverContent className="w-[600px] h-80">
+            <PopoverContent className="w-[400px] h-[220px] ml-8 bg-background">
+                <p className="text-xs text-foreground">Equalizer</p>
                 <div className="flex flex-row justify-evenly mt-4">
                     <div className="flex flex-col w-4">
                         <p className="text-nano">Gain</p>
@@ -29,27 +31,39 @@ export function Equalizer({
                         filters.map((filter: any, idx: number) => {
                             return (
                                 <div
-                                    key={'filter ' + idx + refreshEq}
+                                    key={'filter ' + idx}
                                     className="flex flex-col items-center w-4"
                                 >
                                     <p className="text-nano">
                                         {filterGains[idx]}
                                     </p>
                                     <Slider
-                                        defaultValue={[filters[idx].gain.value]}
+                                        key={idx}
+                                        value={[filterGains[idx]]}
                                         className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
                                         min={-12}
                                         max={12}
                                         step={0.1}
                                         orientation="vertical"
                                         onValueChange={(num) => {
-                                            let newGain = filterGains
-                                            newGain[idx] = num[0]
-                                            setFilterGains(newGain)
+                                            setFilterGains(
+                                                filterGains.map(
+                                                    (
+                                                        gain: any,
+                                                        gainIdx: number
+                                                    ) => {
+                                                        return idx === gainIdx
+                                                            ? num[0]
+                                                            : gain
+                                                    }
+                                                )
+                                            )
                                         }}
                                     />
                                     <p className="text-nano">
-                                        {freqs[idx].end}
+                                        {freqs[idx].end < 1000
+                                            ? freqs[idx].end
+                                            : freqs[idx].end / 1000 + 'k'}
                                     </p>
                                 </div>
                             )
@@ -66,8 +80,6 @@ export function Equalizer({
                                 return 0
                             }),
                         ])
-                        console.log('refreshEq', refreshEq)
-                        setRefreshEq(!refreshEq)
                     }}
                 >
                     Reset

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Slider } from './slider'
 import {
     ShuffleIcon,
@@ -43,9 +43,8 @@ export function ControlsBar({
     filters,
     freqs,
 }: any) {
-    const [refreshEq, setRefreshEq] = useState(false)
     return (
-        <div className="flex flex-row justify-between mt-1 mx-1 pr-2  text-ring">
+        <div className="flex flex-row justify-between mt-1 mx-1 pr-2 text-ring">
             <div className="flex">
                 <div className="h-[24px] m-0.5">
                     <div className="">
@@ -74,8 +73,6 @@ export function ControlsBar({
                     setFilterGains={setFilterGains}
                     filters={filters}
                     freqs={freqs}
-                    setRefreshEq={setRefreshEq}
-                    refreshEq={refreshEq}
                 />
 
                 {onTop ? (

@@ -19,6 +19,10 @@ export function TrackArea({
     const svgRef = useRef<null | any>(null)
 
     useEffect(() => {
+        console.log('TrackArea')
+    }, [])
+
+    useEffect(() => {
         // Source:
         // https://codepen.io/agorkem/pen/PwyNOg/
 
