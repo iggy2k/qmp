@@ -47,34 +47,31 @@ analyser.maxDecibels = -10
 analyser.smoothingTimeConstant = 1.0 //0.75;
 analyser.fftSize = 128
 let sourceNode = audioContext.createMediaElementSource(audio)
+let gainNode = audioContext.createGain()
 
 let filters: BiquadFilterNode[] = []
 
-let freqs = [
-    { start: 0, end: 32 },
-    { start: 32, end: 64 },
-    { start: 64, end: 125 },
-    { start: 125, end: 250 },
-    { start: 250, end: 500 },
-    { start: 500, end: 1000 },
-    { start: 1000, end: 2000 },
-    { start: 2000, end: 4000 },
-    { start: 4000, end: 8000 },
-    { start: 8000, end: 16000 },
-    { start: 16000, end: 20000 },
-]
+let freqs = [32, 64, 125, 500, 1000, 2000, 4000, 8000, 16000]
 
-for (let freq of freqs) {
+for (let i = 0; i < freqs.length; i++) {
+    let freq = freqs[i]
     let filter = audioContext.createBiquadFilter()
-    filter.type = 'peaking'
-    let geometricMean = Math.sqrt(freq.start * freq.end)
-    filter.frequency.value = geometricMean
-    filter.Q.value = geometricMean / (freq.end - freq.start)
+    if (i === 0) {
+        filter.type = 'lowshelf'
+    } else if (i === freqs.length - 1) {
+        filter.type = 'highshelf'
+    } else {
+        filter.type = 'peaking'
+        filter.Q.value = 1
+    }
+    filter.frequency.value = freq
     filter.gain.value = 0
     filters.push(filter)
 }
 
 console.log(filters)
+
+// sourceNode.connect(gainNode)
 
 for (let i = 0; i <= filters.length; i++) {
     if (i === 0) {
@@ -86,7 +83,8 @@ for (let i = 0; i <= filters.length; i++) {
     }
 }
 
-analyser.connect(audioContext.destination)
+analyser.connect(gainNode)
+gainNode.connect(audioContext.destination)
 
 async function setAudioOutput(deviceId: string) {
     await audio.setSinkId(deviceId)
@@ -204,6 +202,8 @@ function App() {
             return 0
         }),
     ])
+
+    const [preampGain, setPreampGain] = useState(0.5)
 
     const setAudioSource = (filePath: string) => {
         if (filePath) {
@@ -651,7 +651,6 @@ function App() {
         }
     }, [progress])
 
-    // Update dynamic colors
     useEffect(() => {
         console.log('filterGains')
         for (let i = 0; i < filterGains.length; i++) {
@@ -661,8 +660,13 @@ function App() {
         }
     }, [JSON.stringify(filterGains)])
 
+    useEffect(() => {
+        console.log('preampGain')
+        gainNode.gain.setValueAtTime(preampGain, audioContext.currentTime)
+    }, [preampGain])
+
     return (
-        <div className="red h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className="yellow h-[100vh] flex flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
@@ -716,6 +720,8 @@ function App() {
                     filterGains={filterGains}
                     filters={filters}
                     freqs={freqs}
+                    setPreampGain={setPreampGain}
+                    preampGain={preampGain}
                 />
             </div>
             <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">

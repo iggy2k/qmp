@@ -11,6 +11,8 @@ export function Equalizer({
     setFilterGains,
     filters,
     freqs,
+    preampGain,
+    setPreampGain,
 }: any) {
     useEffect(() => {
         console.log('Equalizer')
@@ -23,10 +25,30 @@ export function Equalizer({
             <PopoverContent className="w-[400px] h-[220px] ml-8 bg-background">
                 <p className="text-xs text-foreground">Equalizer</p>
                 <div className="flex flex-row justify-evenly mt-4">
-                    <div className="flex flex-col w-4">
+                    <div
+                        key={'filter-gain'}
+                        className="flex flex-col items-center w-4"
+                    >
+                        <p className="text-nano">{preampGain.toString()}</p>
+                        <Slider
+                            value={[preampGain]}
+                            className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
+                            min={0}
+                            max={1}
+                            step={0.1}
+                            orientation="vertical"
+                            onValueChange={(num) => {
+                                setPreampGain(num[0])
+                            }}
+                        />
+                        <p className="text-nano">Preamp</p>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    {/* <div className="flex flex-col w-4">
                         <p className="text-nano">Gain</p>
                         <p className="text-nano mt-auto">Freq.</p>
-                    </div>
+                    </div> */}
                     {filters &&
                         filters.map((filter: any, idx: number) => {
                             return (
@@ -61,9 +83,9 @@ export function Equalizer({
                                         }}
                                     />
                                     <p className="text-nano">
-                                        {freqs[idx].end < 1000
-                                            ? freqs[idx].end
-                                            : freqs[idx].end / 1000 + 'k'}
+                                        {freqs[idx] < 1000
+                                            ? freqs[idx]
+                                            : freqs[idx] / 1000 + 'k'}
                                     </p>
                                 </div>
                             )

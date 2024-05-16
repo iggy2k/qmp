@@ -42,6 +42,8 @@ export function ControlsBar({
     setFilterGains,
     filters,
     freqs,
+    setPreampGain,
+    preampGain,
 }: any) {
     return (
         <div className="flex flex-row justify-between mt-1 mx-1 pr-2 text-ring">
@@ -73,6 +75,8 @@ export function ControlsBar({
                     setFilterGains={setFilterGains}
                     filters={filters}
                     freqs={freqs}
+                    setPreampGain={setPreampGain}
+                    preampGain={preampGain}
                 />
 
                 {onTop ? (
