@@ -652,7 +652,7 @@ function App() {
     }, [progress])
 
     useEffect(() => {
-        console.log('filterGains')
+        // console.log('filterGains')
         for (let i = 0; i < filterGains.length; i++) {
             if (filters[i]) {
                 filters[i].gain.value = filterGains[i]

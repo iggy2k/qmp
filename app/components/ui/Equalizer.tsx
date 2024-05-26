@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Slider } from './slider'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import { Button } from './button'
 import { Label } from './label'
+import { Switch } from './switch'
 import { MixerVerticalIcon } from '@radix-ui/react-icons'
 import { cn } from '@/lib/utils'
 
@@ -14,17 +15,40 @@ export function Equalizer({
     preampGain,
     setPreampGain,
 }: any) {
+    const [snapBand, setSnapBand] = useState(false)
     useEffect(() => {
         console.log('Equalizer')
     }, [])
+    const changeBands = (num: number[], idx: number) => {
+        if (!snapBand) {
+            setFilterGains(
+                filterGains.map((gain: any, gainIdx: number) => {
+                    return idx === gainIdx ? num[0] : gain
+                })
+            )
+        } else {
+            setFilterGains(
+                filterGains.map((gain: any, gainIdx: number) => {
+                    if (idx === gainIdx) {
+                        return num[0]
+                    } else {
+                        let distance = Math.abs(gainIdx - idx) + 1
+                        let delta =
+                            gain - (filterGains[idx] - num[0]) / distance
+                        return Math.round(delta * 10) / 10
+                    }
+                })
+            )
+        }
+    }
     return (
         <Popover>
             <PopoverTrigger asChild>
                 <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] h-[220px] ml-8 bg-background">
+            <PopoverContent className="w-[400px] h-[210px] ml-8 bg-background">
                 <p className="text-xs text-foreground">Equalizer</p>
-                <div className="flex flex-row justify-evenly mt-4">
+                <div className="flex flex-row justify-evenly mt-1">
                     <div
                         key={'filter-gain'}
                         className="flex flex-col items-center w-4"
@@ -68,18 +92,7 @@ export function Equalizer({
                                         step={0.1}
                                         orientation="vertical"
                                         onValueChange={(num) => {
-                                            setFilterGains(
-                                                filterGains.map(
-                                                    (
-                                                        gain: any,
-                                                        gainIdx: number
-                                                    ) => {
-                                                        return idx === gainIdx
-                                                            ? num[0]
-                                                            : gain
-                                                    }
-                                                )
-                                            )
+                                            changeBands(num, idx)
                                         }}
                                     />
                                     <p className="text-nano">
@@ -91,21 +104,35 @@ export function Equalizer({
                             )
                         })}
                 </div>
-                <Button
-                    className={cn(
-                        'h-4 w-16 ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background text-xs'
-                    )}
-                    size="icon"
-                    onClick={() => {
-                        setFilterGains([
-                            ...filterGains.map((_: any) => {
-                                return 0
-                            }),
-                        ])
-                    }}
-                >
-                    Reset
-                </Button>
+                <div className="flex flex-row mt-1">
+                    <div>
+                        <Button
+                            className={cn(
+                                'h-4 w-16 ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background text-xs'
+                            )}
+                            size="icon"
+                            onClick={() => {
+                                setFilterGains([
+                                    ...filterGains.map((_: any) => {
+                                        return 0
+                                    }),
+                                ])
+                            }}
+                        >
+                            Reset
+                        </Button>
+                    </div>
+                    <div className="flex items-center mr-0 ml-auto">
+                        <Switch
+                            id="snap-band"
+                            onClick={() => {
+                                setSnapBand(!snapBand)
+                            }}
+                            checked={snapBand}
+                        />
+                        <Label className="text-xs ml-1">Snap Band</Label>
+                    </div>
+                </div>
             </PopoverContent>
         </Popover>
     )
