@@ -5,7 +5,7 @@ import { Button } from './button'
 import { Label } from './label'
 import { Switch } from './switch'
 import { MixerVerticalIcon } from '@radix-ui/react-icons'
-import { cn } from '@/lib/utils'
+import { cn } from '../../lib/utils'
 
 export function Equalizer({
     filterGains,
@@ -32,10 +32,22 @@ export function Equalizer({
                     if (idx === gainIdx) {
                         return num[0]
                     } else {
-                        let distance = Math.abs(gainIdx - idx) + 1
-                        let delta =
-                            gain - (filterGains[idx] - num[0]) / distance
-                        return Math.round(delta * 10) / 10
+                        let delta = gain
+                        let distance = Math.abs(gainIdx - idx)
+                        const max_distance = 5
+                        if (distance < max_distance) {
+                            if (gain < num[0] - distance - max_distance) {
+                                delta = gain + (max_distance - distance)
+                            } else if (
+                                gain >
+                                num[0] + distance + max_distance
+                            ) {
+                                delta = gain - (max_distance - distance)
+                            } else {
+                                delta = gain
+                            }
+                        }
+                        return Math.round(delta)
                     }
                 })
             )
@@ -89,7 +101,7 @@ export function Equalizer({
                                         className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
                                         min={-12}
                                         max={12}
-                                        step={0.1}
+                                        step={1}
                                         orientation="vertical"
                                         onValueChange={(num) => {
                                             changeBands(num, idx)

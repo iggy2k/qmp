@@ -16,7 +16,7 @@ import {
     SpeakerModerateIcon,
     SpeakerOffIcon,
 } from '@radix-ui/react-icons'
-import { cn } from '@/lib/utils'
+import { cn } from '../../lib/utils'
 import { Equalizer } from './Equalizer'
 
 export function ControlsBar({

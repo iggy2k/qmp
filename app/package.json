@@ -79,7 +79,6 @@
     "build": {
         "productName": "qmp",
         "appId": "org.qmp",
-        "compression": "maximum",
         "dmg": {
             "icon": "public/icon.icns"
         },
