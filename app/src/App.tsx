@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { prominent } from 'color.js'
-import { PlusIcon } from '@radix-ui/react-icons'
+import { PlusIcon, UploadIcon, CardStackPlusIcon } from '@radix-ui/react-icons'
 
 import { Button } from '../components/ui/button'
 
@@ -32,6 +32,15 @@ import { DirectoryBadge } from '../components/ui/DirectoryBadge'
 import { FixedSizeList } from 'react-window'
 import { CloseOrCollapse } from '../components/ui/CloseOrCollapse'
 import { TrackArea } from '../components/ui/TrackArea'
+
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu'
 
 const PROGRESS_BAR_PRECISION = 1000
 
@@ -121,11 +130,15 @@ function App() {
                         return track.file
                     })
                     .indexOf(over.id)
-
-                return [
+                let new_array = [
                     arrayMove(swapTracks[0], oldIndex, newIndex),
                     swapTracks[1],
                 ]
+                window.Main.send('reorder-playlist', {
+                    new_playlist: new_array[0].map((e: any) => e.file),
+                    playlist_name: swapDirs[0],
+                })
+                return new_array
             })
             if (swapDirs[0] == swapDirs[1]) {
                 const newIndex = swapTracks[0]
@@ -366,6 +379,10 @@ function App() {
         window.Main.send('add-dir-tm', null)
     }
 
+    const addPlaylist = () => {
+        window.Main.send('add-playlist-tm', null)
+    }
+
     // Set track metadata and covers once the directory is loaded
     const unpackFilesData = (filesData: any[], filesPaths: string[]) => {
         let formats = filesData[0].map(
@@ -594,6 +611,17 @@ function App() {
             }
         )
 
+        window.Main.receive(
+            'add-playlist-fm',
+            (newDirectory: string, filesData: any[], filesPaths: string[]) => {
+                setSwapDirs((swapDirs) => [newDirectory, swapDirs[1]])
+
+                let newSongs = unpackFilesData(filesData, filesPaths)
+
+                setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+            }
+        )
+
         window.Main.receive('add-dir-from-menu', () => {
             addDir()
         })
@@ -740,21 +768,79 @@ function App() {
                         )
                     })}
                 </div>
-                <Button
-                    className={cn(
-                        'h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background ',
-                        {
-                            'animate-pulse transition-opacity duration-100':
-                                directories.length == 0,
-                        }
-                    )}
-                    size="icon"
-                    onClick={() => {
-                        addDir()
-                    }}
-                >
-                    <PlusIcon />
-                </Button>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            className={cn(
+                                'h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                                {
+                                    'animate-pulse transition-opacity duration-100':
+                                        directories.length == 0,
+                                }
+                            )}
+                            size="icon"
+                        >
+                            <PlusIcon />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-40" side="left">
+                        <Button
+                            className={cn(
+                                'w-full cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                                {
+                                    'animate-pulse transition-opacity duration-100':
+                                        directories.length == 0,
+                                }
+                            )}
+                            size="sm"
+                            onClick={() => {
+                                addDir()
+                            }}
+                        >
+                            Load a directory
+                            <UploadIcon className="ml-1" />
+                        </Button>
+                        <DropdownMenuSeparator />
+                        <Button
+                            className={cn(
+                                'w-full cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                                {
+                                    'animate-pulse transition-opacity duration-100':
+                                        directories.length == 0,
+                                }
+                            )}
+                            size="sm"
+                            onClick={() => {
+                                addPlaylist()
+                            }}
+                        >
+                            New playlist
+                            <CardStackPlusIcon className="ml-1" />
+                        </Button>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+            <div
+                onDrop={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    let paths = []
+                    for (const f of e.dataTransfer.files as unknown as any[]) {
+                        paths.push(f.path)
+                    }
+                    console.log(paths)
+                    window.Main.send('ondragstart', paths)
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                }}
+                className="border-[1px] drag border-foreground m-1 p-1 text-center rounded-md"
+            >
+                <p className="text-sm">
+                    Drag songs here to add to this playlist
+                </p>
             </div>
             <div className="overflow-y-hide flex-1 flex-grow">
                 {directories.length == 0 ? (
@@ -821,6 +907,7 @@ function App() {
                     </DndContext>
                 )}
             </div>
+
             {settings.bottomBar && (
                 <BottomBar
                     play={play}

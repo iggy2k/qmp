@@ -148,7 +148,8 @@ function createWindow() {
         minHeight: WIN_HEIGHT_MIN,
         maxWidth: WIN_WIDTH_MAX,
         maxHeight: WIN_HEIGHT_MAX,
-        vibrancy: 'dark',
+        vibrancy: 'appearance-based',
+        backgroundMaterial: 'auto',
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true,
@@ -378,10 +379,42 @@ function createWindow() {
                     files_data_array,
                     file_list
                 )
+
+                let playlists = store.get('playlists') as Object[]
+
+                if (playlists) {
+                    store.set(
+                        'playlists',
+                        playlists.concat([{ name: dir, tracks: file_list }])
+                    )
+                } else {
+                    store.set('playlists', [{ name: dir, tracks: file_list }])
+                }
             })
             .catch((e: any) => {
                 console.log(e)
             })
+    })
+
+    ipcMain.on('add-playlist-tm', (_) => {
+        let playlists = store.get('playlists') as Object[]
+
+        let playlist = playlists.length.toString()
+
+        if (playlists) {
+            store.set(
+                'playlists',
+                playlists.concat([{ name: playlist, tracks: [] }])
+            )
+        } else {
+            store.set('playlists', [{ name: playlist, tracks: [] }])
+        }
+        window.webContents.send('add-playlist-fm', playlist, [], [])
+    })
+
+    ipcMain.on('ondragstart', (event, arg) => {
+        console.log('Dropped File(s):', arg)
+        event.returnValue = `Received ${arg.length} paths.`
     })
 
     ipcMain.on('open-settings-tm', (_) => {
@@ -435,18 +468,46 @@ function createWindow() {
         )
     })
 
+    ipcMain.on(
+        'reorder-playlist',
+        (_, data: { new_playlist: string[]; playlist_name: string }) => {
+            console.log(data)
+
+            let playlists = store.get('playlists') as Object[]
+
+            let filteredPlaylists = playlists.map(function (e: any) {
+                if (e.name === data.playlist_name) {
+                    e.tracks = data.new_playlist
+                    return e
+                } else {
+                    return e
+                }
+            })
+
+            store.set('playlists', filteredPlaylists)
+        }
+    )
+
     ipcMain.on('remove-dir', (_, dir: string) => {
         let obj = store.get('all_dirs') as string[]
 
         DEBUG && console.log(`before removing ${dir} = ${obj}`)
 
-        var filteredArray = obj.filter(function (e) {
+        var filteredDirs = obj.filter(function (e) {
             return e !== dir
         })
 
-        DEBUG && console.log(`after removing ${dir} = ${filteredArray}`)
+        DEBUG && console.log(`after removing ${dir} = ${filteredDirs}`)
 
-        store.set('all_dirs', filteredArray)
+        store.set('all_dirs', filteredDirs)
+
+        let playlists = store.get('playlists') as Object[]
+
+        let filteredPlaylists = playlists.filter(function (e: any) {
+            return e.name !== dir
+        })
+
+        store.set('playlists', filteredPlaylists)
     })
 
     window.on('resize', () => {

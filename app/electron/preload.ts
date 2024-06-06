@@ -39,6 +39,10 @@ const validChannels = [
     'set-audio-output-fm',
     'get-audio-output-tm',
     'get-audio-output-fm',
+    'reorder-playlist',
+    'add-playlist-tm',
+    'add-playlist-fm',
+    'ondragstart',
 ]
 
 const api = {
