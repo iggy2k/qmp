@@ -27,8 +27,8 @@ export function ControlsBar({
     openSettings,
     repeat,
     setRepeat,
-    swapTracks,
-    swapIndeces,
+    activeTracks,
+    playlistIndices,
     shuffle,
     setShuffle,
     openFile,
@@ -91,7 +91,7 @@ export function ControlsBar({
                     />
                 )}
                 <GearIcon
-                    className="no-drag h-[24px] m-0.5"
+                    className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-red-300 duration-300"
                     onClick={() => {
                         openSettings()
                     }}
@@ -117,24 +117,24 @@ export function ControlsBar({
                     className="no-drag h-[24px] m-0.5"
                     onClick={() => {
                         let rand_idx = Math.floor(
-                            Math.random() * swapTracks[1].length
+                            Math.random() * activeTracks.playing.length
                         )
                         shuffle
                             ? openFile(
-                                  swapTracks[1][rand_idx].file,
+                                  activeTracks.playing[rand_idx].file,
                                   false,
                                   rand_idx
                               )
                             : openFile(
-                                  swapTracks[1][
-                                      swapIndeces[1] >= 1
-                                          ? swapIndeces[1] - 1
-                                          : swapTracks[1].length - 1
+                                  activeTracks.playing[
+                                      playlistIndices.playing >= 1
+                                          ? playlistIndices.playing - 1
+                                          : activeTracks.playing.length - 1
                                   ].file,
                                   false,
-                                  swapIndeces[1] >= 1
-                                      ? swapIndeces[1] - 1
-                                      : swapTracks[1].length - 1
+                                  playlistIndices.playing >= 1
+                                      ? playlistIndices.playing - 1
+                                      : activeTracks.playing.length - 1
                               )
                     }}
                 />
@@ -153,21 +153,28 @@ export function ControlsBar({
                     className="no-drag h-[24px] m-0.5"
                     onClick={() => {
                         let rand_idx = Math.floor(
-                            Math.random() * swapTracks[1].length
+                            Math.random() * activeTracks.playing.length
+                        )
+                        console.log(
+                            'TrackNextIcon',
+                            rand_idx,
+                            activeTracks,
+                            activeTracks.playing.length
                         )
                         shuffle
                             ? openFile(
-                                  swapTracks[1][rand_idx].file,
+                                  activeTracks.playing[rand_idx].file,
                                   false,
                                   rand_idx
                               )
                             : openFile(
-                                  swapTracks[1][
-                                      (swapIndeces[1] + 1) %
-                                          swapTracks[1].length
+                                  activeTracks.playing[
+                                      (playlistIndices.playing + 1) %
+                                          activeTracks.playing.length
                                   ].file,
                                   false,
-                                  (swapIndeces[1] + 1) % swapTracks[1].length
+                                  (playlistIndices.playing + 1) %
+                                      activeTracks.playing.length
                               )
                     }}
                 />

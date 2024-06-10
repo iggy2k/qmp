@@ -8,10 +8,10 @@ import { Input } from './input'
 import { Badge } from './badge'
 
 export function DirectoryBadge({
-    swapDirs,
+    activePlaylists,
     dir,
     openCertainDir,
-    directories,
+    allPlaylists,
     index,
     removeDir,
 }: any) {
@@ -19,7 +19,7 @@ export function DirectoryBadge({
     return (
         <div
             onClick={() => {
-                swapDirs[0] !== dir && openCertainDir(dir, true)
+                activePlaylists.viewing !== dir && openCertainDir(dir, true)
             }}
             className="no-drag"
         >
@@ -28,11 +28,11 @@ export function DirectoryBadge({
                     cn()
                     // '',
                     // {
-                    //     'bg-foreground text-background': swapDirs[0] == dir,
+                    //     'bg-foreground text-background': activePlaylists.viewing == dir,
                     // },
                     // {
                     //     'bg-muted-foreground text-background':
-                    //         swapDirs[1] == dir,
+                    //         activePlaylists.playing == dir,
                     // }
                 }
                 variant={'secondary'}
@@ -41,14 +41,14 @@ export function DirectoryBadge({
                     <Input
                         className="h-4 w-20 text-xs"
                         placeholder={
-                            directories[index] &&
-                            directories[index].split('/').reverse()[0]
+                            allPlaylists[index] &&
+                            allPlaylists[index].split('/').reverse()[0]
                         }
                     />
                 ) : (
                     <p>
-                        {directories[index] &&
-                            directories[index].split('/').reverse()[0]}
+                        {allPlaylists[index] &&
+                            allPlaylists[index].split('/').reverse()[0]}
                     </p>
                 )}
                 <div className="">

@@ -100,6 +100,20 @@ async function setAudioOutput(deviceId: string) {
     window.Main.send('get-audio-output-tm', audio.sinkId)
 }
 
+interface TrackCouple {
+    viewing: any[]
+    playing: any[]
+}
+interface PlaylistCouple {
+    viewing: string
+    playing: string
+}
+
+interface IndexCouple {
+    viewing: number
+    playing: number
+}
+
 function App() {
     const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -119,35 +133,42 @@ function App() {
     function handleDragEnd(event: any) {
         const { active, over }: any = event
         if (active.id !== over.id) {
-            setSwapTracks((swapTracks) => {
-                const oldIndex = swapTracks[0]
+            setActiveTracks((activeTracks) => {
+                const oldIndex = activeTracks.viewing
                     .map((track) => {
                         return track.file
                     })
                     .indexOf(active.id)
-                const newIndex = swapTracks[0]
+                const newIndex = activeTracks.viewing
                     .map((track) => {
                         return track.file
                     })
                     .indexOf(over.id)
-                let new_array = [
-                    arrayMove(swapTracks[0], oldIndex, newIndex),
-                    swapTracks[1],
-                ]
+                let newTracks = {
+                    viewing: arrayMove(
+                        activeTracks.viewing,
+                        oldIndex,
+                        newIndex
+                    ),
+                    playing: activeTracks.playing,
+                }
                 window.Main.send('reorder-playlist', {
-                    new_playlist: new_array[0].map((e: any) => e.file),
-                    playlist_name: swapDirs[0],
+                    new_playlist: newTracks.viewing.map((e: any) => e.file),
+                    playlist_name: activePlaylists.viewing,
                 })
-                return new_array
+                return newTracks
             })
-            if (swapDirs[0] == swapDirs[1]) {
-                const newIndex = swapTracks[0]
+            if (activePlaylists.viewing == activePlaylists.playing) {
+                const newIndex = activeTracks.viewing
                     .map((track) => {
                         return track.file
                     })
                     .indexOf(over.id)
                 console.log(newIndex)
-                setSwapIndeces((swapIndeces) => [swapIndeces[0], newIndex])
+                setPlaylistIndices((playlistIndices) => ({
+                    viewing: playlistIndices.viewing,
+                    playing: newIndex,
+                }))
             }
         }
         setActiveId(null)
@@ -192,11 +213,25 @@ function App() {
     const listRef = useRef<null | any>(null)
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
     const [electronWindowHeight, setElectronWindowHeight] = useState(450)
-    const [swapTracks, setSwapTracks] = useState<any[][]>([[], []])
-    const [directories, setDirectories] = useState<string[]>([])
-    const [swapDirs, setSwapDirs] = useState<string[]>(['', ''])
-    const [swapIndeces, setSwapIndeces] = useState<number[]>([-1, -1])
-    const [currSong, setCurrSong] = useState<any>({})
+
+    const [activeTracks, setActiveTracks] = useState<TrackCouple>({
+        viewing: [],
+        playing: [],
+    })
+
+    const [allPlaylists, setAllPlaylists] = useState<string[]>([])
+
+    const [activePlaylists, setActivePlaylists] = useState<PlaylistCouple>({
+        viewing: '',
+        playing: '',
+    })
+
+    const [playlistIndices, setPlaylistIndices] = useState<IndexCouple>({
+        playing: -1,
+        viewing: -1,
+    })
+
+    const [currentSong, setCurrentSong] = useState<any>({})
     const [play, setPlay] = useState(false)
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(0.1)
@@ -208,7 +243,7 @@ function App() {
     const [sessionRestored, setSessionRestored] = useState(false)
     const [lastFile, setLastFile] = useState('')
     const [lastIndex, setLastIndex] = useState(-1)
-    const [closedBothSwapDirs, setClosedBothSwapDirs] = useState(false)
+    const [closedBothPlaylists, setClosedBothPlaylists] = useState(false)
 
     const [filterGains, setFilterGains] = useState<number[]>([
         ...filters.map((_) => {
@@ -232,25 +267,37 @@ function App() {
 
     // Switch to a new track
     const openFile = (file: string, setSameDir: boolean, index: number) => {
-        if (swapDirs[0] == swapDirs[1]) {
-            setCurrSong(swapTracks[0][index])
+        console.log('openFile', file, setSameDir, index)
+        if (activePlaylists.playing == activePlaylists.viewing) {
+            setCurrentSong(activeTracks.viewing[index])
             setAudioSource(file)
         } else {
             if (setSameDir) {
-                setSwapTracks((swapTracks) => [swapTracks[0], swapTracks[0]])
-                setSwapDirs((swapDirs) => [swapDirs[0], swapDirs[0]])
-                setCurrSong(swapTracks[0][index])
+                console.log('openFile', activeTracks)
+                setActiveTracks((activeTracks) => ({
+                    viewing: activeTracks.viewing,
+                    playing: activeTracks.viewing,
+                }))
+                setActivePlaylists((activePlaylists) => ({
+                    viewing: activePlaylists.viewing,
+                    playing: activePlaylists.viewing,
+                }))
+                setCurrentSong(activeTracks.viewing[index])
                 setAudioSource(file)
             } else {
-                setCurrSong(swapTracks[1][index])
+                setCurrentSong(activeTracks.playing[index])
                 setAudioSource(file)
             }
         }
 
         setProgress(0)
-        setSwapIndeces((swapIndeces) => [swapIndeces[0], index])
 
-        window.Main.setLastOpenDir(swapDirs[0])
+        setPlaylistIndices((playlistIndices) => ({
+            viewing: playlistIndices.viewing,
+            playing: index,
+        }))
+
+        window.Main.setLastOpenDir(activePlaylists.viewing)
         window.Main.setOldFile(file)
         window.Main.setOldIndex(index)
     }
@@ -336,36 +383,39 @@ function App() {
     const removeDir = (e: any, idx: number) => {
         e.stopPropagation()
         // Last directory case
-        if (directories.length == 1) {
-            setSwapTracks([[], []])
+        if (allPlaylists.length == 1) {
+            setActiveTracks({ viewing: [], playing: [] })
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.setLastOpenDir('')
-            setCurrSong({})
+            setCurrentSong({})
             setAudioSource('')
         } else {
             // Directory that is both open and playing
-            if (directories[idx] == swapDirs[0] && swapDirs[0] == swapDirs[1]) {
-                let idx = directories.indexOf(swapDirs[1])
+            if (
+                allPlaylists[idx] == activePlaylists.viewing &&
+                activePlaylists.viewing == activePlaylists.playing
+            ) {
+                let idx = allPlaylists.indexOf(activePlaylists.playing)
                 openCertainDir(
-                    directories[idx + 1] || directories[idx - 1],
+                    allPlaylists[idx + 1] || allPlaylists[idx - 1],
                     false
                 )
-                setClosedBothSwapDirs(true)
+                setClosedBothPlaylists(true)
                 // Directory that is currently open
-            } else if (directories[idx] == swapDirs[0]) {
+            } else if (allPlaylists[idx] == activePlaylists.viewing) {
                 openCertainDir(
-                    directories[idx - 1] || directories[idx + 1],
+                    allPlaylists[idx - 1] || allPlaylists[idx + 1],
                     false
                 )
                 // Directory that is currently playing
-            } else if (directories[idx] == swapDirs[1]) {
-                openCertainDir(swapDirs[0], false)
-                openFile(swapTracks[0][0].file, true, 0)
+            } else if (allPlaylists[idx] == activePlaylists.playing) {
+                openCertainDir(activePlaylists.viewing, false)
+                openFile(activeTracks.viewing[0].file, true, 0)
             }
         }
         // Update directory for session restore
-        window.Main.RemoveDir(directories[idx])
-        setDirectories(directories.filter((dir) => dir !== directories[idx]))
+        window.Main.RemoveDir(allPlaylists[idx])
+        setAllPlaylists(allPlaylists.filter((dir) => dir !== allPlaylists[idx]))
     }
 
     // Open a directory via dialog window
@@ -462,8 +512,8 @@ function App() {
 
     // Save current track cover art if it exists
     const downloadCover = (b64data: any) => {
-        if (b64data !== undefined && currSong) {
-            window.Main.SaveCover(b64data.toString('base64'), currSong.name)
+        if (b64data !== undefined && currentSong) {
+            window.Main.SaveCover(b64data.toString('base64'), currentSong.name)
         }
     }
 
@@ -476,21 +526,21 @@ function App() {
     useEffect(() => {
         if (
             !sessionRestored &&
-            swapTracks[0][lastIndex] &&
+            activeTracks.viewing[lastIndex] &&
             lastFile !== '' &&
             lastIndex !== -1
         ) {
             setSessionRestored(true)
             openFile(lastFile, true, lastIndex)
         }
-    }, [sessionRestored, swapTracks, lastFile, lastIndex])
+    }, [sessionRestored, activeTracks, lastFile, lastIndex])
 
     // Add a new directory after add-dir-tm receiver fires
     useEffect(() => {
-        !directories.includes(swapDirs[0]) &&
-            swapDirs[0] &&
-            setDirectories([...directories, swapDirs[0]])
-    }, [swapDirs])
+        !allPlaylists.includes(activePlaylists.viewing) &&
+            activePlaylists.viewing &&
+            setAllPlaylists([...allPlaylists, activePlaylists.viewing])
+    }, [activePlaylists])
 
     // Audio update
     useEffect(() => {
@@ -501,16 +551,20 @@ function App() {
     // Open a file of a different directory
     // in case a directory that is both open and playing was closed
     useEffect(() => {
-        if (swapTracks[0][0] && closedBothSwapDirs) {
-            openFile(swapTracks[0][0].file, true, 0)
-            setClosedBothSwapDirs(false)
+        if (activeTracks.viewing[0] && closedBothPlaylists) {
+            openFile(activeTracks.viewing[0].file, true, 0)
+            setClosedBothPlaylists(false)
         }
-    }, [swapTracks])
+    }, [activeTracks])
 
     // Handle change of index in the playing directory
     useEffect(() => {
-        if (listRef.current && !resized && swapDirs[0] == swapDirs[1]) {
-            listRef.current.scrollToItem(swapIndeces[1], 'smart')
+        if (
+            listRef.current &&
+            !resized &&
+            activePlaylists.viewing == activePlaylists.playing
+        ) {
+            listRef.current.scrollToItem(playlistIndices.playing, 'smart')
         }
         if (audio.paused && play) {
             audio.play()
@@ -518,7 +572,7 @@ function App() {
             audio.pause()
             setPlay(false)
         }
-    }, [swapIndeces])
+    }, [playlistIndices])
 
     // Normal way of using react with listeners
     useEffect(() => {
@@ -578,7 +632,7 @@ function App() {
                 past_dirs: string[],
                 last_index: number
             ) => {
-                past_dirs && setDirectories(past_dirs)
+                past_dirs && setAllPlaylists(past_dirs)
                 last_open_dir && openCertainDir(last_open_dir, true)
                 last_file && setLastFile(last_file)
                 last_index && setLastIndex(last_index)
@@ -603,22 +657,29 @@ function App() {
         window.Main.receive(
             'add-dir-fm',
             (newDirectory: string, filesData: any[], filesPaths: string[]) => {
-                setSwapDirs((swapDirs) => [newDirectory, swapDirs[1]])
+                setActivePlaylists((activePlaylists) => ({
+                    viewing: newDirectory,
+                    playing: activePlaylists.playing,
+                }))
 
                 let newSongs = unpackFilesData(filesData, filesPaths)
 
-                setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+                console.log('add-dir-fm', newSongs, activeTracks)
+
+                setActiveTracks((activeTracks) => ({
+                    viewing: newSongs,
+                    playing: activeTracks.playing,
+                }))
             }
         )
 
         window.Main.receive(
             'add-playlist-fm',
             (newDirectory: string, filesData: any[], filesPaths: string[]) => {
-                setSwapDirs((swapDirs) => [newDirectory, swapDirs[1]])
-
-                let newSongs = unpackFilesData(filesData, filesPaths)
-
-                setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+                setActivePlaylists((activePlaylists) => ({
+                    viewing: newDirectory,
+                    playing: activePlaylists.playing,
+                }))
             }
         )
 
@@ -634,16 +695,30 @@ function App() {
                 filesPaths: string[],
                 setIndexToZero: boolean
             ) => {
-                setSwapDirs((swapDirs) => [newDirectory, swapDirs[1]])
+                setActivePlaylists((activePlaylists) => ({
+                    viewing: newDirectory,
+                    playing: activePlaylists.playing,
+                }))
 
                 let newSongs = unpackFilesData(filesData, filesPaths)
 
-                setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+                console.log('open-dir-fm', newSongs, activeTracks)
+
+                setActiveTracks((activeTracks) => ({
+                    viewing: newSongs,
+                    playing: activeTracks.playing,
+                }))
 
                 if (setIndexToZero) {
-                    setSwapIndeces((swapIndeces) => [0, swapIndeces[1]])
+                    setPlaylistIndices((playlistIndices) => ({
+                        viewing: 0,
+                        playing: playlistIndices.playing,
+                    }))
                 } else {
-                    setSwapTracks((swapTracks) => [newSongs, swapTracks[1]])
+                    setActiveTracks((activeTracks) => ({
+                        viewing: newSongs,
+                        playing: activeTracks.playing,
+                    }))
                 }
             }
         )
@@ -660,20 +735,24 @@ function App() {
     // Update dynamic colors
     useEffect(() => {
         updateColors()
-    }, [currSong])
+    }, [currentSong])
 
     // Bad progressbar handling. TODO: use some standard progress bar
     useEffect(() => {
         if (progress === PROGRESS_BAR_PRECISION && !repeat) {
             if (shuffle) {
-                let rand_idx = Math.floor(Math.random() * swapTracks[1].length)
-                openFile(swapTracks[1][rand_idx].file, false, rand_idx)
+                let rand_idx = Math.floor(
+                    Math.random() * activeTracks.playing.length
+                )
+                openFile(activeTracks.playing[rand_idx].file, false, rand_idx)
             } else {
                 openFile(
-                    swapTracks[1][(swapIndeces[1] + 1) % swapTracks[1].length]
-                        .file,
+                    activeTracks.playing[
+                        (playlistIndices.playing + 1) %
+                            activeTracks.playing.length
+                    ].file,
                     false,
-                    (swapIndeces[1] + 1) % swapTracks[1].length
+                    (playlistIndices.playing + 1) % activeTracks.playing.length
                 )
             }
         }
@@ -713,7 +792,7 @@ function App() {
                 }`}
             >
                 <TrackArea
-                    currSong={currSong}
+                    currentSong={currentSong}
                     trackCoverRef={trackCoverRef}
                     settings={settings}
                     downloadCover={downloadCover}
@@ -733,8 +812,8 @@ function App() {
                     openSettings={openSettings}
                     repeat={repeat}
                     setRepeat={setRepeat}
-                    swapTracks={swapTracks}
-                    swapIndeces={swapIndeces}
+                    activeTracks={activeTracks}
+                    playlistIndices={playlistIndices}
                     shuffle={shuffle}
                     setShuffle={setShuffle}
                     openFile={openFile}
@@ -754,14 +833,14 @@ function App() {
             </div>
             <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">
                 <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
-                    {directories.map((dir: string, index: number) => {
+                    {allPlaylists.map((dir: string, index: number) => {
                         return (
                             <DirectoryBadge
                                 key={dir}
-                                swapDirs={swapDirs}
+                                activePlaylists={activePlaylists}
                                 dir={dir}
                                 openCertainDir={openCertainDir}
-                                directories={directories}
+                                allPlaylists={allPlaylists}
                                 index={index}
                                 removeDir={removeDir}
                             />
@@ -776,7 +855,7 @@ function App() {
                                 'h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background ',
                                 {
                                     'animate-pulse transition-opacity duration-100':
-                                        directories.length == 0,
+                                        allPlaylists.length == 0,
                                 }
                             )}
                             size="icon"
@@ -790,7 +869,7 @@ function App() {
                                 'w-full cursor-pointer no-drag bg-background text-foreground hover:text-background ',
                                 {
                                     'animate-pulse transition-opacity duration-100':
-                                        directories.length == 0,
+                                        allPlaylists.length == 0,
                                 }
                             )}
                             size="sm"
@@ -807,7 +886,7 @@ function App() {
                                 'w-full cursor-pointer no-drag bg-background text-foreground hover:text-background ',
                                 {
                                     'animate-pulse transition-opacity duration-100':
-                                        directories.length == 0,
+                                        allPlaylists.length == 0,
                                 }
                             )}
                             size="sm"
@@ -843,7 +922,7 @@ function App() {
                 </p>
             </div>
             <div className="overflow-y-hide flex-1 flex-grow">
-                {directories.length == 0 ? (
+                {allPlaylists.length == 0 ? (
                     <p className="text-foregound text-sm w-full text-center mt-2">
                         {'Loaded tracks will show up here'}
                     </p>
@@ -859,7 +938,7 @@ function App() {
                         modifiers={[restrictToVerticalAxis]}
                     >
                         <SortableContext
-                            items={swapTracks[0].map((track) => {
+                            items={activeTracks.viewing.map((track) => {
                                 return track.file
                             })}
                             strategy={verticalListSortingStrategy}
@@ -875,14 +954,16 @@ function App() {
                                     (settings.bottomBar ? 20 : 50)
                                 }
                                 itemCount={
-                                    swapTracks[0] ? swapTracks[0].length : 0
+                                    activeTracks.viewing
+                                        ? activeTracks.viewing.length
+                                        : 0
                                 }
                                 itemSize={30}
                                 itemData={{
-                                    trackList: swapTracks[0],
+                                    trackList: activeTracks.viewing,
                                     openFile: openFile,
-                                    swapDirs: swapDirs,
-                                    swapIndeces: swapIndeces,
+                                    activePlaylists: activePlaylists,
+                                    playlistIndices: playlistIndices,
                                 }}
                                 width={'100%'}
                             >
@@ -893,8 +974,8 @@ function App() {
                         {/* <DragOverlay>
                             {activeId ? (
                                 <SortableItem
-                                    data={swapTracks[0]}
-                                    index={swapTracks[0]
+                                    data={activeTracks.viewing}
+                                    index={activeTracks.viewing
                                         .map((track) => {
                                             return track.file
                                         })
@@ -911,9 +992,9 @@ function App() {
             {settings.bottomBar && (
                 <BottomBar
                     play={play}
-                    swapTracks={swapTracks}
-                    swapDirs={swapDirs}
-                    swapIndeces={swapIndeces}
+                    activeTracks={activeTracks}
+                    activePlaylists={activePlaylists}
+                    playlistIndices={playlistIndices}
                 />
             )}
         </div>

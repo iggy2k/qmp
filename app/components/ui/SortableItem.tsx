@@ -12,9 +12,9 @@ export function SortableItem(props: any) {
 
     let trackData = data.trackList[index]
 
-    let swapDirs = data.swapDirs
+    let activePlaylists = data.activePlaylists
 
-    let swapIndeces = data.swapIndeces
+    let playlistIndices = data.playlistIndices
 
     let openFile = data.openFile
 
@@ -44,8 +44,8 @@ export function SortableItem(props: any) {
                     'flex flex-row p-[1px] text-center rounded-md box-border hover:bg-accent transition-colors duration-100 text-foreground',
                     {
                         'bg-foreground text-background transition-colors duration-100 hover:bg-foreground':
-                            index == swapIndeces[1] &&
-                            swapDirs[0] == swapDirs[1],
+                            index == playlistIndices.playing &&
+                            activePlaylists.viewing == activePlaylists.playing,
                     }
                 )}
                 onClick={() => {

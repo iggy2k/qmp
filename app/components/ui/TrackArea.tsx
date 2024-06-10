@@ -5,7 +5,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { secondsToDhmsShort } from '../../src/helpers'
 
 export function TrackArea({
-    currSong,
+    currentSong,
     trackCoverRef,
     settings,
     downloadCover,
@@ -149,7 +149,7 @@ export function TrackArea({
         <div className="flex">
             <div className="no-drag p-2 pb-0">
                 <div className="flex-none w-[48px] h-[48px]">
-                    {currSong && currSong.cover ? (
+                    {currentSong && currentSong.cover ? (
                         <img
                             ref={trackCoverRef}
                             className="no-drag ml-[0.1rem] rounded-lg duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] transition-[
@@ -157,10 +157,10 @@ export function TrackArea({
                     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                     transition-duration: 150ms;] 
                     "
-                            src={currSong ? currSong.cover : ''}
+                            src={currentSong ? currentSong.cover : ''}
                             onClick={() => {
-                                currSong && settings.downloadCover
-                                    ? downloadCover(currSong.cover)
+                                currentSong && settings.downloadCover
+                                    ? downloadCover(currentSong.cover)
                                     : null
                             }}
                             alt=""
@@ -178,27 +178,27 @@ export function TrackArea({
             <div className="ml-1 mt-2 flex-1 text-foreground">
                 <div className="flex flex-row">
                     <div>
-                        {!currSong ||
-                            (currSong && !currSong.file && (
+                        {!currentSong ||
+                            (currentSong && !currentSong.file && (
                                 <p className="no-drag text-xs">
                                     Track name will be here
                                 </p>
                             ))}
                         <p className="no-drag text-xs">
-                            {currSong &&
-                                currSong.file &&
-                                currSong.file
+                            {currentSong &&
+                                currentSong.file &&
+                                currentSong.file
                                     .split('/')
                                     .reverse()[0]
                                     .replace(/\.[^/.]+$/, '')}
                         </p>
                         <div className="drag flex flex-row text-xs">
-                            {!currSong ||
-                                (currSong && !currSong.file && (
+                            {!currentSong ||
+                                (currentSong && !currentSong.file && (
                                     <p>Album name will be here</p>
                                 ))}
-                            {currSong && currSong.album && (
-                                <p>{currSong.album}</p>
+                            {currentSong && currentSong.album && (
+                                <p>{currentSong.album}</p>
                             )}
                         </div>
                     </div>
@@ -241,7 +241,8 @@ export function TrackArea({
                     <p className="text-xs mr-2 flex-1 text-right font-light pr-1">
                         {secondsToDhmsShort(audio.currentTime)}
                         &nbsp;/&nbsp;
-                        {currSong && secondsToDhmsShort(currSong.duration)}
+                        {currentSong &&
+                            secondsToDhmsShort(currentSong.duration)}
                     </p>
                 </div>
             </div>
