@@ -21,21 +21,21 @@ export function DirectoryBadge({
             onClick={() => {
                 activePlaylists.viewing !== dir && openCertainDir(dir, true)
             }}
-            className="no-drag"
+            className="no-drag cursor-pointer"
         >
             <Badge
-                className={
-                    cn()
-                    // '',
-                    // {
-                    //     'bg-foreground text-background': activePlaylists.viewing == dir,
-                    // },
-                    // {
-                    //     'bg-muted-foreground text-background':
-                    //         activePlaylists.playing == dir,
-                    // }
-                }
-                variant={'secondary'}
+                className={cn(
+                    '',
+                    {
+                        'bg-muted-foreground text-background':
+                            activePlaylists.playing == dir,
+                    },
+                    {
+                        'bg-primary text-background':
+                            activePlaylists.viewing == dir,
+                    }
+                )}
+                variant={'outline'}
             >
                 {edit ? (
                     <Input

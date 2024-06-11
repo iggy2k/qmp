@@ -300,19 +300,33 @@ function createWindow() {
         let dir = args[0]
         let changeIndex = args[1]
 
-        let file_list = rreaddirSync(dir, [])
-        file_list = file_list.filter(checkExension)
+        // let file_list = rreaddirSync(dir, [])
+        // file_list = file_list.filter(checkExension)
 
-        if (file_list.length < 1) {
+        let playlists = store.get('playlists') as Object[]
+
+        if (!playlists) {
             return
         }
 
-        openFiles(file_list).then((files_data_array) => {
+        let playlist = playlists.filter((e: any) => e.name === dir)[0] as any
+
+        if (!playlist) {
+            return
+        }
+
+        let tracks = playlist.tracks as string[]
+
+        if (!tracks) {
+            return
+        }
+
+        openFiles(tracks).then((files_data_array) => {
             window.webContents.send(
                 'open-dir-fm',
                 dir,
                 files_data_array,
-                file_list,
+                tracks,
                 changeIndex
             )
         })
@@ -383,10 +397,12 @@ function createWindow() {
                 let playlists = store.get('playlists') as Object[]
 
                 if (playlists) {
-                    store.set(
-                        'playlists',
-                        playlists.concat([{ name: dir, tracks: file_list }])
-                    )
+                    if (!playlists.map((e: any) => e.name).includes(dir)) {
+                        store.set(
+                            'playlists',
+                            playlists.concat([{ name: dir, tracks: file_list }])
+                        )
+                    }
                 } else {
                     store.set('playlists', [{ name: dir, tracks: file_list }])
                 }
@@ -402,10 +418,12 @@ function createWindow() {
         let playlist = playlists.length.toString()
 
         if (playlists) {
-            store.set(
-                'playlists',
-                playlists.concat([{ name: playlist, tracks: [] }])
-            )
+            if (!playlists.map((e: any) => e.name).includes(playlist)) {
+                store.set(
+                    'playlists',
+                    playlists.concat([{ name: playlist, tracks: [] }])
+                )
+            }
         } else {
             store.set('playlists', [{ name: playlist, tracks: [] }])
         }

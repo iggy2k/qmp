@@ -56,7 +56,7 @@ export function Equalizer({
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <MixerVerticalIcon className="no-drag h-[24px] m-0.5" />
+                <MixerVerticalIcon className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300" />
             </PopoverTrigger>
             <PopoverContent className="w-[400px] h-[210px] ml-8 bg-background">
                 <p className="text-xs text-foreground">Equalizer</p>
