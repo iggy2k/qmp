@@ -430,10 +430,50 @@ function createWindow() {
         window.webContents.send('add-playlist-fm', playlist, [], [])
     })
 
-    ipcMain.on('ondragstart', (event, arg) => {
-        console.log('Dropped File(s):', arg)
-        event.returnValue = `Received ${arg.length} paths.`
-    })
+    ipcMain.on(
+        'ondragstart',
+        (
+            event,
+            args: {
+                playlist: string
+                paths: string[]
+            }
+        ) => {
+            console.log('Dropped File(s):', args.paths)
+
+            let paths_filtered = args.paths.filter((e) =>
+                HTML5_AUDIO.includes(e.split('.').pop()!)
+            )
+
+            if (paths_filtered.length === 0) {
+                return
+            }
+
+            event.returnValue = `Received ${paths_filtered} paths.`
+
+            let playlists = store.get('playlists') as any[]
+
+            let this_playlist_idx = playlists.findIndex((e: any) => {
+                return e.name === args.playlist
+            })
+
+            if (!this_playlist_idx) {
+                return
+            }
+
+            let this_playlist = playlists[this_playlist_idx]
+
+            console.log(this_playlist)
+
+            this_playlist.tracks = this_playlist.tracks.concat(paths_filtered)
+
+            playlists[this_playlist_idx] = this_playlist
+
+            store.set('playlists', playlists)
+
+            window.webContents.send('ondragend', args.playlist)
+        }
+    )
 
     ipcMain.on('open-settings-tm', (_) => {
         DEBUG && console.log('opening settings at ' + url + '/settings')
@@ -466,8 +506,8 @@ function createWindow() {
     ipcMain.on('restore-session-tm', (_) => {
         let last_open_dir = store.get('last_open_dir')
         let last_file = store.get('last_file')
-        let last_index = store.get('last_index')
-        if (!last_open_dir || !last_file || !last_index) {
+        let last_index = store.get('last_index') || 0
+        if (!last_open_dir || !last_file) {
             return
         }
         let past_dirs = store.get('all_dirs') as string[]

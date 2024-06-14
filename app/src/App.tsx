@@ -632,6 +632,13 @@ function App() {
                 past_dirs: string[],
                 last_index: number
             ) => {
+                console.log(
+                    'restore-session-fm',
+                    last_open_dir,
+                    last_file,
+                    past_dirs,
+                    last_index
+                )
                 past_dirs && setAllPlaylists(past_dirs)
                 last_open_dir && openCertainDir(last_open_dir, true)
                 last_file && setLastFile(last_file)
@@ -640,6 +647,10 @@ function App() {
         )
         window.Main.receive('get-height-from-main', (height: number) => {
             setElectronWindowHeight(height)
+        })
+
+        window.Main.receive('ondragend', (dir: string) => {
+            openCertainDir(dir, false)
         })
 
         window.Main.receive(
@@ -679,6 +690,10 @@ function App() {
                 setActivePlaylists((activePlaylists) => ({
                     viewing: newDirectory,
                     playing: activePlaylists.playing,
+                }))
+                setActiveTracks((activeTracks) => ({
+                    viewing: [],
+                    playing: activeTracks.playing,
                 }))
             }
         )
@@ -909,7 +924,10 @@ function App() {
                         paths.push(f.path)
                     }
                     console.log(paths)
-                    window.Main.send('ondragstart', paths)
+                    window.Main.send('ondragstart', {
+                        playlist: activePlaylists.viewing,
+                        paths: paths,
+                    })
                 }}
                 onDragOver={(e) => {
                     e.preventDefault()

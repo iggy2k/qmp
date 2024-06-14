@@ -43,6 +43,7 @@ const validChannels = [
     'add-playlist-tm',
     'add-playlist-fm',
     'ondragstart',
+    'ondragend',
 ]
 
 const api = {
