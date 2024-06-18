@@ -431,7 +431,38 @@ function createWindow() {
     })
 
     ipcMain.on(
-        'ondragstart',
+        'remove-track-from-playlist-tm',
+        (_, args: { track_file: string; playlist: string }) => {
+            let playlists = store.get('playlists') as any[]
+
+            let this_playlist_idx = playlists.findIndex((e: any) => {
+                return e.name === args.playlist
+            })
+
+            if (!this_playlist_idx) {
+                return
+            }
+
+            let this_playlist = playlists[this_playlist_idx]
+
+            console.log(this_playlist)
+
+            this_playlist.tracks = this_playlist.tracks.filter(
+                (e: string) => e !== args.track_file
+            )
+
+            playlists[this_playlist_idx] = this_playlist
+
+            store.set('playlists', playlists)
+
+            console.log(this_playlist)
+
+            window.webContents.send('add-tracks-to-playlist-fm', args.playlist)
+        }
+    )
+
+    ipcMain.on(
+        'add-tracks-to-playlist-tm',
         (
             event,
             args: {
@@ -463,15 +494,15 @@ function createWindow() {
 
             let this_playlist = playlists[this_playlist_idx]
 
-            console.log(this_playlist)
-
             this_playlist.tracks = this_playlist.tracks.concat(paths_filtered)
 
             playlists[this_playlist_idx] = this_playlist
 
             store.set('playlists', playlists)
 
-            window.webContents.send('ondragend', args.playlist)
+            console.log(this_playlist)
+
+            window.webContents.send('add-tracks-to-playlist-fm', args.playlist)
         }
     )
 

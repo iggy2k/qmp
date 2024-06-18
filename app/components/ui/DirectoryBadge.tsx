@@ -25,7 +25,7 @@ export function DirectoryBadge({
         >
             <Badge
                 className={cn(
-                    '',
+                    'hover:bg-primary hover:text-primary-foreground transition-colors duration-200',
                     {
                         'bg-muted-foreground text-background':
                             activePlaylists.playing == dir,

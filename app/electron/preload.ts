@@ -42,8 +42,10 @@ const validChannels = [
     'reorder-playlist',
     'add-playlist-tm',
     'add-playlist-fm',
-    'ondragstart',
-    'ondragend',
+    'add-tracks-to-playlist-tm',
+    'add-tracks-to-playlist-fm',
+    'remove-track-from-playlist-tm',
+    'remove-track-from-playlist-fm',
 ]
 
 const api = {

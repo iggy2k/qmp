@@ -649,7 +649,7 @@ function App() {
             setElectronWindowHeight(height)
         })
 
-        window.Main.receive('ondragend', (dir: string) => {
+        window.Main.receive('add-tracks-to-playlist-fm', (dir: string) => {
             openCertainDir(dir, false)
         })
 
@@ -710,29 +710,33 @@ function App() {
                 filesPaths: string[],
                 setIndexToZero: boolean
             ) => {
-                setActivePlaylists((activePlaylists) => ({
-                    viewing: newDirectory,
-                    playing: activePlaylists.playing,
-                }))
-
                 let newSongs = unpackFilesData(filesData, filesPaths)
+                // Nested set state is bad but I don't feel like
+                // adding another useeffect for this action
+                setActivePlaylists((activePlaylists) => {
+                    if (newDirectory === activePlaylists.viewing) {
+                        // Refresh playing directory
+                        setActiveTracks((_) => ({
+                            viewing: newSongs,
+                            playing: newSongs,
+                        }))
+                    } else {
+                        setActiveTracks((activeTracks) => ({
+                            viewing: newSongs,
+                            playing: activeTracks.playing,
+                        }))
+                    }
 
-                console.log('open-dir-fm', newSongs, activeTracks)
-
-                setActiveTracks((activeTracks) => ({
-                    viewing: newSongs,
-                    playing: activeTracks.playing,
-                }))
+                    return {
+                        viewing: newDirectory,
+                        playing: activePlaylists.playing,
+                    }
+                })
 
                 if (setIndexToZero) {
                     setPlaylistIndices((playlistIndices) => ({
                         viewing: 0,
                         playing: playlistIndices.playing,
-                    }))
-                } else {
-                    setActiveTracks((activeTracks) => ({
-                        viewing: newSongs,
-                        playing: activeTracks.playing,
                     }))
                 }
             }
@@ -846,7 +850,7 @@ function App() {
                     preampGain={preampGain}
                 />
             </div>
-            <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background">
+            <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background border-t-2 border-b-2 border-border">
                 <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
                     {allPlaylists.map((dir: string, index: number) => {
                         return (
@@ -924,7 +928,7 @@ function App() {
                         paths.push(f.path)
                     }
                     console.log(paths)
-                    window.Main.send('ondragstart', {
+                    window.Main.send('add-tracks-to-playlist-tm', {
                         playlist: activePlaylists.viewing,
                         paths: paths,
                     })
@@ -933,16 +937,15 @@ function App() {
                     e.preventDefault()
                     e.stopPropagation()
                 }}
-                className="border-[1px] drag border-foreground m-1 p-1 text-center rounded-md"
+                className="overflow-y-hide flex-1 flex-grow"
             >
-                <p className="text-sm">
-                    Drag songs here to add to this playlist
-                </p>
-            </div>
-            <div className="overflow-y-hide flex-1 flex-grow">
                 {allPlaylists.length == 0 ? (
                     <p className="text-foregound text-sm w-full text-center mt-2">
                         {'Loaded tracks will show up here'}
+                    </p>
+                ) : activeTracks.viewing.length == 0 ? (
+                    <p className="text-foregound text-sm w-full text-center mt-2">
+                        {'Drag and drop audio files here'}
                     </p>
                 ) : (
                     <DndContext
@@ -988,21 +991,6 @@ function App() {
                                 {SortableItem}
                             </FixedSizeList>
                         </SortableContext>
-                        {/* Optional: Extra drag overlay */}
-                        {/* <DragOverlay>
-                            {activeId ? (
-                                <SortableItem
-                                    data={activeTracks.viewing}
-                                    index={activeTracks.viewing
-                                        .map((track) => {
-                                            return track.file
-                                        })
-                                        .indexOf(activeId)}
-                                >
-                                    DRAG
-                                </SortableItem>
-                            ) : null}
-                        </DragOverlay> */}
                     </DndContext>
                 )}
             </div>
