@@ -3,9 +3,9 @@ import React, { useEffect, useState, useRef } from 'react'
 
 import { CursorTextIcon, Cross1Icon } from '@radix-ui/react-icons'
 
-import { Input } from './input'
+import { Input } from '../primitives/input'
 
-import { Badge } from './badge'
+import { Badge } from '../primitives/badge'
 
 export function DirectoryBadge({
     activePlaylists,
@@ -25,7 +25,7 @@ export function DirectoryBadge({
         >
             <Badge
                 className={cn(
-                    'hover:bg-primary hover:text-primary-foreground transition-colors duration-200',
+                    'transition-colors duration-200 hover:bg-primary hover:text-primary-foreground',
                     {
                         'bg-muted-foreground text-background':
                             activePlaylists.playing == dir,
@@ -53,11 +53,11 @@ export function DirectoryBadge({
                 )}
                 <div className="">
                     <Cross1Icon
-                        className="pl-1 inline-block opacity-30 hover:opacity-100 transition-opacity"
+                        className="inline-block pl-1 opacity-30 transition-opacity hover:opacity-100"
                         onClick={(e) => removeDir(e, index)}
                     />
                     <CursorTextIcon
-                        className="pl-1 inline-block opacity-30 hover:opacity-100 transition-opacity"
+                        className="inline-block pl-1 opacity-30 transition-opacity hover:opacity-100"
                         onClick={() => {
                             setEdit(!edit)
                         }}

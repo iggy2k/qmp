@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Slider } from './slider'
-import { Popover, PopoverContent, PopoverTrigger } from './popover'
-import { Button } from './button'
-import { Label } from './label'
-import { Switch } from './switch'
+import { Slider } from '../primitives/slider'
+import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
+import { Button } from '../primitives/button'
+import { Label } from '../primitives/label'
+import { Switch } from '../primitives/switch'
 import { MixerVerticalIcon } from '@radix-ui/react-icons'
 import { cn } from '../../lib/utils'
 
@@ -56,19 +56,19 @@ export function Equalizer({
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <MixerVerticalIcon className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300" />
+                <MixerVerticalIcon className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground" />
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] h-[210px] ml-8 bg-background">
+            <PopoverContent className="ml-8 h-[210px] w-[400px] bg-background">
                 <p className="text-xs text-foreground">Equalizer</p>
-                <div className="flex flex-row justify-evenly mt-1">
+                <div className="mt-1 flex flex-row justify-evenly">
                     <div
                         key={'filter-gain'}
-                        className="flex flex-col items-center w-4"
+                        className="flex w-4 flex-col items-center"
                     >
                         <p className="text-nano">{preampGain.toString()}</p>
                         <Slider
                             value={[preampGain]}
-                            className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
+                            className="no-drag h-[100px] w-[8px] flex-col bg-inherit"
                             min={0}
                             max={1}
                             step={0.1}
@@ -90,7 +90,7 @@ export function Equalizer({
                             return (
                                 <div
                                     key={'filter ' + idx}
-                                    className="flex flex-col items-center w-4"
+                                    className="flex w-4 flex-col items-center"
                                 >
                                     <p className="text-nano">
                                         {filterGains[idx]}
@@ -98,7 +98,7 @@ export function Equalizer({
                                     <Slider
                                         key={idx}
                                         value={[filterGains[idx]]}
-                                        className="no-drag bg-inherit flex-col h-[100px] w-[8px]"
+                                        className="no-drag h-[100px] w-[8px] flex-col bg-inherit"
                                         min={-12}
                                         max={12}
                                         step={1}
@@ -116,11 +116,11 @@ export function Equalizer({
                             )
                         })}
                 </div>
-                <div className="flex flex-row mt-1">
+                <div className="mt-1 flex flex-row">
                     <div>
                         <Button
                             className={cn(
-                                'h-4 w-16 ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background text-xs'
+                                'no-drag ml-auto h-4 w-16 cursor-pointer bg-background text-xs text-foreground hover:text-background'
                             )}
                             size="icon"
                             onClick={() => {
@@ -134,7 +134,7 @@ export function Equalizer({
                             Reset
                         </Button>
                     </div>
-                    <div className="flex items-center mr-0 ml-auto">
+                    <div className="ml-auto mr-0 flex items-center">
                         <Switch
                             id="snap-band"
                             onClick={() => {
@@ -142,7 +142,7 @@ export function Equalizer({
                             }}
                             checked={snapBand}
                         />
-                        <Label className="text-xs ml-1">Snap Band</Label>
+                        <Label className="ml-1 text-xs">Snap Band</Label>
                     </div>
                 </div>
             </PopoverContent>

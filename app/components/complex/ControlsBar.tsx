@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Slider } from './slider'
+import { Slider } from '../primitives/slider'
 import {
     ShuffleIcon,
     TrackNextIcon,
@@ -46,24 +46,24 @@ export function ControlsBar({
     preampGain,
 }: any) {
     return (
-        <div className="flex flex-row justify-between mt-1 mx-1 pr-2 text-ring">
+        <div className="mx-1 mt-1 flex flex-row justify-between pr-2 text-ring">
             <div className="flex">
-                <div className="h-[24px] cursor-pointer m-0.5">
+                <div className="m-0.5 h-[24px] cursor-pointer">
                     <div className="">
                         <TriangleDownIcon
-                            className={`no-drag origin-center transition-colors hover:text-muted-foreground duration-300 ${
+                            className={`no-drag origin-center transition-colors duration-300 hover:text-muted-foreground ${
                                 resized
-                                    ? 'h-[24px] cursor-pointer w-[24px] rotate-0 '
-                                    : 'rotate-[-180deg] h-0'
+                                    ? 'h-[24px] w-[24px] rotate-0 cursor-pointer '
+                                    : 'h-0 rotate-[-180deg]'
                             } `}
                             onClick={collapse}
                         />
 
                         <TriangleUpIcon
-                            className={`no-drag origin-center transition-colors hover:text-muted-foreground duration-300 ${
+                            className={`no-drag origin-center transition-colors duration-300 hover:text-muted-foreground ${
                                 !resized
-                                    ? 'h-[24px] cursor-pointer w-[24px] rotate-0 '
-                                    : 'rotate-180 h-0 '
+                                    ? 'h-[24px] w-[24px] rotate-0 cursor-pointer '
+                                    : 'h-0 rotate-180 '
                             } `}
                             onClick={collapse}
                         />
@@ -81,17 +81,17 @@ export function ControlsBar({
 
                 {onTop ? (
                     <DrawingPinFilledIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                         onClick={alwaysOnTop}
                     />
                 ) : (
                     <DrawingPinIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                         onClick={alwaysOnTop}
                     />
                 )}
                 <GearIcon
-                    className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                    className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
                         openSettings()
                     }}
@@ -100,21 +100,21 @@ export function ControlsBar({
             <div className="flex">
                 {repeat ? (
                     <LoopIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                         onMouseDown={() => {
                             setRepeat(!repeat)
                         }}
                     />
                 ) : (
                     <LoopIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 text-ring/60 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer text-ring/60 transition-colors duration-300 hover:text-muted-foreground"
                         onMouseDown={() => {
                             setRepeat(!repeat)
                         }}
                     />
                 )}
                 <TrackPreviousIcon
-                    className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                    className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
                         let rand_idx = Math.floor(
                             Math.random() * activeTracks.playing.length
@@ -140,17 +140,17 @@ export function ControlsBar({
                 />
                 {play ? (
                     <PauseIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                         onClick={() => togglePlay()}
                     />
                 ) : (
                     <PlayIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                         onClick={() => togglePlay()}
                     />
                 )}
                 <TrackNextIcon
-                    className="no-drag h-[24px] cursor-pointer m-0.5 transition-colors hover:text-muted-foreground duration-300"
+                    className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
                         let rand_idx = Math.floor(
                             Math.random() * activeTracks.playing.length
@@ -180,12 +180,12 @@ export function ControlsBar({
                 />
                 {shuffle ? (
                     <ShuffleIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 text-ring transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer text-ring transition-colors duration-300 hover:text-muted-foreground"
                         onClick={() => setShuffle(false)}
                     />
                 ) : (
                     <ShuffleIcon
-                        className="no-drag h-[24px] cursor-pointer m-0.5 text-ring/60 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 h-[24px] cursor-pointer text-ring/60 transition-colors duration-300 hover:text-muted-foreground"
                         onClick={() => setShuffle(true)}
                     />
                 )}
@@ -196,27 +196,27 @@ export function ControlsBar({
                         onClick={() => {
                             setVolume(preMuteVolume)
                         }}
-                        className="no-drag h-[24px] cursor-pointer m-0.5 mr-1.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 mr-1.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     />
                 ) : volume < 0.5 ? (
                     <SpeakerModerateIcon
                         onClick={() => {
                             mute()
                         }}
-                        className="no-drag h-[24px] cursor-pointer m-0.5 mr-1.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 mr-1.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     />
                 ) : (
                     <SpeakerLoudIcon
                         onClick={() => {
                             mute()
                         }}
-                        className="no-drag h-[24px] cursor-pointer m-0.5 mr-1.5 transition-colors hover:text-muted-foreground duration-300"
+                        className="no-drag m-0.5 mr-1.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     />
                 )}
                 <Slider
                     defaultValue={[0.1]}
                     value={[volume]}
-                    className="no-drag bg-inherit w-[100px]"
+                    className="no-drag w-[100px] bg-inherit"
                     min={0}
                     max={1.0}
                     step={0.01}

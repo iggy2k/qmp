@@ -75,5 +75,5 @@ module.exports = {
             },
         },
     },
-    plugins: ['prettier-plugin-tailwindcss', 'tailwindcss-animate'],
+    plugins: ['tailwindcss-animate', 'prettier-plugin-tailwindcss'],
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { prominent } from 'color.js'
 import { PlusIcon, UploadIcon, CardStackPlusIcon } from '@radix-ui/react-icons'
 
-import { Button } from '../components/ui/button'
+import { Button } from '../components/primitives/button'
 
 import { cn } from '../lib/utils'
 
@@ -25,13 +25,13 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 
-import { SortableItem } from '../components/ui/SortableItem'
-import { BottomBar } from '../components/ui/BottomBar'
-import { ControlsBar } from '../components/ui/ControlsBar'
-import { DirectoryBadge } from '../components/ui/DirectoryBadge'
+import { SortableItem } from '../components/complex/SortableItem'
+import { BottomBar } from '../components/complex/BottomBar'
+import { ControlsBar } from '../components/complex/ControlsBar'
+import { DirectoryBadge } from '../components/complex/DirectoryBadge'
 import { FixedSizeList } from 'react-window'
-import { CloseOrCollapse } from '../components/ui/CloseOrCollapse'
-import { TrackArea } from '../components/ui/TrackArea'
+import { CloseOrCollapse } from '../components/complex/CloseOrCollapse'
+import { TrackArea } from '../components/complex/TrackArea'
 
 import {
     DropdownMenu,
@@ -40,7 +40,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu'
+} from '../components/primitives/dropdown-menu'
 
 const PROGRESS_BAR_PRECISION = 1000
 
@@ -792,7 +792,7 @@ function App() {
     }, [preampGain])
 
     return (
-        <div className=" h-[100vh] flex flex-col overflow-y-hidden bg-background">
+        <div className=" flex h-[100vh] flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
@@ -806,7 +806,7 @@ function App() {
                           }
                         : {}
                 }
-                className={`h-[85px] animate-bg-spin drag ${
+                className={`animate-bg-spin drag h-[85px] ${
                     play && settings.movingColors
                 }`}
             >
@@ -850,8 +850,8 @@ function App() {
                     preampGain={preampGain}
                 />
             </div>
-            <div className="h-[35px] flex-none place-items-center px-1 drag flex flex-row bg-background border-t-2 border-b-2 border-border">
-                <div className="flex flex-row overflow-x-scroll space-x-1 whitespace-nowrap directory-list mb-1 ">
+            <div className="drag flex h-[35px] flex-none flex-row place-items-center border-b-2 border-t-2 border-border bg-background px-1">
+                <div className="directory-list mb-1 flex flex-row space-x-1 overflow-x-scroll whitespace-nowrap ">
                     {allPlaylists.map((dir: string, index: number) => {
                         return (
                             <DirectoryBadge
@@ -871,7 +871,7 @@ function App() {
                     <DropdownMenuTrigger asChild>
                         <Button
                             className={cn(
-                                'h-[24px] w-[24px] ml-auto cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                                'no-drag ml-auto h-[24px] w-[24px] cursor-pointer bg-background text-foreground hover:text-background ',
                                 {
                                     'animate-pulse transition-opacity duration-100':
                                         allPlaylists.length == 0,
@@ -885,7 +885,7 @@ function App() {
                     <DropdownMenuContent className="w-40" side="left">
                         <Button
                             className={cn(
-                                'w-full cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                                'no-drag w-full cursor-pointer bg-background text-foreground hover:text-background ',
                                 {
                                     'animate-pulse transition-opacity duration-100':
                                         allPlaylists.length == 0,
@@ -902,7 +902,7 @@ function App() {
                         <DropdownMenuSeparator />
                         <Button
                             className={cn(
-                                'w-full cursor-pointer no-drag bg-background text-foreground hover:text-background ',
+                                'no-drag w-full cursor-pointer bg-background text-foreground hover:text-background ',
                                 {
                                     'animate-pulse transition-opacity duration-100':
                                         allPlaylists.length == 0,
@@ -940,11 +940,11 @@ function App() {
                 className="overflow-y-hide flex-1 flex-grow"
             >
                 {allPlaylists.length == 0 ? (
-                    <p className="text-foregound text-sm w-full text-center mt-2">
+                    <p className="text-foregound mt-2 w-full text-center text-sm">
                         {'Loaded tracks will show up here'}
                     </p>
                 ) : activeTracks.viewing.length == 0 ? (
-                    <p className="text-foregound text-sm w-full text-center mt-2">
+                    <p className="text-foregound mt-2 w-full text-center text-sm">
                         {'Drag and drop audio files here'}
                     </p>
                 ) : (

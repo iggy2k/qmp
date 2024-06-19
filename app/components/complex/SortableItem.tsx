@@ -12,7 +12,7 @@ import {
     ContextMenuContent,
     ContextMenuItem,
     ContextMenuTrigger,
-} from './context-menu'
+} from '../primitives/context-menu'
 
 export function SortableItem(props: any) {
     const { index, style: styleProp, data, isScrolling, ...rest } = props
@@ -44,14 +44,14 @@ export function SortableItem(props: any) {
                     {...attributes}
                     {...listeners}
                     className={cn(
-                        ' overflow-auto h-7 px-2',
+                        ' h-7 overflow-auto px-2',
                         { 'pt-1': index == 0 },
                         { 'pb-1': index == data.trackList.length - 1 }
                     )}
                 >
                     <div
                         className={cn(
-                            'flex flex-row p-[1px] text-center rounded-md box-border hover:bg-accent transition-colors duration-100 text-foreground',
+                            'box-border flex flex-row rounded-md p-[1px] text-center text-foreground transition-colors duration-100 hover:bg-accent',
                             {
                                 'bg-foreground text-background transition-colors duration-100 hover:bg-foreground':
                                     index == playlistIndices.playing &&
@@ -65,15 +65,15 @@ export function SortableItem(props: any) {
                     >
                         {trackData && trackData.cover ? (
                             <img
-                                className="w-[24px] h-[24px] rounded-lg flex-none"
+                                className="h-[24px] w-[24px] flex-none rounded-lg"
                                 src={trackData.cover}
                                 alt=""
                             />
                         ) : (
-                            <ImageIcon className="drag min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]" />
+                            <ImageIcon className="drag max-h-[24px] min-h-[24px] min-w-[24px] max-w-[24px]" />
                         )}
 
-                        <div className="text-sm place-items-center ml-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                        <div className="ml-2 place-items-center overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                             {trackData && trackData.name ? (
                                 <div className="flex flex-row pt-[0.1rem]">
                                     <p>
@@ -100,13 +100,13 @@ export function SortableItem(props: any) {
                             )}
                         </div>
 
-                        <div className="flex place-items-center ml-auto">
+                        <div className="ml-auto flex place-items-center">
                             <div
                                 style={{
                                     fontSize: '0.65rem',
                                     lineHeight: '1.1rem',
                                 }}
-                                className="p-[0.1rem] grid grid-flow-col text-xs font-mono rounded-md"
+                                className="grid grid-flow-col rounded-md p-[0.1rem] font-mono text-xs"
                             >
                                 <div
                                     className="rounded-md px-1 font-mono

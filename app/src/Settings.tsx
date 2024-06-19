@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 import { invertColor, randomHexColor } from './helpers'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { Switch } from '../components/ui/switch'
-import { Label } from '../components/ui/label'
-import { Button } from '../components/ui/button'
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from '../components/primitives/tabs'
+import { Switch } from '../components/primitives/switch'
+import { Label } from '../components/primitives/label'
+import { Button } from '../components/primitives/button'
 
 import { ExclamationTriangleIcon, ReloadIcon } from '@radix-ui/react-icons'
 import {
@@ -12,7 +17,7 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from '../components/ui/tooltip'
+} from '../components/primitives/tooltip'
 
 import {
     Select,
@@ -20,7 +25,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '../components/ui/select'
+} from '../components/primitives/select'
 
 function Settings() {
     const [mediaDevices, setMediaDevices] = useState<Object>({})
@@ -168,7 +173,7 @@ function Settings() {
     }, [mediaDevices])
 
     return (
-        <div className=" h-[100vh] overflow-hidden drag w-full">
+        <div className=" drag h-[100vh] w-full overflow-hidden">
             <Tabs defaultValue="Features" className="w-full ">
                 <TabsList className="w-full rounded-none">
                     <TabsTrigger className="w-1/3" value="Features">
@@ -182,8 +187,8 @@ function Settings() {
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="Features">
-                    <div className="grid grid-flow-col auto-cols-2 transition-opacity m-1 pb-9 p-1">
-                        <div className="no-drag flex flex-col p-2 space-y-1">
+                    <div className="auto-cols-2 m-1 grid grid-flow-col p-1 pb-9 transition-opacity">
+                        <div className="no-drag flex flex-col space-y-1 p-2">
                             <div className="flex items-center space-x-2">
                                 <Switch
                                     id="ause-cover"
@@ -256,7 +261,7 @@ function Settings() {
                                 <TooltipProvider>
                                     <Tooltip delayDuration={0}>
                                         <TooltipTrigger asChild>
-                                            <ExclamationTriangleIcon className="pt-[0.1rem] h-[24px]" />
+                                            <ExclamationTriangleIcon className="h-[24px] pt-[0.1rem]" />
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <p>
@@ -300,7 +305,7 @@ function Settings() {
                                 <TooltipProvider>
                                     <Tooltip delayDuration={0}>
                                         <TooltipTrigger asChild>
-                                            <ExclamationTriangleIcon className="pt-[0.1rem] h-[24px]" />
+                                            <ExclamationTriangleIcon className="h-[24px] pt-[0.1rem]" />
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <p>Requires restarting the app</p>
@@ -312,11 +317,11 @@ function Settings() {
                     </div>
                 </TabsContent>
                 <TabsContent value="Interface">
-                    <div className="rounded-md m-1 p-2 grid grid-flow-row grid-cols-2 place-items-left">
-                        <div className="no-drag mt-1 flex flex-row ml-5">
+                    <div className="place-items-left m-1 grid grid-flow-row grid-cols-2 rounded-md p-2">
+                        <div className="no-drag ml-5 mt-1 flex flex-row">
                             <div
                                 className={
-                                    `w-[35px] h-[20px]` +
+                                    `h-[20px] w-[35px]` +
                                     (selected == 'background'
                                         ? ` border-2`
                                         : '')
@@ -328,20 +333,20 @@ function Settings() {
                                 onClick={() => setSelected('background')}
                             ></div>
                             <div>
-                                <p className="ml-4 b-1  font-semi text-sm">
+                                <p className="b-1 font-semi  ml-4 text-sm">
                                     Background
                                 </p>
                             </div>
                         </div>
-                        <div className="no-drag mt-1 grid grid-flow-col auto-cols-max ml-auto mr-5">
+                        <div className="no-drag ml-auto mr-5 mt-1 grid auto-cols-max grid-flow-col">
                             <div className="">
-                                <p className="mr-4 b-1  font-semi text-sm">
+                                <p className="b-1 font-semi  mr-4 text-sm">
                                     Accent
                                 </p>
                             </div>
                             <div
                                 className={
-                                    `w-[35px] h-[20px]` +
+                                    `h-[20px] w-[35px]` +
                                     (selected == 'accent' ? ` border-2` : '')
                                 }
                                 style={{
@@ -351,10 +356,10 @@ function Settings() {
                                 onClick={() => setSelected('accent')}
                             ></div>
                         </div>
-                        <div className="no-drag mt-1 grid grid-flow-col auto-cols-max ml-5">
+                        <div className="no-drag ml-5 mt-1 grid auto-cols-max grid-flow-col">
                             <div
                                 className={
-                                    `w-[35px] h-[20px]` +
+                                    `h-[20px] w-[35px]` +
                                     (selected == 'text' ? ` border-2` : '')
                                 }
                                 style={{
@@ -363,21 +368,21 @@ function Settings() {
                                 }}
                                 onClick={() => setSelected('text')}
                             ></div>
-                            <div className="grid grid-flow-col auto-cols-2">
-                                <p className="ml-4 b-1  font-semi text-sm">
+                            <div className="auto-cols-2 grid grid-flow-col">
+                                <p className="b-1 font-semi  ml-4 text-sm">
                                     Text
                                 </p>
                             </div>
                         </div>
-                        <div className="no-drag mt-1 grid grid-flow-col auto-cols-max ml-auto mr-5">
-                            <div className="grid grid-flow-col auto-cols-2">
-                                <p className="mr-4 b-1  font-semi text-sm">
+                        <div className="no-drag ml-auto mr-5 mt-1 grid auto-cols-max grid-flow-col">
+                            <div className="auto-cols-2 grid grid-flow-col">
+                                <p className="b-1 font-semi  mr-4 text-sm">
                                     Alt text
                                 </p>
                             </div>
                             <div
                                 className={
-                                    `w-[35px] h-[20px]` +
+                                    `h-[20px] w-[35px]` +
                                     (selected == 'altText' ? ` border-2` : '')
                                 }
                                 style={{
@@ -389,8 +394,8 @@ function Settings() {
                         </div>
 
                         <div
-                            className="grid grid-flow-col grid-cols-2 my-4 ml-5
-max-h-[110px]"
+                            className="my-4 ml-5 grid max-h-[110px] grid-flow-col
+grid-cols-2"
                         >
                             <HexColorPicker
                                 className="no-drag max-h-[120px] max-w-[240px]"
@@ -398,28 +403,28 @@ max-h-[110px]"
                                     selected == 'background'
                                         ? background
                                         : selected == 'accent'
-                                        ? accent
-                                        : selected == 'text'
-                                        ? text
-                                        : selected == 'altText'
-                                        ? altText
-                                        : '#000000'
+                                          ? accent
+                                          : selected == 'text'
+                                            ? text
+                                            : selected == 'altText'
+                                              ? altText
+                                              : '#000000'
                                 }
                                 onChange={
                                     selected == 'background'
                                         ? setBackground
                                         : selected == 'accent'
-                                        ? setAccent
-                                        : selected == 'text'
-                                        ? setText
-                                        : selected == 'altText'
-                                        ? setAltText
-                                        : () => null
+                                          ? setAccent
+                                          : selected == 'text'
+                                            ? setText
+                                            : selected == 'altText'
+                                              ? setAltText
+                                              : () => null
                                 }
                             />
                         </div>
 
-                        <div className="flex flex-col justify-center space-y-4 w-[50%] mr-auto ml-10 pt-1">
+                        <div className="ml-10 mr-auto flex w-[50%] flex-col justify-center space-y-4 pt-1">
                             <Button
                                 onClick={() => {
                                     setRandomColors()
@@ -498,7 +503,7 @@ max-h-[110px]"
                                         )
                                     }}
                                 >
-                                    <ReloadIcon className="pb-[0.1rem] h-[20px]" />
+                                    <ReloadIcon className="h-[20px] pb-[0.1rem]" />
                                 </Button>
                             </div>
                         </div>
