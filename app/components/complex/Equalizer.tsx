@@ -20,7 +20,14 @@ export function Equalizer({
     freqs,
     preampGain,
     setPreampGain,
-}: any) {
+}: {
+    filterGains: number[]
+    setFilterGains: React.Dispatch<React.SetStateAction<number[]>>
+    filters: BiquadFilterNode[]
+    freqs: number[]
+    preampGain: number
+    setPreampGain: React.Dispatch<React.SetStateAction<number>>
+}) {
     const [snapBand, setSnapBand] = useState(false)
     useEffect(() => {
         console.log('Equalizer')
@@ -28,18 +35,18 @@ export function Equalizer({
     const changeBands = (num: number[], idx: number) => {
         if (!snapBand) {
             setFilterGains(
-                filterGains.map((gain: any, gainIdx: number) => {
+                filterGains.map((gain: number, gainIdx: number) => {
                     return idx === gainIdx ? num[0] : gain
                 })
             )
         } else {
             setFilterGains(
-                filterGains.map((gain: any, gainIdx: number) => {
+                filterGains.map((gain: number, gainIdx: number) => {
                     if (idx === gainIdx) {
                         return num[0]
                     } else {
                         let delta = gain
-                        let distance = Math.abs(gainIdx - idx)
+                        const distance = Math.abs(gainIdx - idx)
                         const max_distance = 5
                         if (distance < max_distance) {
                             if (gain < num[0] - distance - max_distance) {
@@ -92,7 +99,7 @@ export function Equalizer({
                         <p className="text-nano mt-auto">Freq.</p>
                     </div> */}
                     {filters &&
-                        filters.map((filter: any, idx: number) => {
+                        filters.map((filter: BiquadFilterNode, idx: number) => {
                             return (
                                 <div
                                     key={'filter ' + idx}
@@ -131,7 +138,7 @@ export function Equalizer({
                             size="icon"
                             onClick={() => {
                                 setFilterGains([
-                                    ...filterGains.map((_: any) => {
+                                    ...filterGains.map(() => {
                                         return 0
                                     }),
                                 ])

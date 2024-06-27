@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { prominent } from 'color.js'
 import { PlusIcon, UploadIcon, CardStackPlusIcon } from '@radix-ui/react-icons'
 
@@ -56,13 +56,11 @@ const audioContext = new AudioContext()
 const analyser = audioContext.createAnalyser()
 analyser.minDecibels = -90
 analyser.maxDecibels = -10
-analyser.smoothingTimeConstant = 1.0 //0.75;
+analyser.smoothingTimeConstant = 1.0
 analyser.fftSize = 128
 const sourceNode = audioContext.createMediaElementSource(audio)
 const gainNode = audioContext.createGain()
-
 const filters: BiquadFilterNode[] = []
-
 const freqs = [32, 64, 125, 500, 1000, 2000, 4000, 8000, 16000]
 
 for (let i = 0; i < freqs.length; i++) {
@@ -80,10 +78,6 @@ for (let i = 0; i < freqs.length; i++) {
     filter.gain.value = 0
     filters.push(filter)
 }
-
-console.log(filters)
-
-// sourceNode.connect(gainNode)
 
 for (let i = 0; i <= filters.length; i++) {
     if (i === 0) {
@@ -126,6 +120,33 @@ export interface PlaylistCouple {
 export interface IndexCouple {
     viewing: number
     playing: number
+}
+
+export interface Controls {
+    resized: boolean
+    collapse: () => void
+    onTop: boolean
+    alwaysOnTop: () => void
+    openSettings: () => void
+    repeat: boolean
+    setRepeat: React.Dispatch<React.SetStateAction<boolean>>
+    activeTracks: TrackCouple
+    playlistIndices: IndexCouple
+    shuffle: boolean
+    setShuffle: React.Dispatch<React.SetStateAction<boolean>>
+    openFile: (file: string, setSameDir: boolean, index: number) => void
+    play: boolean
+    togglePlay: () => void
+    volume: number
+    setVolume: React.Dispatch<React.SetStateAction<number>>
+    preMuteVolume: number
+    mute: () => void
+    setFilterGains: React.Dispatch<React.SetStateAction<number[]>>
+    filterGains: number[]
+    filters: BiquadFilterNode[]
+    freqs: number[]
+    setPreampGain: React.Dispatch<React.SetStateAction<number>>
+    preampGain: number
 }
 
 function App() {
@@ -267,6 +288,8 @@ function App() {
         }),
     ])
 
+    const filterGainsString = JSON.stringify(filterGains)
+
     const [preampGain, setPreampGain] = useState(0.5)
 
     const setAudioSource = (filePath: string) => {
@@ -282,41 +305,44 @@ function App() {
     // }
 
     // Switch to a new track
-    const openFile = (file: string, setSameDir: boolean, index: number) => {
-        console.log('openFile', file, setSameDir, index)
-        if (activePlaylists.playing == activePlaylists.viewing) {
-            setCurrentSong(activeTracks.viewing[index])
-            setAudioSource(file)
-        } else {
-            if (setSameDir) {
-                console.log('openFile', activeTracks)
-                setActiveTracks((activeTracks) => ({
-                    viewing: activeTracks.viewing,
-                    playing: activeTracks.viewing,
-                }))
-                setActivePlaylists((activePlaylists) => ({
-                    viewing: activePlaylists.viewing,
-                    playing: activePlaylists.viewing,
-                }))
+    const openFile = useCallback(
+        (file: string, setSameDir: boolean, index: number) => {
+            console.log('openFile', file, setSameDir, index)
+            if (activePlaylists.playing == activePlaylists.viewing) {
                 setCurrentSong(activeTracks.viewing[index])
                 setAudioSource(file)
             } else {
-                setCurrentSong(activeTracks.playing[index])
-                setAudioSource(file)
+                if (setSameDir) {
+                    console.log('openFile', activeTracks)
+                    setActiveTracks((activeTracks) => ({
+                        viewing: activeTracks.viewing,
+                        playing: activeTracks.viewing,
+                    }))
+                    setActivePlaylists((activePlaylists) => ({
+                        viewing: activePlaylists.viewing,
+                        playing: activePlaylists.viewing,
+                    }))
+                    setCurrentSong(activeTracks.viewing[index])
+                    setAudioSource(file)
+                } else {
+                    setCurrentSong(activeTracks.playing[index])
+                    setAudioSource(file)
+                }
             }
-        }
 
-        setProgress(0)
+            setProgress(0)
 
-        setPlaylistIndices((playlistIndices) => ({
-            viewing: playlistIndices.viewing,
-            playing: index,
-        }))
+            setPlaylistIndices((playlistIndices) => ({
+                viewing: playlistIndices.viewing,
+                playing: index,
+            }))
 
-        window.Main.setLastOpenDir(activePlaylists.viewing)
-        window.Main.setOldFile(file)
-        window.Main.setOldIndex(index)
-    }
+            window.Main.setLastOpenDir(activePlaylists.viewing)
+            window.Main.setOldFile(file)
+            window.Main.setOldIndex(index)
+        },
+        [activePlaylists.playing, activePlaylists.viewing, activeTracks]
+    )
 
     const togglePlay = () => {
         if (audio) {
@@ -341,20 +367,6 @@ function App() {
         if (window.Main) {
             setOnTop(!onTop)
             window.Main.AlwaysOnTop()
-        }
-    }
-
-    // Update the  progressbar
-    const updateProgress = () => {
-        if (audio) {
-            const frac = audio.currentTime / audio.duration
-            if (frac !== Infinity) {
-                const new_progress = Math.trunc(frac * PROGRESS_BAR_PRECISION)
-                setProgress(new_progress)
-                if (frac == 1 && play) {
-                    togglePlay()
-                }
-            }
         }
     }
 
@@ -396,7 +408,10 @@ function App() {
     }
 
     // Remove a certain directory
-    const removeDir = (e: Event, idx: number) => {
+    const removeDir = (
+        e: React.MouseEvent<Element, MouseEvent>,
+        idx: number
+    ) => {
         e.stopPropagation()
         // Last directory case
         if (allPlaylists.length == 1) {
@@ -534,14 +549,14 @@ function App() {
             setSessionRestored(true)
             openFile(lastFile, true, lastIndex)
         }
-    }, [sessionRestored, activeTracks, lastFile, lastIndex])
+    }, [sessionRestored, activeTracks, lastFile, lastIndex, openFile])
 
     // Add a new directory after add-dir-tm receiver fires
     useEffect(() => {
         !allPlaylists.includes(activePlaylists.viewing) &&
             activePlaylists.viewing &&
             setAllPlaylists([...allPlaylists, activePlaylists.viewing])
-    }, [activePlaylists])
+    }, [activePlaylists, allPlaylists])
 
     // Audio update
     useEffect(() => {
@@ -556,7 +571,7 @@ function App() {
             openFile(activeTracks.viewing[0].file, true, 0)
             setClosedBothPlaylists(false)
         }
-    }, [activeTracks])
+    }, [activeTracks, closedBothPlaylists, openFile])
 
     // Handle change of index in the playing directory
     useEffect(() => {
@@ -573,11 +588,27 @@ function App() {
             audio.pause()
             setPlay(false)
         }
-    }, [playlistIndices])
+    }, [
+        playlistIndices,
+        activePlaylists.playing,
+        activePlaylists.viewing,
+        play,
+        resized,
+    ])
 
     // Normal way of using react with listeners
     useEffect(() => {
-        audio.ontimeupdate = updateProgress
+        audio.ontimeupdate = () => {
+            if (audio) {
+                const frac = audio.currentTime / audio.duration
+                if (frac !== Infinity) {
+                    const new_progress = Math.trunc(
+                        frac * PROGRESS_BAR_PRECISION
+                    )
+                    setProgress(new_progress)
+                }
+            }
+        }
 
         window.Main.send('restore-session-tm', null)
         window.Main.send('get-old-ui-colors-tm', null)
@@ -681,8 +712,6 @@ function App() {
 
                 const newSongs = unpackFilesData(filesData, filesPaths)
 
-                console.log('add-dir-fm', newSongs, activeTracks)
-
                 setActiveTracks((activeTracks) => ({
                     viewing: newSongs,
                     playing: activeTracks.playing,
@@ -759,7 +788,6 @@ function App() {
         updateColors()
     }, [currentSong])
 
-    // Bad progressbar handling. TODO: use some standard progress bar
     useEffect(() => {
         if (progress === PROGRESS_BAR_PRECISION && !repeat) {
             if (shuffle) {
@@ -778,19 +806,27 @@ function App() {
                 )
             }
         }
-    }, [progress])
+    }, [
+        progress,
+        activeTracks.playing,
+        openFile,
+        playlistIndices.playing,
+        repeat,
+        shuffle,
+    ])
 
     useEffect(() => {
-        // console.log('filterGains')
+        console.log('[filterGainsString]')
+        const filterGains = JSON.parse(filterGainsString)
         for (let i = 0; i < filterGains.length; i++) {
             if (filters[i]) {
                 filters[i].gain.value = filterGains[i]
             }
         }
-    }, [JSON.stringify(filterGains)])
+    }, [filterGainsString])
 
     useEffect(() => {
-        console.log('preampGain')
+        console.log('[preampGain]')
         gainNode.gain.setValueAtTime(preampGain, audioContext.currentTime)
     }, [preampGain])
 
@@ -827,30 +863,32 @@ function App() {
                 />
 
                 <ControlsBar
-                    resized={resized}
-                    collapse={collapse}
-                    onTop={onTop}
-                    alwaysOnTop={alwaysOnTop}
-                    openSettings={openSettings}
-                    repeat={repeat}
-                    setRepeat={setRepeat}
-                    activeTracks={activeTracks}
-                    playlistIndices={playlistIndices}
-                    shuffle={shuffle}
-                    setShuffle={setShuffle}
-                    openFile={openFile}
-                    play={play}
-                    togglePlay={togglePlay}
-                    volume={volume}
-                    setVolume={setVolume}
-                    preMuteVolume={preMuteVolume}
-                    mute={mute}
-                    setFilterGains={setFilterGains}
-                    filterGains={filterGains}
-                    filters={filters}
-                    freqs={freqs}
-                    setPreampGain={setPreampGain}
-                    preampGain={preampGain}
+                    {...{
+                        resized: resized,
+                        collapse: collapse,
+                        onTop: onTop,
+                        alwaysOnTop: alwaysOnTop,
+                        openSettings: openSettings,
+                        repeat: repeat,
+                        setRepeat: setRepeat,
+                        activeTracks: activeTracks,
+                        playlistIndices: playlistIndices,
+                        shuffle: shuffle,
+                        setShuffle: setShuffle,
+                        openFile: openFile,
+                        play: play,
+                        togglePlay: togglePlay,
+                        volume: volume,
+                        setVolume: setVolume,
+                        preMuteVolume: preMuteVolume,
+                        mute: mute,
+                        setFilterGains: setFilterGains,
+                        filterGains: filterGains,
+                        filters: filters,
+                        freqs: freqs,
+                        setPreampGain: setPreampGain,
+                        preampGain: preampGain,
+                    }}
                 />
             </div>
             <div className="drag flex h-[35px] flex-none flex-row place-items-center border-b-2 border-t-2 border-border bg-background px-1">

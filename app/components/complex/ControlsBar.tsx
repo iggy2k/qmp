@@ -17,33 +17,35 @@ import {
     SpeakerOffIcon,
 } from '@radix-ui/react-icons'
 import { Equalizer } from '@/components/complex/Equalizer'
+import { Controls } from '@/src/App'
 
-export function ControlsBar({
-    resized,
-    collapse,
-    onTop,
-    alwaysOnTop,
-    openSettings,
-    repeat,
-    setRepeat,
-    activeTracks,
-    playlistIndices,
-    shuffle,
-    setShuffle,
-    openFile,
-    play,
-    togglePlay,
-    volume,
-    setVolume,
-    preMuteVolume,
-    mute,
-    filterGains,
-    setFilterGains,
-    filters,
-    freqs,
-    setPreampGain,
-    preampGain,
-}: any) {
+export function ControlsBar(controls: Controls) {
+    const {
+        resized,
+        collapse,
+        onTop,
+        alwaysOnTop,
+        openSettings,
+        repeat,
+        setRepeat,
+        activeTracks,
+        playlistIndices,
+        shuffle,
+        setShuffle,
+        openFile,
+        play,
+        togglePlay,
+        volume,
+        setVolume,
+        preMuteVolume,
+        mute,
+        filterGains,
+        setFilterGains,
+        filters,
+        freqs,
+        setPreampGain,
+        preampGain,
+    } = controls
     return (
         <div className="mx-1 mt-1 flex flex-row justify-between pr-2 text-ring">
             <div className="flex">
@@ -115,7 +117,7 @@ export function ControlsBar({
                 <TrackPreviousIcon
                     className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
-                        let rand_idx = Math.floor(
+                        const rand_idx = Math.floor(
                             Math.random() * activeTracks.playing.length
                         )
                         shuffle
@@ -151,7 +153,7 @@ export function ControlsBar({
                 <TrackNextIcon
                     className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
-                        let rand_idx = Math.floor(
+                        const rand_idx = Math.floor(
                             Math.random() * activeTracks.playing.length
                         )
                         console.log(

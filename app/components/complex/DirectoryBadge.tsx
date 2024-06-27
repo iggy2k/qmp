@@ -6,6 +6,7 @@ import { CursorTextIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { Input } from '@/components/primitives/input'
 
 import { Badge } from '@/components/primitives/badge'
+import { PlaylistCouple } from '@/src/App'
 
 export function DirectoryBadge({
     activePlaylists,
@@ -14,7 +15,14 @@ export function DirectoryBadge({
     allPlaylists,
     index,
     removeDir,
-}: any) {
+}: {
+    activePlaylists: PlaylistCouple
+    dir: string
+    openCertainDir: (path: string, setIndexToZero: boolean) => void
+    allPlaylists: string[]
+    index: number
+    removeDir: (e: React.MouseEvent<Element, MouseEvent>, idx: number) => void
+}) {
     const [edit, setEdit] = useState(false)
     return (
         <div

@@ -22,7 +22,7 @@ export function BottomBar({
                         ? secondsToDhms(
                               activeTracks.viewing
                                   .map(function (song: Track) {
-                                      return parseInt(song.duration)
+                                      return song.duration
                                   })
                                   .reduce((acc: number, curr: number) => {
                                       return acc + curr
