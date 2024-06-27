@@ -1,11 +1,17 @@
+import { Button } from '@/components/primitives/button'
+import { Label } from '@/components/primitives/label'
+
 import React, { useEffect, useState } from 'react'
-import { Slider } from '../primitives/slider'
-import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
-import { Button } from '../primitives/button'
-import { Label } from '../primitives/label'
-import { Switch } from '../primitives/switch'
+import { Slider } from '@/components/primitives/slider'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/primitives/popover'
+
+import { Switch } from '@/components/primitives/switch'
 import { MixerVerticalIcon } from '@radix-ui/react-icons'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 export function Equalizer({
     filterGains,

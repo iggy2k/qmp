@@ -17,6 +17,10 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    DragEndEvent,
+    Active,
+    Over,
+    DragStartEvent,
 } from '@dnd-kit/core'
 import {
     arrayMove,
@@ -36,11 +40,10 @@ import { TrackArea } from '../components/complex/TrackArea'
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '../components/primitives/dropdown-menu'
+import { IAudioMetadata } from 'music-metadata'
 
 const PROGRESS_BAR_PRECISION = 1000
 
@@ -50,21 +53,21 @@ const audio = new Audio() as HTMLAudioElement & {
 }
 
 const audioContext = new AudioContext()
-let analyser = audioContext.createAnalyser()
+const analyser = audioContext.createAnalyser()
 analyser.minDecibels = -90
 analyser.maxDecibels = -10
 analyser.smoothingTimeConstant = 1.0 //0.75;
 analyser.fftSize = 128
-let sourceNode = audioContext.createMediaElementSource(audio)
-let gainNode = audioContext.createGain()
+const sourceNode = audioContext.createMediaElementSource(audio)
+const gainNode = audioContext.createGain()
 
-let filters: BiquadFilterNode[] = []
+const filters: BiquadFilterNode[] = []
 
-let freqs = [32, 64, 125, 500, 1000, 2000, 4000, 8000, 16000]
+const freqs = [32, 64, 125, 500, 1000, 2000, 4000, 8000, 16000]
 
 for (let i = 0; i < freqs.length; i++) {
-    let freq = freqs[i]
-    let filter = audioContext.createBiquadFilter()
+    const freq = freqs[i]
+    const filter = audioContext.createBiquadFilter()
     if (i === 0) {
         filter.type = 'lowshelf'
     } else if (i === freqs.length - 1) {
@@ -100,16 +103,27 @@ async function setAudioOutput(deviceId: string) {
     window.Main.send('get-audio-output-tm', audio.sinkId)
 }
 
-interface TrackCouple {
-    viewing: any[]
-    playing: any[]
+export interface Track {
+    format: string
+    duration: number
+    rate: number
+    name: string
+    album: string
+    author: string
+    cover: BinaryData | null
+    file: string
 }
-interface PlaylistCouple {
+
+export interface TrackCouple {
+    viewing: Track[]
+    playing: Track[]
+}
+export interface PlaylistCouple {
     viewing: string
     playing: string
 }
 
-interface IndexCouple {
+export interface IndexCouple {
     viewing: number
     playing: number
 }
@@ -130,21 +144,21 @@ function App() {
         })
     )
 
-    function handleDragEnd(event: any) {
-        const { active, over }: any = event
-        if (active.id !== over.id) {
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over }: { active: Active; over: Over | null } = event
+        if (active.id !== over?.id) {
             setActiveTracks((activeTracks) => {
                 const oldIndex = activeTracks.viewing
                     .map((track) => {
                         return track.file
                     })
-                    .indexOf(active.id)
+                    .indexOf(active.id as string)
                 const newIndex = activeTracks.viewing
                     .map((track) => {
                         return track.file
                     })
-                    .indexOf(over.id)
-                let newTracks = {
+                    .indexOf(over?.id as string)
+                const newTracks = {
                     viewing: arrayMove(
                         activeTracks.viewing,
                         oldIndex,
@@ -153,7 +167,9 @@ function App() {
                     playing: activeTracks.playing,
                 }
                 window.Main.send('reorder-playlist', {
-                    new_playlist: newTracks.viewing.map((e: any) => e.file),
+                    new_playlist: newTracks.viewing.map(
+                        (track: Track) => track.file
+                    ),
                     playlist_name: activePlaylists.viewing,
                 })
                 return newTracks
@@ -163,7 +179,7 @@ function App() {
                     .map((track) => {
                         return track.file
                     })
-                    .indexOf(over.id)
+                    .indexOf(over?.id as string)
                 console.log(newIndex)
                 setPlaylistIndices((playlistIndices) => ({
                     viewing: playlistIndices.viewing,
@@ -181,17 +197,17 @@ function App() {
         '#000000',
     ])
 
-    const [UIColors, setUIColors] = useState<{
-        background: string
-        accent: string
-        text: string
-        altText: string
-    }>({
-        background: '#000000',
-        accent: '#000000',
-        text: '#000000',
-        altText: '#000000',
-    })
+    // const [UIColors, setUIColors] = useState<{
+    //     background: string
+    //     accent: string
+    //     text: string
+    //     altText: string
+    // }>({
+    //     background: '#000000',
+    //     accent: '#000000',
+    //     text: '#000000',
+    //     altText: '#000000',
+    // })
 
     const [settings, setSettings] = useState<{
         useCover: boolean
@@ -210,7 +226,7 @@ function App() {
     })
 
     // Current track data states
-    const listRef = useRef<null | any>(null)
+    const listRef = useRef<null | FixedSizeList>(null)
     const trackCoverRef = useRef<null | HTMLImageElement>(null)
     const [electronWindowHeight, setElectronWindowHeight] = useState(450)
 
@@ -231,7 +247,7 @@ function App() {
         viewing: -1,
     })
 
-    const [currentSong, setCurrentSong] = useState<any>({})
+    const [currentSong, setCurrentSong] = useState<Track | null>(null)
     const [play, setPlay] = useState(false)
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(0.1)
@@ -246,7 +262,7 @@ function App() {
     const [closedBothPlaylists, setClosedBothPlaylists] = useState(false)
 
     const [filterGains, setFilterGains] = useState<number[]>([
-        ...filters.map((_) => {
+        ...filters.map(() => {
             return 0
         }),
     ])
@@ -261,9 +277,9 @@ function App() {
         }
     }
 
-    const sendOldColors = () => {
-        window.Main.send('set-old-ui-colors-tm', UIColors)
-    }
+    // const sendOldColors = () => {
+    //     window.Main.send('set-old-ui-colors-tm', UIColors)
+    // }
 
     // Switch to a new track
     const openFile = (file: string, setSameDir: boolean, index: number) => {
@@ -328,12 +344,12 @@ function App() {
         }
     }
 
-    // Update the fancy progressbar
+    // Update the  progressbar
     const updateProgress = () => {
         if (audio) {
-            let frac = audio.currentTime / audio.duration
+            const frac = audio.currentTime / audio.duration
             if (frac !== Infinity) {
-                let new_progress = Math.trunc(frac * PROGRESS_BAR_PRECISION)
+                const new_progress = Math.trunc(frac * PROGRESS_BAR_PRECISION)
                 setProgress(new_progress)
                 if (frac == 1 && play) {
                     togglePlay()
@@ -346,18 +362,18 @@ function App() {
     function updateColors() {
         trackCoverRef.current &&
             prominent(trackCoverRef.current, { amount: 20 }).then((color) => {
-                let topColors: Record<string, number> = {}
+                const topColors: Record<string, number> = {}
                 if (Array.isArray(color)) {
-                    color.forEach((element: any) => {
-                        let hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
+                    for (const element of color as number[][]) {
+                        const hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
                         topColors[hex] =
                             element[0] * 0.299 +
                             element[1] * 0.587 +
                             element[2] * 0.114
-                    })
+                    }
                 }
 
-                let keys = Object.keys(topColors)
+                const keys = Object.keys(topColors)
 
                 keys.sort(
                     (a, b) =>
@@ -380,14 +396,14 @@ function App() {
     }
 
     // Remove a certain directory
-    const removeDir = (e: any, idx: number) => {
+    const removeDir = (e: Event, idx: number) => {
         e.stopPropagation()
         // Last directory case
         if (allPlaylists.length == 1) {
             setActiveTracks({ viewing: [], playing: [] })
             setColors(['#000000', '#000000', '#000000', '#000000'])
             window.Main.setLastOpenDir('')
-            setCurrentSong({})
+            setCurrentSong(null)
             setAudioSource('')
         } else {
             // Directory that is both open and playing
@@ -395,7 +411,7 @@ function App() {
                 allPlaylists[idx] == activePlaylists.viewing &&
                 activePlaylists.viewing == activePlaylists.playing
             ) {
-                let idx = allPlaylists.indexOf(activePlaylists.playing)
+                const idx = allPlaylists.indexOf(activePlaylists.playing)
                 openCertainDir(
                     allPlaylists[idx + 1] || allPlaylists[idx - 1],
                     false
@@ -434,69 +450,51 @@ function App() {
     }
 
     // Set track metadata and covers once the directory is loaded
-    const unpackFilesData = (filesData: any[], filesPaths: string[]) => {
-        let formats = filesData[0].map(
-            (trackData: { [x: string]: { [x: string]: any } }) =>
-                trackData['format']['container']
-                    ? trackData['format']['container']
-                    : null
+    const unpackFilesData = (
+        filesData: [IAudioMetadata[], BinaryData[]],
+        filesPaths: string[]
+    ) => {
+        const formats = filesData[0].map((trackData: IAudioMetadata) =>
+            trackData['format']['container']
+                ? trackData['format']['container']
+                : null
         )
 
-        let durations = filesData[0].map(
-            (trackData: { [x: string]: { [x: string]: any } }) =>
-                trackData['format']['duration']
-                    ? trackData['format']['duration']
-                    : null
+        const durations = filesData[0].map((trackData: IAudioMetadata) =>
+            trackData['format']['duration']
+                ? trackData['format']['duration']
+                : null
         )
 
-        let rates = filesData[0].map(
-            (trackData: { [x: string]: { [x: string]: any } }) =>
-                trackData['format']['sampleRate']
-                    ? trackData['format']['sampleRate']
-                    : null
+        const rates = filesData[0].map((trackData: IAudioMetadata) =>
+            trackData['format']['sampleRate']
+                ? trackData['format']['sampleRate']
+                : null
         )
 
-        let names = filesData[0].map(
-            (trackData: { [x: string]: { [x: string]: any } }) =>
-                trackData['common']['title']
-                    ? trackData['common']['title']
-                    : null
+        const names = filesData[0].map((trackData: IAudioMetadata) =>
+            trackData['common']['title'] ? trackData['common']['title'] : null
         )
 
-        let albums = filesData[0].map(
-            (trackData: { [x: string]: { [x: string]: any } }) =>
-                trackData['common']['album']
-                    ? trackData['common']['album']
-                    : null
+        const albums = filesData[0].map((trackData: IAudioMetadata) =>
+            trackData['common']['album'] ? trackData['common']['album'] : null
         )
 
-        let authors = filesData[0].map(
-            (trackData: { [x: string]: { [x: string]: any } }) =>
-                trackData['common']['artist']
-                    ? trackData['common']['artist']
-                    : null
+        const authors = filesData[0].map((trackData: IAudioMetadata) =>
+            trackData['common']['artist'] ? trackData['common']['artist'] : null
         )
 
-        let covers = filesData[1]
-        let newSongs: {
-            format: string
-            duration: string
-            rate: string
-            name: string
-            album: string
-            author: string
-            cover: string
-            file: string
-        }[] = []
+        const covers = filesData[1]
+        const newSongs: Track[] = []
         for (let i = 0; i < names.length; i++) {
             newSongs.push({
-                format: formats[i],
-                duration: durations[i],
-                rate: rates[i],
-                name: names[i],
-                album: albums[i],
-                author: authors[i],
-                cover: covers[i],
+                format: formats[i] || '',
+                duration: durations[i] || 0,
+                rate: rates[i] || 0,
+                name: names[i] || '',
+                album: albums[i] || '',
+                author: authors[i] || '',
+                cover: covers[i] || null,
                 file: filesPaths[i],
             })
         }
@@ -511,9 +509,12 @@ function App() {
     }
 
     // Save current track cover art if it exists
-    const downloadCover = (b64data: any) => {
+    const downloadCover = (b64data: BinaryData) => {
         if (b64data !== undefined && currentSong) {
-            window.Main.SaveCover(b64data.toString('base64'), currentSong.name)
+            window.Main.SaveCover(
+                b64data.toString(),
+                Object.hasOwn(currentSong, 'name') ? currentSong.name : 'cover'
+            )
         }
     }
 
@@ -586,17 +587,18 @@ function App() {
             setAudioOutput(deviceId)
         })
 
-        window.Main.receive(
-            'get-old-ui-colors-fm',
-            (UIColors: {
-                background: string
-                accent: string
-                text: string
-                altText: string
-            }) => {
-                setUIColors(UIColors)
-            }
-        )
+        // window.Main.receive(
+        //     'get-old-ui-colors-fm',
+        //     (UIColors: {
+        //         background: string
+        //         accent: string
+        //         text: string
+        //         altText: string
+        //     }) => {
+        //         setUIColors(UIColors)
+        //     }
+        // )
+
         window.Main.receive(
             'set-settings-fm',
             (newSettings: {
@@ -653,27 +655,31 @@ function App() {
             openCertainDir(dir, false)
         })
 
-        window.Main.receive(
-            'set-ui-colors-fm',
-            (args: {
-                background: string
-                accent: string
-                text: string
-                altText: string
-            }) => {
-                setUIColors(args)
-            }
-        )
+        // window.Main.receive(
+        //     'set-ui-colors-fm',
+        //     (args: {
+        //         background: string
+        //         accent: string
+        //         text: string
+        //         altText: string
+        //     }) => {
+        //         setUIColors(args)
+        //     }
+        // )
 
         window.Main.receive(
             'add-dir-fm',
-            (newDirectory: string, filesData: any[], filesPaths: string[]) => {
+            (
+                newDirectory: string,
+                filesData: [IAudioMetadata[], BinaryData[]],
+                filesPaths: string[]
+            ) => {
                 setActivePlaylists((activePlaylists) => ({
                     viewing: newDirectory,
                     playing: activePlaylists.playing,
                 }))
 
-                let newSongs = unpackFilesData(filesData, filesPaths)
+                const newSongs = unpackFilesData(filesData, filesPaths)
 
                 console.log('add-dir-fm', newSongs, activeTracks)
 
@@ -684,19 +690,16 @@ function App() {
             }
         )
 
-        window.Main.receive(
-            'add-playlist-fm',
-            (newDirectory: string, filesData: any[], filesPaths: string[]) => {
-                setActivePlaylists((activePlaylists) => ({
-                    viewing: newDirectory,
-                    playing: activePlaylists.playing,
-                }))
-                setActiveTracks((activeTracks) => ({
-                    viewing: [],
-                    playing: activeTracks.playing,
-                }))
-            }
-        )
+        window.Main.receive('add-playlist-fm', (newDirectory: string) => {
+            setActivePlaylists((activePlaylists) => ({
+                viewing: newDirectory,
+                playing: activePlaylists.playing,
+            }))
+            setActiveTracks((activeTracks) => ({
+                viewing: [],
+                playing: activeTracks.playing,
+            }))
+        })
 
         window.Main.receive('add-dir-from-menu', () => {
             addDir()
@@ -706,17 +709,17 @@ function App() {
             'open-dir-fm',
             (
                 newDirectory: string,
-                filesData: any[],
+                filesData: [IAudioMetadata[], BinaryData[]],
                 filesPaths: string[],
                 setIndexToZero: boolean
             ) => {
-                let newSongs = unpackFilesData(filesData, filesPaths)
+                const newSongs = unpackFilesData(filesData, filesPaths)
                 // Nested set state is bad but I don't feel like
                 // adding another useeffect for this action
                 setActivePlaylists((activePlaylists) => {
                     if (newDirectory === activePlaylists.viewing) {
                         // Refresh playing directory
-                        setActiveTracks((_) => ({
+                        setActiveTracks(() => ({
                             viewing: newSongs,
                             playing: newSongs,
                         }))
@@ -760,7 +763,7 @@ function App() {
     useEffect(() => {
         if (progress === PROGRESS_BAR_PRECISION && !repeat) {
             if (shuffle) {
-                let rand_idx = Math.floor(
+                const rand_idx = Math.floor(
                     Math.random() * activeTracks.playing.length
                 )
                 openFile(activeTracks.playing[rand_idx].file, false, rand_idx)
@@ -923,8 +926,11 @@ function App() {
                 onDrop={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    let paths = []
-                    for (const f of e.dataTransfer.files as unknown as any[]) {
+                    const paths = []
+                    const files = e.dataTransfer.files
+                    for (let i = 0; i < files.length; i++) {
+                        const f = files[i] as File & { path: string }
+                        console.log(f)
                         paths.push(f.path)
                     }
                     console.log(paths)
@@ -951,8 +957,8 @@ function App() {
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
-                        onDragStart={({ active }: any) => {
-                            setActiveId(active.id)
+                        onDragStart={({ active }: DragStartEvent) => {
+                            setActiveId(active.id as string)
                         }}
                         onDragEnd={handleDragEnd}
                         onDragCancel={() => setActiveId(null)}
@@ -985,6 +991,7 @@ function App() {
                                     openFile: openFile,
                                     activePlaylists: activePlaylists,
                                     playlistIndices: playlistIndices,
+                                    activeId: activeId,
                                 }}
                                 width={'100%'}
                             >

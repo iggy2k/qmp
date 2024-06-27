@@ -41,6 +41,7 @@
         "color.js": "^1.2.0",
         "electron-is-dev": "^2.0.0",
         "electron-store": "^8.1.0",
+        "eslint-plugin-import": "^2.29.1",
         "lucide-react": "^0.367.0",
         "music-metadata": "7.13",
         "react": "^18.2.0",

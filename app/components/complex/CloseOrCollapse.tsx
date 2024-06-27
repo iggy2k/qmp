@@ -1,16 +1,16 @@
 import React from 'react'
 
-export function CloseOrCollapse({}: any) {
+export function CloseOrCollapse() {
     return (
-        <div className="grid grid-flow-col auto-cols-max pt-3 px-3 gap-3 opacity-0 hover:opacity-100 transition-opacity	fixed min-w-full h-[40px] shadow-[inset_2px_25px_25px_-26px_#000000]">
+        <div className="fixed grid h-[40px] min-w-full auto-cols-max grid-flow-col gap-3 px-3 pt-3	opacity-0 shadow-[inset_2px_25px_25px_-26px_#000000] transition-opacity hover:opacity-100">
             <div
-                className="no-drag h-[12px] w-[12px] bg-red-500 hover:bg-[#b52424] rounded-full"
+                className="no-drag h-[12px] w-[12px] rounded-full bg-red-500 hover:bg-[#b52424]"
                 onClick={() => {
                     window.Main.Close()
                 }}
             ></div>
             <div
-                className="no-drag h-[12px] w-[12px] bg-yellow-500 hover:bg-[#939624] rounded-full"
+                className="no-drag h-[12px] w-[12px] rounded-full bg-yellow-500 hover:bg-[#939624]"
                 onClick={() => {
                     window.Main.Minimize()
                 }}

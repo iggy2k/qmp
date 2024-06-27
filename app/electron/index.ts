@@ -15,6 +15,7 @@ import * as fs from 'fs'
 import Store from 'electron-store'
 
 import sharp from 'sharp'
+import { IAudioMetadata } from 'music-metadata'
 
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MAX = 600
@@ -36,7 +37,7 @@ const HTML5_AUDIO = [
     'webm',
     'ogg',
 ] // Incomplete, still covers 99.9% use cases
-var resized = true
+let resized = true
 const store = new Store()
 
 const DEBUG = false
@@ -74,7 +75,7 @@ function checkExension(file: string) {
     )
 }
 
-async function processAsync(md: any) {
+async function processAsync(md: IAudioMetadata) {
     let data
     if (mm.selectCover(md!.common.picture)) {
         data = mm.selectCover(md!.common.picture)?.data
@@ -105,11 +106,11 @@ async function openFiles(files: string[]) {
         promises.push(mm.parseFile(files[i]))
     }
 
-    var res1 = await Promise.all(promises)
+    const res1 = await Promise.all(promises)
 
-    var res2 = res1.map((i) => processAsync(i))
+    const res2 = res1.map((i) => processAsync(i))
 
-    var res3 = await Promise.all(res2)
+    const res3 = await Promise.all(res2)
 
     return [res1, res3]
 }

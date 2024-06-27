@@ -1,11 +1,11 @@
-import { cn } from '../../lib/utils'
-import React, { useEffect, useState, useRef } from 'react'
+import { cn } from '@/lib/utils'
+import React, { useState } from 'react'
 
 import { CursorTextIcon, Cross1Icon } from '@radix-ui/react-icons'
 
-import { Input } from '../primitives/input'
+import { Input } from '@/components/primitives/input'
 
-import { Badge } from '../primitives/badge'
+import { Badge } from '@/components/primitives/badge'
 
 export function DirectoryBadge({
     activePlaylists,

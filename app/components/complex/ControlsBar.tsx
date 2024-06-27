@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Slider } from '../primitives/slider'
+import React from 'react'
+import { Slider } from '@/components/primitives/slider'
 import {
     ShuffleIcon,
     TrackNextIcon,
@@ -16,8 +16,7 @@ import {
     SpeakerModerateIcon,
     SpeakerOffIcon,
 } from '@radix-ui/react-icons'
-import { cn } from '../../lib/utils'
-import { Equalizer } from './Equalizer'
+import { Equalizer } from '@/components/complex/Equalizer'
 
 export function ControlsBar({
     resized,

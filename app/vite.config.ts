@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { UserConfig, ConfigEnv } from 'vite'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import NodeGlobalsPolyfillPlugin from '@esbuild-plugins/node-globals-polyfill'
 
 const srcRoot = join(__dirname, 'src')
@@ -14,7 +14,7 @@ export default ({ command }: ConfigEnv): UserConfig => {
             plugins: [react()],
             resolve: {
                 alias: {
-                    '@': srcRoot,
+                    '@': resolve(__dirname, '.'),
                 },
             },
             build: {
@@ -48,7 +48,8 @@ export default ({ command }: ConfigEnv): UserConfig => {
         plugins: [react()],
         resolve: {
             alias: {
-                '/@': srcRoot,
+                '@': resolve(__dirname, '.'),
+                // '/@': srcRoot,
             },
         },
         build: {

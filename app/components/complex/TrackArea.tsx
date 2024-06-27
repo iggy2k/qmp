@@ -1,8 +1,8 @@
-import { Slider } from '../primitives/slider'
+import { Slider } from '@/components/primitives/slider'
 
 import { ImageIcon } from '@radix-ui/react-icons'
-import React, { useEffect, useState, useRef } from 'react'
-import { secondsToDhmsShort } from '../../src/helpers'
+import React, { useEffect, useRef } from 'react'
+import { secondsToDhmsShort } from '@//src/helpers'
 
 export function TrackArea({
     currentSong,

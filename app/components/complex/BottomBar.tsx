@@ -1,21 +1,28 @@
 import React from 'react'
-import { secondsToDhms } from '../../src/helpers'
+import { secondsToDhms } from '@/src/helpers'
+
+import { TrackCouple, PlaylistCouple, IndexCouple, Track } from '@/src/App'
 
 export function BottomBar({
     play,
     activeTracks,
     activePlaylists,
     playlistIndices,
-}: any) {
+}: {
+    play: boolean
+    activeTracks: TrackCouple
+    activePlaylists: PlaylistCouple
+    playlistIndices: IndexCouple
+}) {
     return (
-        <div className="drag flex-none place-items-center p-2 bg-background text-foreground">
+        <div className="drag flex-none place-items-center bg-background p-2 text-foreground">
             <div className="flex flex-row">
-                <p className="text-left text-xs mx-1 w-[33%] overflow-hidden inline-block whitespace-nowrap flex-1">
+                <p className="mx-1 inline-block w-[33%] flex-1 overflow-hidden whitespace-nowrap text-left text-xs">
                     {activeTracks.viewing.length > 0
                         ? secondsToDhms(
                               activeTracks.viewing
-                                  .map(function (song: any) {
-                                      return song.duration
+                                  .map(function (song: Track) {
+                                      return parseInt(song.duration)
                                   })
                                   .reduce((acc: number, curr: number) => {
                                       return acc + curr
@@ -23,8 +30,8 @@ export function BottomBar({
                           )
                         : '0d 0h 0m 0s'}
                 </p>
-                <div className="mr-1 w-[33%] flex-none inline-block ">
-                    <p className="text-xs text-center overflow-hidden whitespace-nowrap text-ellipsis">
+                <div className="mr-1 inline-block w-[33%] flex-none ">
+                    <p className="overflow-hidden text-ellipsis whitespace-nowrap text-center text-xs">
                         {`${play ? 'Playing' : 'Paused'} ${
                             activePlaylists.viewing == activePlaylists.playing
                                 ? 'current'
@@ -32,10 +39,10 @@ export function BottomBar({
                         } folder`}
                     </p>
                 </div>
-                <div className="mr-1 w-[33%] flex-none inline-block ">
+                <div className="mr-1 inline-block w-[33%] flex-none ">
                     <p
                         title={activePlaylists.viewing}
-                        className="text-xs text-right overflow-hidden whitespace-nowrap text-ellipsis"
+                        className="overflow-hidden text-ellipsis whitespace-nowrap text-right text-xs"
                     >
                         {activeTracks.viewing.length > 0
                             ? `${playlistIndices.playing + 1} / ${activeTracks.playing.length}`

@@ -1,18 +1,18 @@
 import React from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 import { ImageIcon } from '@radix-ui/react-icons'
 
-import { secondsToDhmsShort } from '../../src/helpers'
+import { secondsToDhmsShort } from '@/src/helpers'
 
 import {
     ContextMenu,
     ContextMenuContent,
     ContextMenuItem,
     ContextMenuTrigger,
-} from '../primitives/context-menu'
+} from '@/components/primitives/context-menu'
 
 export function SortableItem(props: any) {
     const { index, style: styleProp, data, isScrolling, ...rest } = props
@@ -24,6 +24,8 @@ export function SortableItem(props: any) {
     let playlistIndices = data.playlistIndices
 
     let openFile = data.openFile
+
+    let activeId = data.activeId
 
     const { attributes, listeners, setNodeRef, transform, transition } =
         useSortable({ id: trackData.file, animateLayoutChanges: () => false })
@@ -37,7 +39,6 @@ export function SortableItem(props: any) {
     return (
         <ContextMenu>
             <ContextMenuTrigger>
-                {' '}
                 <div
                     ref={setNodeRef}
                     style={style}
@@ -52,6 +53,10 @@ export function SortableItem(props: any) {
                     <div
                         className={cn(
                             'box-border flex flex-row rounded-md p-[1px] text-center text-foreground transition-colors duration-100 hover:bg-accent',
+                            {
+                                'border-y-[1px] border-foreground':
+                                    activeId === trackData.file,
+                            },
                             {
                                 'bg-foreground text-background transition-colors duration-100 hover:bg-foreground':
                                     index == playlistIndices.playing &&
