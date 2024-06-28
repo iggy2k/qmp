@@ -104,7 +104,8 @@ export interface Track {
     name: string
     album: string
     author: string
-    cover: BinaryData | null
+    // base64 string
+    cover: string | null
     file: string
 }
 
@@ -466,7 +467,7 @@ function App() {
 
     // Set track metadata and covers once the directory is loaded
     const unpackFilesData = (
-        filesData: [IAudioMetadata[], BinaryData[]],
+        filesData: [IAudioMetadata[], string[]],
         filesPaths: string[]
     ) => {
         const formats = filesData[0].map((trackData: IAudioMetadata) =>
@@ -524,7 +525,7 @@ function App() {
     }
 
     // Save current track cover art if it exists
-    const downloadCover = (b64data: BinaryData) => {
+    const downloadCover = (b64data: string) => {
         if (b64data !== undefined && currentSong) {
             window.Main.SaveCover(
                 b64data.toString(),
@@ -702,7 +703,7 @@ function App() {
             'add-dir-fm',
             (
                 newDirectory: string,
-                filesData: [IAudioMetadata[], BinaryData[]],
+                filesData: [IAudioMetadata[], string[]],
                 filesPaths: string[]
             ) => {
                 setActivePlaylists((activePlaylists) => ({
@@ -738,7 +739,7 @@ function App() {
             'open-dir-fm',
             (
                 newDirectory: string,
-                filesData: [IAudioMetadata[], BinaryData[]],
+                filesData: [IAudioMetadata[], string[]],
                 filesPaths: string[],
                 setIndexToZero: boolean
             ) => {

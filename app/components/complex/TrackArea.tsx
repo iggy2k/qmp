@@ -3,6 +3,7 @@ import { Slider } from '@/components/primitives/slider'
 import { ImageIcon } from '@radix-ui/react-icons'
 import React, { useEffect, useRef } from 'react'
 import { secondsToDhmsShort } from '@//src/helpers'
+import { Track } from '@/src/App'
 
 export function TrackArea({
     currentSong,
@@ -15,8 +16,29 @@ export function TrackArea({
     setSeek,
     audio,
     analyser,
-}: any) {
-    const svgRef = useRef<null | any>(null)
+}: {
+    currentSong: Track | null
+    trackCoverRef: React.MutableRefObject<HTMLImageElement | null>
+    settings: {
+        useCover: boolean
+        movingColors: boolean
+        downloadCover: boolean
+        transparentInactive: boolean
+        bottomBar: boolean
+        framelessWindow: boolean
+    }
+    downloadCover: (b64data: string) => void
+    progress: number
+    PROGRESS_BAR_PRECISION: number
+    setProgress: React.Dispatch<React.SetStateAction<number>>
+    setSeek: (time: number) => void
+    audio: HTMLAudioElement & {
+        setSinkId(deviceId: string): void
+        sinkId: string
+    }
+    analyser: AnalyserNode
+}) {
+    const svgRef = useRef<SVGSVGElement | null>(null)
 
     useEffect(() => {
         console.log('TrackArea')
@@ -26,57 +48,67 @@ export function TrackArea({
         // Source:
         // https://codepen.io/agorkem/pen/PwyNOg/
 
-        let freqArray: Uint8Array
         let nextFreqArray: Uint8Array
-        let svgNS = svgRef.current.namespaceURI
+        const svgNS = svgRef.current?.namespaceURI
+        if (!svgNS) {
+            return
+        }
         let g = document.createElementNS(svgNS, 'g')
 
         let frame = 0
-        let framesToInterpolate = 4
-        let magicConst = 1 / framesToInterpolate
+        const framesToInterpolate = 4
+        const magicConst = 1 / framesToInterpolate
         let animation = 0
-        let width = 96
-        let height = 32
-        let maxHeight = Math.max(height * 0.3, 48)
-        let choke = 70
+        const width = 96
+        const height = 32
+        const maxHeight = Math.max(height * 0.3, 48)
+        const choke = 70
 
         // audio.addEventListener('canplay', () => {
 
         // })
 
-        freqArray = new Uint8Array(analyser?.frequencyBinCount || 0)
+        let points: string[]
+
+        const freqArray = new Uint8Array(analyser?.frequencyBinCount || 0)
         nextFreqArray = freqArray
         update()
         function shape(
-            g: any,
-            freqValue: any,
-            freqSequence: any,
-            freqCount: any
+            g: Element,
+            freqValue: number,
+            freqSequence: number,
+            freqCount: number
         ) {
-            let freqRatio = freqSequence / freqCount
-            let x = width * freqRatio
-            let y = height / 2
+            const freqRatio = freqSequence / freqCount
+            const x = width * freqRatio
+            const y = height / 2
 
-            var polyline = document.createElementNS(svgNS, 'polyline')
-            let throttledRatio = (freqValue - choke) / (255 - choke)
+            if (!svgNS) {
+                return
+            }
+
+            const polyline = document.createElementNS(svgNS, 'polyline')
+            const throttledRatio = (freqValue - choke) / (255 - choke)
             // let strokeWidth = (width / freqCount) * throttledRatio + 1
-            let strokeWidth = 2
-            let throttledY = Math.max(throttledRatio, 0) * maxHeight
-            let fallback_color = '#000000'
+            const strokeWidth = 2
+            const throttledY = Math.max(throttledRatio, 0) * maxHeight
+            const fallback_color = '#000000'
 
-            var loc_x = x - strokeWidth / 2,
+            const loc_x = x - strokeWidth / 2,
                 loc_y1 = y - throttledY / 2,
                 loc_y2 = y + throttledY / 2,
                 x_offset = throttledRatio
 
             if (throttledRatio > 0) {
-                var point_1 = loc_x - x_offset + ',' + loc_y1,
+                const point_1 = loc_x - x_offset + ',' + loc_y1,
                     point_2 = loc_x + x_offset + ',' + loc_y2
-                var points = [point_1, point_2]
+                points = [point_1, point_2]
             } else {
-                var points = [loc_x + ',' + (y - 1), loc_x + ',' + (y + 1)]
+                points = [loc_x + ',' + (y - 1), loc_x + ',' + (y + 1)]
             }
-
+            if (!svgRef.current) {
+                return
+            }
             polyline.setAttribute('stroke-width', strokeWidth.toString())
             if (getComputedStyle(svgRef.current).getPropertyValue('color')) {
                 polyline.setAttribute(
@@ -105,6 +137,9 @@ export function TrackArea({
                 return
             }
             g.remove()
+            if (!svgNS) {
+                return
+            }
             g = document.createElementNS(svgNS, 'g')
 
             frame = (frame + 1) % (framesToInterpolate + 1)
@@ -113,12 +148,12 @@ export function TrackArea({
                 nextFreqArray = new Uint8Array(analyser.frequencyBinCount)
                 analyser.getByteTimeDomainData(nextFreqArray)
 
-                for (var i = 0; i < freqArray.length; i++) {
-                    var v = freqArray[i]
+                for (let i = 0; i < freqArray.length; i++) {
+                    const v = freqArray[i]
                     shape(g, v, i + 1, freqArray.length)
                 }
             } else {
-                for (var i = 0; i < freqArray.length; i++) {
+                for (let i = 0; i < freqArray.length; i++) {
                     if (freqArray[i] > nextFreqArray[i]) {
                         freqArray[i] -=
                             (freqArray[i] - nextFreqArray[i]) *
@@ -134,6 +169,9 @@ export function TrackArea({
                 }
             }
 
+            if (!svgRef.current) {
+                return
+            }
             svgRef.current.appendChild(g)
             animation = requestAnimationFrame(update)
         }
@@ -143,7 +181,7 @@ export function TrackArea({
             update()
             cancelAnimationFrame(animation)
         }
-    }, [])
+    }, [analyser])
 
     return (
         <div className="flex">
@@ -159,7 +197,9 @@ export function TrackArea({
                     "
                             src={currentSong ? currentSong.cover : ''}
                             onClick={() => {
-                                currentSong && settings.downloadCover
+                                currentSong &&
+                                currentSong.cover &&
+                                settings.downloadCover
                                     ? downloadCover(currentSong.cover)
                                     : null
                             }}
@@ -220,8 +260,8 @@ export function TrackArea({
                         step={0.001}
                         onValueChange={(num) => {
                             if (audio) {
-                                let userInputProgress = num[0]
-                                let userInputTime = Math.trunc(
+                                const userInputProgress = num[0]
+                                const userInputTime = Math.trunc(
                                     (userInputProgress /
                                         PROGRESS_BAR_PRECISION) *
                                         audio.duration

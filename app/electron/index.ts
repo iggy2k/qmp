@@ -17,6 +17,11 @@ import Store from 'electron-store'
 import sharp from 'sharp'
 import { IAudioMetadata } from 'music-metadata'
 
+interface Playlist {
+    name: string
+    tracks: string[]
+}
+
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MAX = 600
 
@@ -116,7 +121,7 @@ async function openFiles(files: string[]) {
 }
 
 function rreaddirSync(dir: string, allFiles: string[] = []) {
-    let files = fs.readdirSync(dir).map((f) => join(dir, f))
+    const files = fs.readdirSync(dir).map((f) => join(dir, f))
 
     allFiles.push(...files)
     files.forEach((f) => {
@@ -127,7 +132,7 @@ function rreaddirSync(dir: string, allFiles: string[] = []) {
 }
 
 function createWindow() {
-    let oldSettings = store.get('settings') as {
+    const oldSettings = store.get('settings') as {
         useCover: boolean
         movingColors: boolean
         downloadCover: boolean
@@ -185,9 +190,9 @@ function createWindow() {
 
     setTimeout(function () {
         window.show()
-        let bounds = screen.getPrimaryDisplay().bounds
-        let x = bounds.x + (bounds.width - WIN_WIDTH_MIN) / 2
-        let y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
+        const bounds = screen.getPrimaryDisplay().bounds
+        const x = bounds.x + (bounds.width - WIN_WIDTH_MIN) / 2
+        const y = bounds.y + (bounds.height - WIN_HEIGHT) / 2
         window.setPosition(x, y)
         window?.setSize(WIN_WIDTH_MIN, WIN_HEIGHT, true)
         window?.webContents.openDevTools()
@@ -256,8 +261,8 @@ function createWindow() {
         }
     )
 
-    ipcMain.on('get-old-ui-colors-tm', (_) => {
-        let UIColors = store.get('old_ui_colors')
+    ipcMain.on('get-old-ui-colors-tm', () => {
+        const UIColors = store.get('old_ui_colors')
         DEBUG && console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
         settings.webContents.send('get-old-ui-colors-fm', UIColors)
@@ -282,41 +287,41 @@ function createWindow() {
         }
     )
 
-    ipcMain.on('get-settings-tm', (_) => {
-        let oldSettings = store.get('settings')
+    ipcMain.on('get-settings-tm', () => {
+        const oldSettings = store.get('settings')
         DEBUG && console.log('get-settings-tm ' + JSON.stringify(oldSettings))
         window.webContents.send('get-settings-fm', oldSettings)
         settings.webContents.send('get-settings-fm', oldSettings)
     })
 
     // Restore colors when closing settings
-    settings?.on('close', (_) => {
-        let UIColors = store.get('old_ui_colors')
+    settings?.on('close', () => {
+        const UIColors = store.get('old_ui_colors')
         DEBUG && console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
     })
 
-    ipcMain.on('open-dir-tm', (_, args: any[]) => {
+    ipcMain.on('open-dir-tm', (_, args: unknown[]) => {
         DEBUG && console.log('open-dir-tm ' + args)
-        let dir = args[0]
-        let changeIndex = args[1]
+        const dir = args[0]
+        const changeIndex = args[1]
 
         // let file_list = rreaddirSync(dir, [])
         // file_list = file_list.filter(checkExension)
 
-        let playlists = store.get('playlists') as Object[]
+        const playlists = store.get('playlists') as Playlist[]
 
         if (!playlists) {
             return
         }
 
-        let playlist = playlists.filter((e: any) => e.name === dir)[0] as any
+        const playlist = playlists.filter((e: Playlist) => e.name === dir)[0]
 
         if (!playlist) {
             return
         }
 
-        let tracks = playlist.tracks as string[]
+        const tracks = playlist.tracks
 
         if (!tracks) {
             return
@@ -358,20 +363,20 @@ function createWindow() {
             : store.delete('last_open_dir')
     })
 
-    ipcMain.on('add-dir-tm', (_) => {
+    ipcMain.on('add-dir-tm', () => {
         DEBUG && console.log('add-dir-tm')
-        let dirpath = dialog.showOpenDialogSync(window, {
+        const dirpath = dialog.showOpenDialogSync(window, {
             properties: ['openDirectory'],
             defaultPath: '',
         })
 
-        let dir = dirpath?.pop()
+        const dir = dirpath?.pop()
 
         if (!dir) {
             return
         }
 
-        let obj = store.get('all_dirs') as string[]
+        const obj = store.get('all_dirs') as string[]
 
         if (obj && typeof dir == 'string' && !obj.includes(dir)) {
             store.set('all_dirs', obj.concat([dir]))
@@ -395,10 +400,10 @@ function createWindow() {
                     file_list
                 )
 
-                let playlists = store.get('playlists') as Object[]
+                const playlists = store.get('playlists') as Playlist[]
 
                 if (playlists) {
-                    if (!playlists.map((e: any) => e.name).includes(dir)) {
+                    if (!playlists.map((e: Playlist) => e.name).includes(dir)) {
                         store.set(
                             'playlists',
                             playlists.concat([{ name: dir, tracks: file_list }])
@@ -408,18 +413,18 @@ function createWindow() {
                     store.set('playlists', [{ name: dir, tracks: file_list }])
                 }
             })
-            .catch((e: any) => {
+            .catch((e: Error) => {
                 console.log(e)
             })
     })
 
-    ipcMain.on('add-playlist-tm', (_) => {
-        let playlists = store.get('playlists') as Object[]
+    ipcMain.on('add-playlist-tm', () => {
+        const playlists = store.get('playlists') as Playlist[]
 
-        let playlist = playlists.length.toString()
+        const playlist = playlists.length.toString()
 
         if (playlists) {
-            if (!playlists.map((e: any) => e.name).includes(playlist)) {
+            if (!playlists.map((e: Playlist) => e.name).includes(playlist)) {
                 store.set(
                     'playlists',
                     playlists.concat([{ name: playlist, tracks: [] }])
@@ -434,9 +439,9 @@ function createWindow() {
     ipcMain.on(
         'remove-track-from-playlist-tm',
         (_, args: { track_file: string; playlist: string }) => {
-            let playlists = store.get('playlists') as any[]
+            const playlists = store.get('playlists') as Playlist[]
 
-            let this_playlist_idx = playlists.findIndex((e: any) => {
+            const this_playlist_idx = playlists.findIndex((e: Playlist) => {
                 return e.name === args.playlist
             })
 
@@ -444,7 +449,7 @@ function createWindow() {
                 return
             }
 
-            let this_playlist = playlists[this_playlist_idx]
+            const this_playlist = playlists[this_playlist_idx]
 
             console.log(this_playlist)
 
@@ -473,7 +478,7 @@ function createWindow() {
         ) => {
             console.log('Dropped File(s):', args.paths)
 
-            let paths_filtered = args.paths.filter((e) =>
+            const paths_filtered = args.paths.filter((e) =>
                 HTML5_AUDIO.includes(e.split('.').pop()!)
             )
 
@@ -483,9 +488,9 @@ function createWindow() {
 
             event.returnValue = `Received ${paths_filtered} paths.`
 
-            let playlists = store.get('playlists') as any[]
+            const playlists = store.get('playlists') as Playlist[]
 
-            let this_playlist_idx = playlists.findIndex((e: any) => {
+            const this_playlist_idx = playlists.findIndex((e: Playlist) => {
                 return e.name === args.playlist
             })
 
@@ -493,7 +498,7 @@ function createWindow() {
                 return
             }
 
-            let this_playlist = playlists[this_playlist_idx]
+            const this_playlist = playlists[this_playlist_idx]
 
             this_playlist.tracks = this_playlist.tracks.concat(paths_filtered)
 
@@ -507,23 +512,23 @@ function createWindow() {
         }
     )
 
-    ipcMain.on('open-settings-tm', (_) => {
+    ipcMain.on('open-settings-tm', () => {
         DEBUG && console.log('opening settings at ' + url + '/settings')
         if (isDev) {
             settings?.loadURL(url + '#/settings')
         } else {
-            // Why this works
+            // This works
             settings.loadURL(`file://${url}#/settings`)
-            // While this doesn't????????????????/
+            // This doesn't
             // settings?.loadFile(url + '#/settings')
         }
         settings?.webContents.openDevTools()
         settings?.show()
     })
 
-    ipcMain.on('save-cover', (_, data: any, name: string) => {
-        let split = data.split(';base64')
-        let file = dialog.showSaveDialogSync(window, {
+    ipcMain.on('save-cover', (_, data: string, name: string) => {
+        const split = data.split(';base64')
+        const file = dialog.showSaveDialogSync(window, {
             defaultPath:
                 name +
                 '.' +
@@ -535,14 +540,14 @@ function createWindow() {
             })
     })
 
-    ipcMain.on('restore-session-tm', (_) => {
-        let last_open_dir = store.get('last_open_dir')
-        let last_file = store.get('last_file')
-        let last_index = store.get('last_index') || 0
+    ipcMain.on('restore-session-tm', () => {
+        const last_open_dir = store.get('last_open_dir')
+        const last_file = store.get('last_file')
+        const last_index = store.get('last_index') || 0
         if (!last_open_dir || !last_file) {
             return
         }
-        let past_dirs = store.get('all_dirs') as string[]
+        const past_dirs = store.get('all_dirs') as string[]
 
         DEBUG &&
             console.log(
@@ -563,9 +568,9 @@ function createWindow() {
         (_, data: { new_playlist: string[]; playlist_name: string }) => {
             console.log(data)
 
-            let playlists = store.get('playlists') as Object[]
+            const playlists = store.get('playlists') as Playlist[]
 
-            let filteredPlaylists = playlists.map(function (e: any) {
+            const filteredPlaylists = playlists.map(function (e: Playlist) {
                 if (e.name === data.playlist_name) {
                     e.tracks = data.new_playlist
                     return e
@@ -579,11 +584,11 @@ function createWindow() {
     )
 
     ipcMain.on('remove-dir', (_, dir: string) => {
-        let obj = store.get('all_dirs') as string[]
+        const obj = store.get('all_dirs') as string[]
 
         DEBUG && console.log(`before removing ${dir} = ${obj}`)
 
-        var filteredDirs = obj.filter(function (e) {
+        const filteredDirs = obj.filter(function (e) {
             return e !== dir
         })
 
@@ -591,9 +596,9 @@ function createWindow() {
 
         store.set('all_dirs', filteredDirs)
 
-        let playlists = store.get('playlists') as Object[]
+        const playlists = store.get('playlists') as Playlist[]
 
-        let filteredPlaylists = playlists.filter(function (e: any) {
+        const filteredPlaylists = playlists.filter(function (e: Playlist) {
             return e.name !== dir
         })
 
@@ -647,7 +652,7 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
 })
 
-ipcMain.on('message', (event: IpcMainEvent, message: any) => {
+ipcMain.on('message', (event: IpcMainEvent, message: string) => {
     setTimeout(
         () => event.sender.send('message', `electron received ${message}`),
         500

@@ -52,7 +52,6 @@
         "scroll-into-view-if-needed": "^3.1.0",
         "sharp": "^0.32.2",
         "tailwind-merge": "^2.2.2",
-        "tailwindcss-animate": "^1.0.7",
         "util": "^0.12.5"
     },
     "devDependencies": {
@@ -76,6 +75,7 @@
         "prettier": "^3.0.3",
         "prettier-plugin-tailwindcss": "^0.5.6",
         "tailwindcss": "^3.3.3",
+        "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.0.2",
         "wait-on": "^7.0.1"
     },

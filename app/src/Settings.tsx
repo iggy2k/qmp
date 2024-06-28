@@ -28,7 +28,7 @@ import {
 } from '../components/primitives/select'
 
 function Settings() {
-    const [mediaDevices, setMediaDevices] = useState<Object>({})
+    const [mediaDevices, setMediaDevices] = useState<object>({})
     const [refrashMediaDevices, setRefreshMediaDevices] = useState(false)
     const [currSinkId, setCurrSinkId] = useState('')
 
@@ -193,7 +193,7 @@ function Settings() {
                                 <Switch
                                     id="ause-cover"
                                     onClick={() => {
-                                        let oldSettings = { ...settings }
+                                        const oldSettings = { ...settings }
                                         oldSettings.useCover =
                                             !oldSettings.useCover
                                         setSettings(oldSettings)
@@ -209,7 +209,7 @@ function Settings() {
                                 <Switch
                                     id="move-colors"
                                     onClick={() => {
-                                        let oldSettings = { ...settings }
+                                        const oldSettings = { ...settings }
                                         oldSettings.movingColors =
                                             !oldSettings.movingColors
                                         setSettings(oldSettings)
@@ -227,7 +227,7 @@ function Settings() {
                                 <Switch
                                     id="download-cover"
                                     onClick={() => {
-                                        let oldSettings = { ...settings }
+                                        const oldSettings = { ...settings }
                                         oldSettings.downloadCover =
                                             !oldSettings.downloadCover
                                         setSettings(oldSettings)
@@ -245,7 +245,7 @@ function Settings() {
                                 <Switch
                                     id="transparent-inactive"
                                     onClick={() => {
-                                        let oldSettings = { ...settings }
+                                        const oldSettings = { ...settings }
                                         oldSettings.transparentInactive =
                                             !oldSettings.transparentInactive
                                         setSettings(oldSettings)
@@ -276,7 +276,7 @@ function Settings() {
                                 <Switch
                                     id="bottom-bar"
                                     onClick={() => {
-                                        let oldSettings = { ...settings }
+                                        const oldSettings = { ...settings }
                                         oldSettings.bottomBar =
                                             !oldSettings.bottomBar
                                         setSettings(oldSettings)
@@ -293,7 +293,7 @@ function Settings() {
                                     id="frameless"
                                     checked={settings.framelessWindow}
                                     onClick={() => {
-                                        let oldSettings = { ...settings }
+                                        const oldSettings = { ...settings }
                                         oldSettings.framelessWindow =
                                             !oldSettings.framelessWindow
                                         setSettings(oldSettings)

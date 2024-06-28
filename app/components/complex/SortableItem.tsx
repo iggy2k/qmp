@@ -13,19 +13,30 @@ import {
     ContextMenuItem,
     ContextMenuTrigger,
 } from '@/components/primitives/context-menu'
+import { IndexCouple, PlaylistCouple, Track } from '@/src/App'
+export function SortableItem(props: {
+    index: number
+    style: object
+    data: {
+        trackList: Track[]
+        openFile: (file: string, setSameDir: boolean, index: number) => void
+        activePlaylists: PlaylistCouple
+        playlistIndices: IndexCouple
+        activeId: string | null
+    }
+}) {
+    // const { index, style: styleProp, data, isScrolling, ...rest } = props
+    const { index, style: styleProp, data } = props
 
-export function SortableItem(props: any) {
-    const { index, style: styleProp, data, isScrolling, ...rest } = props
+    const trackData = data.trackList[index]
 
-    let trackData = data.trackList[index]
+    const activePlaylists = data.activePlaylists
 
-    let activePlaylists = data.activePlaylists
+    const playlistIndices = data.playlistIndices
 
-    let playlistIndices = data.playlistIndices
+    const openFile = data.openFile
 
-    let openFile = data.openFile
-
-    let activeId = data.activeId
+    const activeId = data.activeId
 
     const { attributes, listeners, setNodeRef, transform, transition } =
         useSortable({ id: trackData.file, animateLayoutChanges: () => false })

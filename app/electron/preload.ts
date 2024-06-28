@@ -53,7 +53,7 @@ const api = {
     sendMessage: (message: string) => {
         ipcRenderer.send('message', message)
     },
-    on: (channel: string, callback: (data: any) => void) => {
+    on: (channel: string, callback: (data: unknown) => void) => {
         ipcRenderer.on(channel, (_, data) => callback(data))
     },
     Resize: () => {
@@ -71,7 +71,7 @@ const api = {
     ReadInBlob: (path: string) => {
         ipcRenderer.send('read-in-blob', path)
     },
-    SaveCover: (data: any, name: string) => {
+    SaveCover: (data: unknown, name: string) => {
         ipcRenderer.send('save-cover', data, name)
     },
     GetHeight: () => {
@@ -94,13 +94,13 @@ const api = {
             ipcRenderer.removeAllListeners(channel)
         }
     },
-    send: (channel: any, data: any) => {
+    send: (channel: string, data: unknown) => {
         // whitelist channels
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
         }
     },
-    receive: (channel: any, func: any) => {
+    receive: (channel: string, func: (...args: unknown[]) => void) => {
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`
             ipcRenderer.on(channel, (_, ...args) => func(...args))
