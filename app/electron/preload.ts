@@ -94,13 +94,15 @@ const api = {
             ipcRenderer.removeAllListeners(channel)
         }
     },
-    send: (channel: string, data: unknown) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    send: (channel: string, data: any) => {
         // whitelist channels
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data)
         }
     },
-    receive: (channel: string, func: (...args: unknown[]) => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    receive: (channel: string, func: (...args: any[]) => void) => {
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender`
             ipcRenderer.on(channel, (_, ...args) => func(...args))

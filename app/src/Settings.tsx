@@ -60,15 +60,6 @@ function Settings() {
         setAltText(randomHexColor())
     }
 
-    const setUIColors = () => {
-        window.Main.send('set-ui-colors-tm', {
-            background: background,
-            accent: accent,
-            text: text,
-            altText: altText,
-        })
-    }
-
     const setOldUIColors = () => {
         window.Main.send('set-old-ui-colors-tm', {
             background: background,
@@ -117,6 +108,14 @@ function Settings() {
         )
     }, [])
     useEffect(() => {
+        const setUIColors = () => {
+            window.Main.send('set-ui-colors-tm', {
+                background: background,
+                accent: accent,
+                text: text,
+                altText: altText,
+            })
+        }
         if (
             background !== '' &&
             accent !== '' &&
@@ -166,7 +165,7 @@ function Settings() {
                     console.error(`${err.name}: ${err.message}`)
                 })
         }
-    }, [refrashMediaDevices])
+    }, [refrashMediaDevices, mediaDevices])
 
     useEffect(() => {
         console.log(mediaDevices)

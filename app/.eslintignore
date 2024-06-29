@@ -1,0 +1,7 @@
+release
+src/out
+node_modules
+main
+components/primitives
+tailwind.config.js
+postcss.config.js

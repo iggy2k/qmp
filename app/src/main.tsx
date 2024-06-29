@@ -3,7 +3,6 @@ import Settings from './Settings'
 import './index.css'
 
 import * as React from 'react'
-import * as ReactDOM from 'react-dom'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 
 import { createRoot } from 'react-dom/client'
