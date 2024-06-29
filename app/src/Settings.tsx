@@ -27,6 +27,24 @@ import {
     SelectValue,
 } from '../components/primitives/select'
 
+enum KeysOfSettings {
+    'useCover' = 'useCover',
+    'movingColors' = 'movingColors',
+    'downloadCover' = 'downloadCover',
+    'transparentInactive' = 'transparentInactive',
+    'bottomBar' = 'bottomBar',
+    'framelessWindow' = 'framelessWindow',
+}
+
+interface Settings {
+    useCover: boolean | undefined
+    movingColors: boolean | undefined
+    downloadCover: boolean | undefined
+    transparentInactive: boolean | undefined
+    bottomBar: boolean | undefined
+    framelessWindow: boolean | undefined
+}
+
 function Settings() {
     const [mediaDevices, setMediaDevices] = useState<object>({})
     const [refrashMediaDevices, setRefreshMediaDevices] = useState(false)
@@ -37,14 +55,7 @@ function Settings() {
     const [text, setText] = useState('')
     const [altText, setAltText] = useState('')
     const [selected, setSelected] = useState('background')
-    const [settings, setSettings] = useState<{
-        useCover: boolean | undefined
-        movingColors: boolean | undefined
-        downloadCover: boolean | undefined
-        transparentInactive: boolean | undefined
-        bottomBar: boolean | undefined
-        framelessWindow: boolean | undefined
-    }>({
+    const [settings, setSettings] = useState<Settings>({
         useCover: undefined,
         movingColors: undefined,
         downloadCover: undefined,
@@ -171,10 +182,43 @@ function Settings() {
         console.log(mediaDevices)
     }, [mediaDevices])
 
+    const featuresToggles = [
+        {
+            display: 'Use cover for track colors',
+            codename: KeysOfSettings.useCover,
+            needsRestart: false,
+        },
+        {
+            display: 'Moving track colors',
+            codename: KeysOfSettings.movingColors,
+            needsRestart: false,
+        },
+        {
+            display: 'Click cover to download',
+            codename: KeysOfSettings.downloadCover,
+            needsRestart: false,
+        },
+        {
+            display: 'Transparency when inactive',
+            codename: KeysOfSettings.transparentInactive,
+            needsRestart: true,
+        },
+        {
+            display: 'Bottom information bar',
+            codename: KeysOfSettings.bottomBar,
+            needsRestart: false,
+        },
+        {
+            display: 'Frameless window',
+            codename: KeysOfSettings.framelessWindow,
+            needsRestart: true,
+        },
+    ]
+
     return (
-        <div className=" drag h-[100vh] w-full overflow-hidden">
+        <div className=" drag h-[100vh] w-full overflow-hidden bg-background">
             <Tabs defaultValue="Features" className="w-full ">
-                <TabsList className="w-full rounded-none">
+                <TabsList className="w-full rounded-none ">
                     <TabsTrigger className="w-1/3" value="Features">
                         Features
                     </TabsTrigger>
@@ -186,132 +230,64 @@ function Settings() {
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="Features">
-                    <div className="auto-cols-2 m-1 grid grid-flow-col p-1 pb-9 transition-opacity">
+                    <div className="auto-cols-2 m-1 grid grid-flow-col  p-1 pb-9 transition-opacity">
                         <div className="no-drag flex flex-col space-y-1 p-2">
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="ause-cover"
-                                    onClick={() => {
-                                        const oldSettings = { ...settings }
-                                        oldSettings.useCover =
-                                            !oldSettings.useCover
-                                        setSettings(oldSettings)
-                                    }}
-                                    checked={settings.useCover}
-                                />
-                                <Label htmlFor="ause-cover" className="text-xs">
-                                    Use cover for track colors
-                                </Label>
-                            </div>
+                            {featuresToggles.map(
+                                (feature: {
+                                    display: string
+                                    codename: KeysOfSettings
+                                    needsRestart: boolean
+                                }) => {
+                                    return (
+                                        <div
+                                            key={feature.codename}
+                                            className="flex items-center space-x-2"
+                                        >
+                                            <Switch
+                                                id="ause-cover"
+                                                onClick={() => {
+                                                    const oldSettings = {
+                                                        ...settings,
+                                                    }
 
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="move-colors"
-                                    onClick={() => {
-                                        const oldSettings = { ...settings }
-                                        oldSettings.movingColors =
-                                            !oldSettings.movingColors
-                                        setSettings(oldSettings)
-                                    }}
-                                    checked={settings.movingColors}
-                                />
-                                <Label
-                                    htmlFor="move-colors"
-                                    className="text-xs"
-                                >
-                                    Moving track colors
-                                </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="download-cover"
-                                    onClick={() => {
-                                        const oldSettings = { ...settings }
-                                        oldSettings.downloadCover =
-                                            !oldSettings.downloadCover
-                                        setSettings(oldSettings)
-                                    }}
-                                    checked={settings.downloadCover}
-                                />
-                                <Label
-                                    htmlFor="download-cover"
-                                    className="text-xs"
-                                >
-                                    Click cover to download
-                                </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="transparent-inactive"
-                                    onClick={() => {
-                                        const oldSettings = { ...settings }
-                                        oldSettings.transparentInactive =
-                                            !oldSettings.transparentInactive
-                                        setSettings(oldSettings)
-                                    }}
-                                    checked={settings.transparentInactive}
-                                />
-                                <Label
-                                    htmlFor="transparent-inactive"
-                                    className="text-xs"
-                                >
-                                    Transparency when inactive
-                                </Label>
-                                <TooltipProvider>
-                                    <Tooltip delayDuration={0}>
-                                        <TooltipTrigger asChild>
-                                            <ExclamationTriangleIcon className="h-[24px] pt-[0.1rem]" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>
-                                                Requires to restarting the app
-                                            </p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="bottom-bar"
-                                    onClick={() => {
-                                        const oldSettings = { ...settings }
-                                        oldSettings.bottomBar =
-                                            !oldSettings.bottomBar
-                                        setSettings(oldSettings)
-                                    }}
-                                    checked={settings.bottomBar}
-                                />
-                                <Label htmlFor="bottom-bar" className="text-xs">
-                                    Bottom information bar
-                                </Label>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="frameless"
-                                    checked={settings.framelessWindow}
-                                    onClick={() => {
-                                        const oldSettings = { ...settings }
-                                        oldSettings.framelessWindow =
-                                            !oldSettings.framelessWindow
-                                        setSettings(oldSettings)
-                                    }}
-                                />
-                                <Label htmlFor="frameless" className="text-xs">
-                                    Frameless window
-                                </Label>
-                                <TooltipProvider>
-                                    <Tooltip delayDuration={0}>
-                                        <TooltipTrigger asChild>
-                                            <ExclamationTriangleIcon className="h-[24px] pt-[0.1rem]" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Requires restarting the app</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
+                                                    oldSettings[
+                                                        feature.codename
+                                                    ] =
+                                                        !oldSettings[
+                                                            feature.codename
+                                                        ]
+                                                    setSettings(oldSettings)
+                                                }}
+                                                checked={
+                                                    settings[feature.codename]
+                                                }
+                                            />
+                                            <Label
+                                                htmlFor="ause-cover"
+                                                className="text-xs"
+                                            >
+                                                {feature.display}
+                                            </Label>
+                                            {feature.needsRestart && (
+                                                <TooltipProvider>
+                                                    <Tooltip delayDuration={0}>
+                                                        <TooltipTrigger asChild>
+                                                            <ExclamationTriangleIcon className="h-[24px] pt-[0.1rem]" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>
+                                                                Requires
+                                                                restarting the
+                                                                app
+                                                            </p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                    )
+                                }
+                            )}
                         </div>
                     </div>
                 </TabsContent>
@@ -373,6 +349,7 @@ function Settings() {
                                 </p>
                             </div>
                         </div>
+
                         <div className="no-drag ml-auto mr-5 mt-1 grid auto-cols-max grid-flow-col">
                             <div className="auto-cols-2 grid grid-flow-col">
                                 <p className="b-1 font-semi  mr-4 text-sm">
@@ -477,11 +454,7 @@ grid-cols-2"
                                                     <SelectItem
                                                         value={k}
                                                         key={k}
-                                                        className={`${
-                                                            v == currSinkId
-                                                                ? 'bg-red-400/50'
-                                                                : 'bg-white/20'
-                                                        } mt-1`}
+                                                        className={`mt-1`}
                                                         onClick={() => {
                                                             setAudioOutput(k)
                                                         }}
