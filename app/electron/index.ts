@@ -8,6 +8,7 @@ import {
     dialog,
     Menu,
     shell,
+    nativeImage,
 } from 'electron'
 import isDev from 'electron-is-dev'
 import * as mm from 'music-metadata'
@@ -25,9 +26,9 @@ interface Playlist {
 const WIN_HEIGHT = 450
 const WIN_HEIGHT_MAX = 600
 
-// const WIN_WIDTH_MIN = 450
+const WIN_WIDTH_MIN = 450
 // const WIN_WIDTH_MAX = 800
-const WIN_WIDTH_MIN = 800
+// const WIN_WIDTH_MIN = 800
 const WIN_WIDTH_MAX = 1200
 
 const HTML5_AUDIO = [
@@ -141,6 +142,10 @@ function createWindow() {
         framelessWindow: boolean
     }
     const WIN_HEIGHT_MIN = 85 + (!oldSettings.framelessWindow ? 30 : 0)
+    const appIcon = nativeImage.createFromPath(
+        join(__dirname, '../public/icon.png')
+    )
+    app.dock.setIcon(appIcon)
     const window = new BrowserWindow({
         height: 1,
         width: 1,
@@ -149,7 +154,7 @@ function createWindow() {
         resizable: true,
         fullscreenable: false,
         title: 'qmp',
-        icon: '/Users/iggy/Documents/GitHub/qmp/app/public/drawing.png',
+        icon: appIcon,
         minWidth: WIN_WIDTH_MIN,
         minHeight: WIN_HEIGHT_MIN,
         maxWidth: WIN_WIDTH_MAX,

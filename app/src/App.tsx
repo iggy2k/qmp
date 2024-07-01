@@ -832,7 +832,7 @@ function App() {
     }, [preampGain])
 
     return (
-        <div className="yellow flex h-[100vh] flex-col overflow-y-hidden bg-background">
+        <div className="flex h-[100vh] flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={

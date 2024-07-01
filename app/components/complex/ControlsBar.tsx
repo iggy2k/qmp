@@ -47,7 +47,7 @@ export function ControlsBar(controls: Controls) {
         preampGain,
     } = controls
     return (
-        <div className="mx-1 mt-1 flex flex-row justify-between pr-2 text-ring">
+        <div className="mx-1 mt-0 flex flex-row justify-between pr-2 text-ring">
             <div className="flex">
                 <div className="m-0.5 h-[24px] cursor-pointer">
                     <div className="">

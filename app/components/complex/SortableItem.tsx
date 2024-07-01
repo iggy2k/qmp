@@ -60,6 +60,9 @@ export function SortableItem(props: {
                         { 'pt-1': index == 0 },
                         { 'pb-1': index == data.trackList.length - 1 }
                     )}
+                    onClick={() => {
+                        openFile(trackData.file, true, index)
+                    }}
                 >
                     <div
                         className={cn(
@@ -75,9 +78,6 @@ export function SortableItem(props: {
                                         activePlaylists.playing,
                             }
                         )}
-                        onClick={() => {
-                            openFile(trackData.file, true, index)
-                        }}
                     >
                         {trackData && trackData.cover ? (
                             <img

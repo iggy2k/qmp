@@ -4,6 +4,7 @@ import { ImageIcon } from '@radix-ui/react-icons'
 import React, { useEffect, useRef } from 'react'
 import { secondsToDhmsShort } from '@//src/helpers'
 import { Track } from '@/src/App'
+import { cn } from '@/lib/utils'
 
 export function TrackArea({
     currentSong,
@@ -190,11 +191,17 @@ export function TrackArea({
                     {currentSong && currentSong.cover ? (
                         <img
                             ref={trackCoverRef}
-                            className="no-drag transition-[ transition-property: transform, shadow, opacity; transition-timing-function:
-                    cubic-bezier(0.4, 0, 0.2, 1);
-                    transition-duration: 150ms;] ml-[0.1rem] rounded-lg duration-150
-                    hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)] 
-                    "
+                            className={cn(
+                                'no-drag transition-[ transition-property: transform, shadow, opacity; transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;] ml-[0.1rem] duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)]',
+                                {
+                                    'animate-[spin_15s_linear_infinite] rounded-full':
+                                        !audio.paused,
+                                },
+                                {
+                                    'pause animate-[spin_15s_linear_infinite] rounded-full':
+                                        audio.paused,
+                                }
+                            )}
                             src={currentSong ? currentSong.cover : ''}
                             onClick={() => {
                                 currentSong &&
