@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 
 export function TrackArea({
     currentSong,
+    currentCover,
     trackCoverRef,
     settings,
     downloadCover,
@@ -19,6 +20,7 @@ export function TrackArea({
     analyser,
 }: {
     currentSong: Track | null
+    currentCover: string
     trackCoverRef: React.MutableRefObject<HTMLImageElement | null>
     settings: {
         useCover: boolean
@@ -202,7 +204,13 @@ export function TrackArea({
                                         audio.paused,
                                 }
                             )}
-                            src={currentSong ? currentSong.cover : ''}
+                            src={
+                                currentCover
+                                    ? currentCover
+                                    : currentSong
+                                      ? currentSong.cover
+                                      : ''
+                            }
                             onClick={() => {
                                 currentSong &&
                                 currentSong.cover &&

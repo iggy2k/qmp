@@ -32,6 +32,8 @@ export function Equalizer({
     useEffect(() => {
         console.log('Equalizer')
     }, [])
+    const [open, setOpen] = useState(false)
+
     const changeBands = (num: number[], idx: number) => {
         if (!snapBand) {
             setFilterGains(
@@ -67,9 +69,17 @@ export function Equalizer({
         }
     }
     return (
-        <Popover>
+        <Popover open={open}>
             <PopoverTrigger asChild>
-                <MixerVerticalIcon className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground" />
+                <MixerVerticalIcon
+                    className={cn(
+                        'no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground',
+                        { 'text-destructive': open }
+                    )}
+                    onClick={() => {
+                        setOpen((open) => !open)
+                    }}
+                />
             </PopoverTrigger>
             <PopoverContent className="ml-8 h-[210px] w-[400px] bg-background">
                 <p className="text-xs text-foreground">Equalizer</p>

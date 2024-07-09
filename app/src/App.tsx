@@ -280,6 +280,8 @@ function App() {
     const [repeat, setRepeat] = useState(false)
     const [sessionRestored, setSessionRestored] = useState(false)
     const [lastFile, setLastFile] = useState('')
+    // Full resolution version of the cover to be displayed at the top
+    const [currentCover, setCurrentCover] = useState('')
     const [lastIndex, setLastIndex] = useState(-1)
     const [closedBothPlaylists, setClosedBothPlaylists] = useState(false)
 
@@ -341,6 +343,8 @@ function App() {
             window.Main.setLastOpenDir(activePlaylists.viewing)
             window.Main.setOldFile(file)
             window.Main.setOldIndex(index)
+
+            window.Main.send('get-full-cover-tm', file)
         },
         [activePlaylists.playing, activePlaylists.viewing, activeTracks]
     )
@@ -619,6 +623,10 @@ function App() {
             setAudioOutput(deviceId)
         })
 
+        window.Main.receive('get-full-cover-fm', (cover: string) => {
+            setCurrentCover(cover)
+        })
+
         // window.Main.receive(
         //     'get-old-ui-colors-fm',
         //     (UIColors: {
@@ -832,7 +840,7 @@ function App() {
     }, [preampGain])
 
     return (
-        <div className="flex h-[100vh] flex-col overflow-y-hidden bg-background">
+        <div className=" flex h-[100vh] flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
@@ -852,6 +860,7 @@ function App() {
             >
                 <TrackArea
                     currentSong={currentSong}
+                    currentCover={currentCover}
                     trackCoverRef={trackCoverRef}
                     settings={settings}
                     downloadCover={downloadCover}

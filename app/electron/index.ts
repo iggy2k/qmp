@@ -121,6 +121,22 @@ async function openFiles(files: string[]) {
     return [res1, res3]
 }
 
+async function getFullRezCover(file: string) {
+    const fileMetaData = await mm.parseFile(file)
+    let cover = ''
+
+    if (mm.selectCover(fileMetaData.common.picture)) {
+        cover =
+            mm
+                .selectCover(fileMetaData.common.picture)
+                ?.data.toString('base64') || ''
+    }
+    if (!cover) {
+        return ''
+    }
+    return `data:image/jpeg;base64,${cover}`
+}
+
 function rreaddirSync(dir: string, allFiles: string[] = []) {
     const files = fs.readdirSync(dir).map((f) => join(dir, f))
 
@@ -304,6 +320,12 @@ function createWindow() {
         const UIColors = store.get('old_ui_colors')
         DEBUG && console.log('get-old-ui-colors-tm ' + JSON.stringify(UIColors))
         window.webContents.send('get-old-ui-colors-fm', UIColors)
+    })
+
+    ipcMain.on('get-full-cover-tm', (_, file: string) => {
+        getFullRezCover(file).then((cover: string) => {
+            window.webContents.send('get-full-cover-fm', cover)
+        })
     })
 
     ipcMain.on('open-dir-tm', (_, args: unknown[]) => {
@@ -527,7 +549,7 @@ function createWindow() {
             // This doesn't
             // settings?.loadFile(url + '#/settings')
         }
-        settings?.webContents.openDevTools()
+        // settings?.webContents.openDevTools()
         settings?.show()
     })
 

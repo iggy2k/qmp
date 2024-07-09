@@ -46,6 +46,8 @@ const validChannels = [
     'add-tracks-to-playlist-fm',
     'remove-track-from-playlist-tm',
     'remove-track-from-playlist-fm',
+    'get-full-cover-tm',
+    'get-full-cover-fm',
 ]
 
 const api = {
