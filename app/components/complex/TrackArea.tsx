@@ -194,15 +194,7 @@ export function TrackArea({
                         <img
                             ref={trackCoverRef}
                             className={cn(
-                                'no-drag transition-[ transition-property: transform, shadow, opacity; transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;] ml-[0.1rem] duration-150 hover:scale-110 hover:shadow-[0_10px_20px_rgba(0,_0,_0,_0.7)]',
-                                {
-                                    'animate-[spin_15s_linear_infinite] rounded-full':
-                                        !audio.paused,
-                                },
-                                {
-                                    'pause animate-[spin_15s_linear_infinite] rounded-full':
-                                        audio.paused,
-                                }
+                                'no-drag z-50 ml-[0.1rem] w-[48px] transform-gpu cursor-pointer rounded-md border-2 border-primary duration-200 hover:absolute'
                             )}
                             src={
                                 currentCover
@@ -226,80 +218,75 @@ export function TrackArea({
                             }
                         />
                     ) : (
-                        <ImageIcon className="drag ml-[0.1rem] h-[48px] w-[48px] rounded-[10px]" />
+                        <ImageIcon className="drag ml-[0.1rem] h-[48px] w-[48px] rounded-[10px] text-primary" />
                     )}
                 </div>
             </div>
-            <div className="ml-1 mt-2 flex-1 text-foreground">
-                <div className="flex flex-row">
-                    <div>
+            <div className="ml-1 mt-2 flex flex-1 flex-col text-foreground ">
+                <div className="mr-2">
+                    {!currentSong ||
+                        (currentSong && !currentSong.file && (
+                            <p className="no-drag text-xs">
+                                Track name will be here
+                            </p>
+                        ))}
+                    <p className="no-drag w-full overflow-hidden overflow-ellipsis whitespace-nowrap text-xs">
+                        {currentSong &&
+                            currentSong.file &&
+                            currentSong.file
+                                .split('/')
+                                .reverse()[0]
+                                .replace(/\.[^/.]+$/, '')}
+                    </p>
+                    <div className="no-drag w-full overflow-hidden overflow-ellipsis whitespace-nowrap text-xs text-foreground/60">
                         {!currentSong ||
                             (currentSong && !currentSong.file && (
-                                <p className="no-drag text-xs">
-                                    Track name will be here
-                                </p>
+                                <p>Album name will be here</p>
                             ))}
-                        <p className="no-drag text-xs">
-                            {currentSong &&
-                                currentSong.file &&
-                                currentSong.file
-                                    .split('/')
-                                    .reverse()[0]
-                                    .replace(/\.[^/.]+$/, '')}
-                        </p>
-                        <div className="drag flex flex-row text-xs">
-                            {!currentSong ||
-                                (currentSong && !currentSong.file && (
-                                    <p>Album name will be here</p>
-                                ))}
-                            {currentSong && currentSong.album && (
-                                <p>{currentSong.album}</p>
-                            )}
-                        </div>
+                        {currentSong && currentSong.album && (
+                            <p>{currentSong.album}</p>
+                        )}
                     </div>
-                    <svg
-                        id="svg"
-                        // !!! text-primary is referenced to draw visualizer
-                        className="ml-auto mr-3 bg-transparent text-primary"
-                        ref={svgRef}
-                    ></svg>
                 </div>
 
-                <div className="flex w-full flex-row">
-                    <Slider
-                        defaultValue={[0]}
-                        value={[progress]}
-                        className="no-drag w-[calc(100%_-_125px)] bg-inherit"
-                        min={0}
-                        max={PROGRESS_BAR_PRECISION}
-                        step={0.001}
-                        onValueChange={(num) => {
-                            if (audio) {
-                                const userInputProgress = num[0]
-                                const userInputTime = Math.trunc(
-                                    (userInputProgress /
-                                        PROGRESS_BAR_PRECISION) *
-                                        audio.duration
-                                )
+                <Slider
+                    defaultValue={[0]}
+                    value={[progress]}
+                    className="no-drag flex-1 bg-inherit pr-2"
+                    min={0}
+                    max={PROGRESS_BAR_PRECISION}
+                    step={0.001}
+                    onValueChange={(num) => {
+                        if (audio) {
+                            const userInputProgress = num[0]
+                            const userInputTime = Math.trunc(
+                                (userInputProgress / PROGRESS_BAR_PRECISION) *
+                                    audio.duration
+                            )
 
-                                if (
-                                    !Number.isNaN(userInputTime) &&
-                                    userInputTime !== Infinity
-                                ) {
-                                    setProgress(userInputProgress)
-                                    setSeek(userInputTime)
-                                }
+                            if (
+                                !Number.isNaN(userInputTime) &&
+                                userInputTime !== Infinity
+                            ) {
+                                setProgress(userInputProgress)
+                                setSeek(userInputTime)
                             }
-                        }}
-                    />
-
-                    <p className="mr-2 flex-1 pr-1 text-right text-xs font-light">
-                        {secondsToDhmsShort(audio.currentTime)}
-                        &nbsp;/&nbsp;
-                        {currentSong &&
-                            secondsToDhmsShort(currentSong.duration)}
-                    </p>
-                </div>
+                        }
+                    }}
+                />
+            </div>
+            <div className="flex-0 w-26 mr-2 mt-2  justify-center align-middle">
+                <svg
+                    id="svg"
+                    // !!! text-primary is referenced to draw visualizer
+                    className="mt-1 text-primary"
+                    ref={svgRef}
+                ></svg>
+                <p className="flex-1 pr-1 text-center text-xs font-light text-foreground">
+                    {secondsToDhmsShort(audio.currentTime)}
+                    &nbsp;/&nbsp;
+                    {currentSong && secondsToDhmsShort(currentSong.duration)}
+                </p>
             </div>
         </div>
     )

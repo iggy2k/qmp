@@ -50,6 +50,8 @@ function Settings() {
     const [refrashMediaDevices, setRefreshMediaDevices] = useState(false)
     const [currSinkId, setCurrSinkId] = useState('')
 
+    const [theme, setTheme] = useState('')
+
     const [background, setBackground] = useState('')
     const [accent, setAccent] = useState('')
     const [text, setText] = useState('')
@@ -216,14 +218,16 @@ function Settings() {
     ]
 
     return (
-        <div className=" drag h-[100vh] w-full overflow-hidden bg-background">
+        <div
+            className={`${theme} drag h-[100vh] w-full overflow-hidden bg-background text-foreground`}
+        >
             <Tabs defaultValue="Features" className="w-full ">
                 <TabsList className="w-full rounded-none ">
                     <TabsTrigger className="w-1/3" value="Features">
                         Features
                     </TabsTrigger>
-                    <TabsTrigger className="w-1/3" value="Interface">
-                        Interface
+                    <TabsTrigger className="w-1/3" value="Theme">
+                        Theme
                     </TabsTrigger>
                     <TabsTrigger className="w-1/3" value="Audio">
                         Audio
@@ -291,126 +295,40 @@ function Settings() {
                         </div>
                     </div>
                 </TabsContent>
-                <TabsContent value="Interface">
-                    <div className="place-items-left m-1 grid grid-flow-row grid-cols-2 rounded-md p-2">
-                        <div className="no-drag ml-5 mt-1 flex flex-row">
-                            <div
-                                className={
-                                    `h-[20px] w-[35px]` +
-                                    (selected == 'background'
-                                        ? ` border-2`
-                                        : '')
-                                }
-                                style={{
-                                    backgroundColor: `${background}`,
-                                    borderColor: `${invertColor(background)}`,
-                                }}
-                                onClick={() => setSelected('background')}
-                            ></div>
-                            <div>
-                                <p className="b-1 font-semi  ml-4 text-sm">
-                                    Background
-                                </p>
-                            </div>
-                        </div>
-                        <div className="no-drag ml-auto mr-5 mt-1 grid auto-cols-max grid-flow-col">
-                            <div className="">
-                                <p className="b-1 font-semi  mr-4 text-sm">
-                                    Accent
-                                </p>
-                            </div>
-                            <div
-                                className={
-                                    `h-[20px] w-[35px]` +
-                                    (selected == 'accent' ? ` border-2` : '')
-                                }
-                                style={{
-                                    backgroundColor: `${accent}`,
-                                    borderColor: `${invertColor(accent)}`,
-                                }}
-                                onClick={() => setSelected('accent')}
-                            ></div>
-                        </div>
-                        <div className="no-drag ml-5 mt-1 grid auto-cols-max grid-flow-col">
-                            <div
-                                className={
-                                    `h-[20px] w-[35px]` +
-                                    (selected == 'text' ? ` border-2` : '')
-                                }
-                                style={{
-                                    backgroundColor: `${text}`,
-                                    borderColor: `${invertColor(text)}`,
-                                }}
-                                onClick={() => setSelected('text')}
-                            ></div>
-                            <div className="auto-cols-2 grid grid-flow-col">
-                                <p className="b-1 font-semi  ml-4 text-sm">
-                                    Text
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="no-drag ml-auto mr-5 mt-1 grid auto-cols-max grid-flow-col">
-                            <div className="auto-cols-2 grid grid-flow-col">
-                                <p className="b-1 font-semi  mr-4 text-sm">
-                                    Alt text
-                                </p>
-                            </div>
-                            <div
-                                className={
-                                    `h-[20px] w-[35px]` +
-                                    (selected == 'altText' ? ` border-2` : '')
-                                }
-                                style={{
-                                    backgroundColor: `${altText}`,
-                                    borderColor: `${invertColor(altText)}`,
-                                }}
-                                onClick={() => setSelected('altText')}
-                            ></div>
-                        </div>
-
-                        <div
-                            className="my-4 ml-5 grid max-h-[110px] grid-flow-col
-grid-cols-2"
+                <TabsContent value="Theme">
+                    <div className=" ml-3 mt-3 flex flex-col gap-3">
+                        <Button
+                            className="no-drag ml-3 flex h-8 w-32"
+                            variant="outline"
+                            onClick={() => {
+                                setTheme('')
+                            }}
                         >
-                            <HexColorPicker
-                                className="no-drag max-h-[120px] max-w-[240px]"
-                                color={
-                                    selected == 'background'
-                                        ? background
-                                        : selected == 'accent'
-                                          ? accent
-                                          : selected == 'text'
-                                            ? text
-                                            : selected == 'altText'
-                                              ? altText
-                                              : '#000000'
-                                }
-                                onChange={
-                                    selected == 'background'
-                                        ? setBackground
-                                        : selected == 'accent'
-                                          ? setAccent
-                                          : selected == 'text'
-                                            ? setText
-                                            : selected == 'altText'
-                                              ? setAltText
-                                              : () => null
-                                }
-                            />
-                        </div>
+                            White
+                            <div className="ml-auto mr-0 h-4 w-4 rounded-full border-2 border-border bg-white"></div>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="no-drag ml-3 flex h-8 w-32"
+                            onClick={() => {
+                                setTheme('yellow')
+                            }}
+                        >
+                            Yellow
+                            <div className="ml-auto mr-0 h-4 w-4 rounded-full border-2 border-border bg-yellow-400"></div>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="no-drag ml-3 flex h-8 w-32"
+                            onClick={() => {
+                                setTheme('red')
+                            }}
+                        >
+                            Red
+                            <div className="ml-auto mr-0 h-4 w-4 rounded-full border-2 border-border bg-red-400"></div>
+                        </Button>
 
-                        <div className="ml-10 mr-auto flex w-[50%] flex-col justify-center space-y-4 pt-1">
-                            <Button
-                                onClick={() => {
-                                    setRandomColors()
-                                }}
-                                variant="outline"
-                                className="no-drag"
-                            >
-                                Randomize
-                            </Button>
-
+                        <div className="w-full content-center items-center ">
                             <Button
                                 onClick={() => {
                                     setOldUIColors()
@@ -426,9 +344,7 @@ grid-cols-2"
                 </TabsContent>
                 <TabsContent value="Audio">
                     <div className=" pl-2">
-                        <Label className="text-foreground" htmlFor="source">
-                            Audio Source
-                        </Label>
+                        <Label htmlFor="source">Audio Source</Label>
                         <div className=" text-sm font-light">
                             <div className="flex gap-x-1">
                                 <Select>
@@ -454,7 +370,7 @@ grid-cols-2"
                                                     <SelectItem
                                                         value={k}
                                                         key={k}
-                                                        className={`mt-1`}
+                                                        className={`mt-1 cursor-pointer`}
                                                         onClick={() => {
                                                             setAudioOutput(k)
                                                         }}

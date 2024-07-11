@@ -74,7 +74,7 @@ export function Equalizer({
                 <MixerVerticalIcon
                     className={cn(
                         'no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground',
-                        { 'text-destructive': open }
+                        { 'text-foreground/30': open }
                     )}
                     onClick={() => {
                         setOpen((open) => !open)

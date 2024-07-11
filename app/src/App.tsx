@@ -375,38 +375,6 @@ function App() {
         }
     }
 
-    // Update the colors for the dynamic gradient of the current track
-    function updateColors() {
-        trackCoverRef.current &&
-            prominent(trackCoverRef.current, { amount: 20 }).then((color) => {
-                const topColors: Record<string, number> = {}
-                if (Array.isArray(color)) {
-                    for (const element of color as number[][]) {
-                        const hex = rgbToHex(element[0], element[1], element[2]) // Get luminance via rbg magic coefficients
-                        topColors[hex] =
-                            element[0] * 0.299 +
-                            element[1] * 0.587 +
-                            element[2] * 0.114
-                    }
-                }
-
-                const keys = Object.keys(topColors)
-
-                keys.sort(
-                    (a, b) =>
-                        grayness(b) - grayness(a) ||
-                        Math.abs(topColors[b] - topColors[a])
-                )
-
-                setColors([
-                    keys[0] || '#333333',
-                    keys[6] || '#333333',
-                    keys[12] || '#333333',
-                    keys[18] || '#333333',
-                ])
-            })
-    }
-
     const mute = () => {
         setPreMuteVolume(volume)
         setVolume(0)
@@ -794,8 +762,51 @@ function App() {
 
     // Update dynamic colors
     useEffect(() => {
+        // Update the colors for the dynamic gradient of the current track
+        const updateColors = () => {
+            let img
+            if (trackCoverRef.current) {
+                img = trackCoverRef.current
+            }
+            if (currentCover) {
+                img = new Image()
+                img.src = currentCover
+            }
+            img &&
+                prominent(img, { amount: 20 }).then((color) => {
+                    const topColors: Record<string, number> = {}
+                    if (Array.isArray(color)) {
+                        for (const element of color as number[][]) {
+                            const hex = rgbToHex(
+                                element[0],
+                                element[1],
+                                element[2]
+                            ) // Get luminance via rbg magic coefficients
+                            topColors[hex] =
+                                element[0] * 0.299 +
+                                element[1] * 0.587 +
+                                element[2] * 0.114
+                        }
+                    }
+
+                    const keys = Object.keys(topColors)
+
+                    keys.sort(
+                        (a, b) =>
+                            grayness(b) - grayness(a) ||
+                            Math.abs(topColors[b] - topColors[a])
+                    )
+
+                    setColors([
+                        keys[0] || '#333333',
+                        keys[6] || '#333333',
+                        keys[12] || '#333333',
+                        keys[18] || '#333333',
+                    ])
+                })
+        }
         updateColors()
-    }, [currentSong])
+    }, [currentSong, currentCover])
 
     useEffect(() => {
         if (progress === PROGRESS_BAR_PRECISION && !repeat) {
@@ -840,7 +851,7 @@ function App() {
     }, [preampGain])
 
     return (
-        <div className=" flex h-[100vh] flex-col overflow-y-hidden bg-background">
+        <div className="red flex h-[100vh] flex-col overflow-y-hidden bg-background">
             {settings.framelessWindow && <CloseOrCollapse />}
             <div
                 style={
