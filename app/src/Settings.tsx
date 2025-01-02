@@ -234,8 +234,8 @@ function Settings() {
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="Features">
-                    <div className="auto-cols-2 m-1 grid grid-flow-col  p-1 pb-9 transition-opacity">
-                        <div className="no-drag flex flex-col space-y-1 p-2">
+                    <div className="auto-cols-2 m-1 grid grid-flow-col p-1 pb-9 transition-opacity">
+                        <div className="no-drag flex flex-col space-y-3 p-2">
                             {featuresToggles.map(
                                 (feature: {
                                     display: string
@@ -348,10 +348,10 @@ function Settings() {
                         <div className=" text-sm font-light">
                             <div className="flex gap-x-1">
                                 <Select>
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="red w-[180px]">
                                         <SelectValue placeholder={'Select'} />
                                     </SelectTrigger>
-                                    <SelectContent className="max-h-[150px]">
+                                    <SelectContent className="red max-h-[150px]">
                                         {Object.entries(mediaDevices).map(
                                             ([k, v]) => {
                                                 let deviceName = v

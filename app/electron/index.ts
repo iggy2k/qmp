@@ -18,6 +18,15 @@ import Store from 'electron-store'
 import sharp from 'sharp'
 import { IAudioMetadata } from 'music-metadata'
 
+export interface Settings {
+    useCover: boolean
+    movingColors: boolean
+    downloadCover: boolean
+    transparentInactive: boolean
+    bottomBar: boolean
+    framelessWindow: boolean
+}
+
 interface Playlist {
     name: string
     tracks: string[]
@@ -46,10 +55,13 @@ const HTML5_AUDIO = [
 let resized = true
 const store = new Store()
 
-const DEBUG = false
+const DEBUG = true
 
-if (!store.get('all_dirs') || (store.get('all_dirs') as string[]).length < 1) {
-    store.set('all_dirs', [])
+if (
+    !store.get('playlists') ||
+    (store.get('playlists') as Playlist[]).length < 1
+) {
+    store.set('playlists', [])
 }
 
 if (!store.get('settings')) {
@@ -289,24 +301,11 @@ function createWindow() {
         settings.webContents.send('get-old-ui-colors-fm', UIColors)
     })
 
-    ipcMain.on(
-        'set-settings-tm',
-        (
-            _,
-            settings: {
-                useCover: boolean
-                movingColors: boolean
-                downloadCover: boolean
-                transparentInactive: boolean
-                bottomBar: boolean
-                framelessWindow: boolean
-            }
-        ) => {
-            DEBUG && console.log('set-settings-tm ' + JSON.stringify(settings))
-            store.set('settings', settings)
-            window.webContents.send('set-settings-fm', settings)
-        }
-    )
+    ipcMain.on('set-settings-tm', (_, settings: Settings) => {
+        DEBUG && console.log('set-settings-tm ' + JSON.stringify(settings))
+        store.set('settings', settings)
+        window.webContents.send('set-settings-fm', settings)
+    })
 
     ipcMain.on('get-settings-tm', () => {
         const oldSettings = store.get('settings')
@@ -401,14 +400,6 @@ function createWindow() {
 
         if (!dir) {
             return
-        }
-
-        const obj = store.get('all_dirs') as string[]
-
-        if (obj && typeof dir == 'string' && !obj.includes(dir)) {
-            store.set('all_dirs', obj.concat([dir]))
-        } else {
-            store.set('all_dirs', [dir])
         }
 
         let file_list = rreaddirSync(dir, [])
@@ -574,7 +565,9 @@ function createWindow() {
         if (!last_open_dir || !last_file) {
             return
         }
-        const past_dirs = store.get('all_dirs') as string[]
+        const past_playlists = store.get('playlists') as Playlist[]
+
+        const past_dirs = past_playlists.map((pl: Playlist) => pl.name)
 
         DEBUG &&
             console.log(
@@ -611,18 +604,6 @@ function createWindow() {
     )
 
     ipcMain.on('remove-dir', (_, dir: string) => {
-        const obj = store.get('all_dirs') as string[]
-
-        DEBUG && console.log(`before removing ${dir} = ${obj}`)
-
-        const filteredDirs = obj.filter(function (e) {
-            return e !== dir
-        })
-
-        DEBUG && console.log(`after removing ${dir} = ${filteredDirs}`)
-
-        store.set('all_dirs', filteredDirs)
-
         const playlists = store.get('playlists') as Playlist[]
 
         const filteredPlaylists = playlists.filter(function (e: Playlist) {

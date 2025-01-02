@@ -59,13 +59,13 @@ export function TrackArea({
         let g = document.createElementNS(svgNS, 'g')
 
         let frame = 0
-        const framesToInterpolate = 4
+        const framesToInterpolate = 3
         const magicConst = 1 / framesToInterpolate
         let animation = 0
         const width = 96
         const height = 32
         const maxHeight = Math.max(height * 0.3, 48)
-        const choke = 70
+        const choke = 95
 
         // audio.addEventListener('canplay', () => {
 
@@ -93,14 +93,16 @@ export function TrackArea({
             const polyline = document.createElementNS(svgNS, 'polyline')
             const throttledRatio = (freqValue - choke) / (255 - choke)
             // let strokeWidth = (width / freqCount) * throttledRatio + 1
-            const strokeWidth = 2
+            const strokeWidth = 1.5
             const throttledY = Math.max(throttledRatio, 0) * maxHeight
+            // const throttledY = 0
             const fallback_color = '#000000'
 
-            const loc_x = x - strokeWidth / 2,
-                loc_y1 = y - throttledY / 2,
-                loc_y2 = y + throttledY / 2,
-                x_offset = throttledRatio
+            const loc_x = x - strokeWidth / 2
+            const loc_y1 = y - throttledY / 2
+            const loc_y2 = y + throttledY / 2
+            const x_offset = 0
+            // const x_offset = throttledRatio
 
             if (throttledRatio > 0) {
                 const point_1 = loc_x - x_offset + ',' + loc_y1,
@@ -187,7 +189,7 @@ export function TrackArea({
     }, [analyser])
 
     return (
-        <div className="flex">
+        <div className="flex justify-between">
             <div className="no-drag p-2 pb-0">
                 <div className="h-[48px] w-[48px] flex-none">
                     {currentSong && currentSong.cover ? (
@@ -222,7 +224,7 @@ export function TrackArea({
                     )}
                 </div>
             </div>
-            <div className="ml-1 mt-2 flex flex-1 flex-col text-foreground ">
+            <div className="ml-1 mt-2 flex min-w-0 flex-1 flex-col text-foreground">
                 <div className="mr-2">
                     {!currentSong ||
                         (currentSong && !currentSong.file && (
@@ -238,17 +240,14 @@ export function TrackArea({
                                 .reverse()[0]
                                 .replace(/\.[^/.]+$/, '')}
                     </p>
-                    <div className="no-drag w-full overflow-hidden overflow-ellipsis whitespace-nowrap text-xs text-foreground/60">
+                    <p className="no-drag w-full overflow-hidden overflow-ellipsis whitespace-nowrap break-words text-xs text-foreground/60">
                         {!currentSong ||
-                            (currentSong && !currentSong.file && (
-                                <p>Album name will be here</p>
-                            ))}
-                        {currentSong && currentSong.album && (
-                            <p>{currentSong.album}</p>
-                        )}
-                    </div>
+                            (currentSong &&
+                                !currentSong.file &&
+                                'Album name will be here')}
+                        {currentSong && currentSong.album && currentSong.album}
+                    </p>
                 </div>
-
                 <Slider
                     defaultValue={[0]}
                     value={[progress]}
@@ -275,7 +274,7 @@ export function TrackArea({
                     }}
                 />
             </div>
-            <div className="flex-0 w-26 mr-2 mt-2  justify-center align-middle">
+            <div className="w-26 mr-2 mt-2 flex-none  justify-center align-middle">
                 <svg
                     id="svg"
                     // !!! text-primary is referenced to draw visualizer

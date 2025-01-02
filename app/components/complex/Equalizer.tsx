@@ -81,7 +81,7 @@ export function Equalizer({
                     }}
                 />
             </PopoverTrigger>
-            <PopoverContent className="ml-8 h-[210px] w-[400px] bg-background">
+            <PopoverContent className="red ml-8 h-[210px] w-[400px] bg-background">
                 <p className="text-xs text-foreground">Equalizer</p>
                 <div className="mt-1 flex flex-row justify-evenly">
                     <div

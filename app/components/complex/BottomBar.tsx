@@ -2,14 +2,13 @@ import React from 'react'
 import { secondsToDhms } from '@/src/helpers'
 
 import { TrackCouple, PlaylistCouple, IndexCouple, Track } from '@/src/App'
+import { cn } from '@/lib/utils'
 
 export function BottomBar({
-    play,
     activeTracks,
     activePlaylists,
     playlistIndices,
 }: {
-    play: boolean
     activeTracks: TrackCouple
     activePlaylists: PlaylistCouple
     playlistIndices: IndexCouple
@@ -30,13 +29,17 @@ export function BottomBar({
                           )
                         : '0d 0h 0m 0s'}
                 </p>
-                <div className="mr-1 inline-block w-[33%] flex-none ">
+                <div className="f mr-1 inline-block w-[33%] flex-none">
                     <p className="overflow-hidden text-ellipsis whitespace-nowrap text-center text-xs">
-                        {`${play ? 'Playing' : 'Paused'} ${
-                            activePlaylists.viewing == activePlaylists.playing
-                                ? 'current'
-                                : 'other'
-                        } folder`}
+                        <span
+                            className={cn('text-foreground', {
+                                'text-foreground/50':
+                                    activePlaylists.playing !=
+                                    activePlaylists.viewing,
+                            })}
+                        >
+                            {activePlaylists.playing.split('/').pop()}
+                        </span>
                     </p>
                 </div>
                 <div className="mr-1 inline-block w-[33%] flex-none ">

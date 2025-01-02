@@ -47,7 +47,7 @@ import { IAudioMetadata } from 'music-metadata'
 
 const PROGRESS_BAR_PRECISION = 1000
 
-const audio = new Audio() as HTMLAudioElement & {
+const audioObj = new Audio() as HTMLAudioElement & {
     setSinkId(deviceId: string): void
     sinkId: string
 }
@@ -58,7 +58,7 @@ analyser.minDecibels = -90
 analyser.maxDecibels = -10
 analyser.smoothingTimeConstant = 1.0
 analyser.fftSize = 128
-const sourceNode = audioContext.createMediaElementSource(audio)
+const sourceNode = audioContext.createMediaElementSource(audioObj)
 const gainNode = audioContext.createGain()
 const filters: BiquadFilterNode[] = []
 const freqs = [32, 64, 125, 500, 1000, 2000, 4000, 8000, 16000]
@@ -93,8 +93,8 @@ analyser.connect(gainNode)
 gainNode.connect(audioContext.destination)
 
 async function setAudioOutput(deviceId: string) {
-    await audio.setSinkId(deviceId)
-    window.Main.send('get-audio-output-tm', audio.sinkId)
+    await audioObj.setSinkId(deviceId)
+    window.Main.send('get-audio-output-tm', audioObj.sinkId)
 }
 
 export interface Track {
@@ -108,6 +108,8 @@ export interface Track {
     cover: string | null
     file: string
 }
+
+import { Settings } from '@/electron/index'
 
 export interface TrackCouple {
     viewing: Track[]
@@ -152,6 +154,13 @@ export interface Controls {
 
 function App() {
     const [activeId, setActiveId] = useState<string | null>(null)
+
+    const [audio] = useState<
+        HTMLAudioElement & {
+            setSinkId(deviceId: string): void
+            sinkId: string
+        }
+    >(audioObj)
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -351,13 +360,22 @@ function App() {
 
     const togglePlay = () => {
         if (audio) {
+            console.log('togglePlay', audio.paused)
             if (audio.paused) {
-                audio.play()
-                setPlay(true)
+                const playPromise = audio.play()
+
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {})
+                        .catch((e) => {
+                            console.log(e)
+                        })
+                }
             } else {
                 audio.pause()
-                setPlay(false)
             }
+        } else {
+            console.log('togglePlay no audio')
         }
     }
 
@@ -511,6 +529,29 @@ function App() {
         window.Main.send('open-settings-tm', null)
     }
 
+    function audioTimeUpdate() {
+        if (audio) {
+            const frac = audio.currentTime / audio.duration
+            if (frac !== Infinity) {
+                setProgress(Math.trunc(frac * PROGRESS_BAR_PRECISION))
+            }
+        }
+    }
+
+    useEffect(() => {
+        audio.addEventListener('play', () => {
+            setPlay(true)
+        })
+        audio.addEventListener('timeupdate', audioTimeUpdate)
+        audio.addEventListener('pause', () => {
+            setPlay(false)
+        })
+
+        return () => {
+            audio.pause()
+        }
+    }, [])
+
     // Restore old dir and song after restore-session-fm is received
     useEffect(() => {
         if (
@@ -559,7 +600,6 @@ function App() {
             audio.play()
         } else if (audio.paused && !play) {
             audio.pause()
-            setPlay(false)
         }
     }, [
         playlistIndices,
@@ -571,18 +611,6 @@ function App() {
 
     // Normal way of using react with listeners
     useEffect(() => {
-        audio.ontimeupdate = () => {
-            if (audio) {
-                const frac = audio.currentTime / audio.duration
-                if (frac !== Infinity) {
-                    const new_progress = Math.trunc(
-                        frac * PROGRESS_BAR_PRECISION
-                    )
-                    setProgress(new_progress)
-                }
-            }
-        }
-
         window.Main.send('restore-session-tm', null)
         window.Main.send('get-old-ui-colors-tm', null)
         window.Main.send('get-settings-tm', null)
@@ -607,32 +635,12 @@ function App() {
         //     }
         // )
 
-        window.Main.receive(
-            'set-settings-fm',
-            (newSettings: {
-                useCover: boolean
-                movingColors: boolean
-                downloadCover: boolean
-                transparentInactive: boolean
-                bottomBar: boolean
-                framelessWindow: boolean
-            }) => {
-                setSettings(newSettings)
-            }
-        )
-        window.Main.receive(
-            'get-settings-fm',
-            (newSettings: {
-                useCover: boolean
-                movingColors: boolean
-                downloadCover: boolean
-                transparentInactive: boolean
-                bottomBar: boolean
-                framelessWindow: boolean
-            }) => {
-                setSettings(newSettings)
-            }
-        )
+        window.Main.receive('set-settings-fm', (newSettings: Settings) => {
+            setSettings(newSettings)
+        })
+        window.Main.receive('get-settings-fm', (newSettings: Settings) => {
+            setSettings(newSettings)
+        })
 
         window.Main.receive(
             'restore-session-fm',
@@ -756,7 +764,7 @@ function App() {
             // otherwise they keep adding making the app unusable
             window.Main.removeAllListeners()
             // Pause on hot-reload
-            audio.pause()
+            // audio.pause()
         }
     }, [])
 
@@ -944,7 +952,7 @@ function App() {
                             <PlusIcon />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-40" side="left">
+                    <DropdownMenuContent className="red w-40" side="left">
                         <Button
                             className={cn(
                                 'no-drag w-full cursor-pointer bg-background text-foreground hover:text-background ',
@@ -1031,7 +1039,7 @@ function App() {
                         >
                             <FixedSizeList
                                 useIsScrolling
-                                overscanCount={10}
+                                overscanCount={50}
                                 ref={listRef}
                                 className={`scroll-smooth`}
                                 height={
@@ -1063,7 +1071,6 @@ function App() {
 
             {settings.bottomBar && (
                 <BottomBar
-                    play={play}
                     activeTracks={activeTracks}
                     activePlaylists={activePlaylists}
                     playlistIndices={playlistIndices}
