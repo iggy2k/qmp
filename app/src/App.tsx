@@ -47,7 +47,7 @@ import { IAudioMetadata } from 'music-metadata'
 
 const PROGRESS_BAR_PRECISION = 1000
 
-const audioObj = new Audio() as HTMLAudioElement & {
+const audio = new Audio() as HTMLAudioElement & {
     setSinkId(deviceId: string): void
     sinkId: string
 }
@@ -58,7 +58,7 @@ analyser.minDecibels = -90
 analyser.maxDecibels = -10
 analyser.smoothingTimeConstant = 1.0
 analyser.fftSize = 128
-const sourceNode = audioContext.createMediaElementSource(audioObj)
+const sourceNode = audioContext.createMediaElementSource(audio)
 const gainNode = audioContext.createGain()
 const filters: BiquadFilterNode[] = []
 const freqs = [32, 64, 125, 500, 1000, 2000, 4000, 8000, 16000]
@@ -93,8 +93,8 @@ analyser.connect(gainNode)
 gainNode.connect(audioContext.destination)
 
 async function setAudioOutput(deviceId: string) {
-    await audioObj.setSinkId(deviceId)
-    window.Main.send('get-audio-output-tm', audioObj.sinkId)
+    await audio.setSinkId(deviceId)
+    window.Main.send('get-audio-output-tm', audio.sinkId)
 }
 
 export interface Track {
@@ -133,11 +133,9 @@ export interface Controls {
     openSettings: () => void
     repeat: boolean
     setRepeat: React.Dispatch<React.SetStateAction<boolean>>
-    activeTracks: TrackCouple
-    playlistIndices: IndexCouple
     shuffle: boolean
     setShuffle: React.Dispatch<React.SetStateAction<boolean>>
-    openFile: (file: string, setSameDir: boolean, index: number) => void
+    playNextPrev: (next: boolean) => void
     play: boolean
     togglePlay: () => void
     volume: number
@@ -154,13 +152,6 @@ export interface Controls {
 
 function App() {
     const [activeId, setActiveId] = useState<string | null>(null)
-
-    const [audio] = useState<
-        HTMLAudioElement & {
-            setSinkId(deviceId: string): void
-            sinkId: string
-        }
-    >(audioObj)
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -342,8 +333,6 @@ function App() {
                 }
             }
 
-            setProgress(0)
-
             setPlaylistIndices((playlistIndices) => ({
                 viewing: playlistIndices.viewing,
                 playing: index,
@@ -356,6 +345,54 @@ function App() {
             window.Main.send('get-full-cover-tm', file)
         },
         [activePlaylists.playing, activePlaylists.viewing, activeTracks]
+    )
+
+    const playNextPrev = useCallback(
+        (next: boolean) => {
+            if (activeTracks.playing.length == 0) {
+                return null
+            }
+            const rand_idx = Math.floor(
+                Math.random() * activeTracks.playing.length
+            )
+            if (next) {
+                shuffle
+                    ? openFile(
+                          activeTracks.playing[rand_idx].file,
+                          false,
+                          rand_idx
+                      )
+                    : openFile(
+                          activeTracks.playing[
+                              (playlistIndices.playing + 1) %
+                                  activeTracks.playing.length
+                          ].file,
+                          false,
+                          (playlistIndices.playing + 1) %
+                              activeTracks.playing.length
+                      )
+            } else {
+                shuffle
+                    ? openFile(
+                          activeTracks.playing[rand_idx].file,
+                          false,
+                          rand_idx
+                      )
+                    : openFile(
+                          activeTracks.playing[
+                              playlistIndices.playing >= 1
+                                  ? playlistIndices.playing - 1
+                                  : activeTracks.playing.length - 1
+                          ].file,
+                          false,
+                          playlistIndices.playing >= 1
+                              ? playlistIndices.playing - 1
+                              : activeTracks.playing.length - 1
+                      )
+            }
+            return null
+        },
+        [activeTracks.playing, openFile, playlistIndices.playing, shuffle]
     )
 
     const togglePlay = () => {
@@ -529,16 +566,15 @@ function App() {
         window.Main.send('open-settings-tm', null)
     }
 
-    function audioTimeUpdate() {
-        if (audio) {
-            const frac = audio.currentTime / audio.duration
-            if (frac !== Infinity) {
-                setProgress(Math.trunc(frac * PROGRESS_BAR_PRECISION))
+    useEffect(() => {
+        const audioTimeUpdate = () => {
+            if (audio) {
+                const frac = audio.currentTime / audio.duration
+                if (frac !== Infinity) {
+                    setProgress(Math.trunc(frac * PROGRESS_BAR_PRECISION))
+                }
             }
         }
-    }
-
-    useEffect(() => {
         audio.addEventListener('play', () => {
             setPlay(true)
         })
@@ -547,10 +583,23 @@ function App() {
             setPlay(false)
         })
 
+        window.navigator.mediaSession.setActionHandler('nexttrack', () => {
+            playNextPrev(true)
+        })
+
+        window.navigator.mediaSession.setActionHandler('previoustrack', () => {
+            playNextPrev(false)
+        })
+
         return () => {
             audio.pause()
+            window.navigator.mediaSession.setActionHandler('nexttrack', null)
+            window.navigator.mediaSession.setActionHandler(
+                'previoustrack',
+                null
+            )
         }
-    }, [])
+    }, [playNextPrev])
 
     // Restore old dir and song after restore-session-fm is received
     useEffect(() => {
@@ -844,7 +893,28 @@ function App() {
     ])
 
     useEffect(() => {
-        console.log('[filterGainsString]')
+        if (currentSong) {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title:
+                        currentSong.name ||
+                        currentSong.file
+                            .split('/')
+                            .reverse()[0]
+                            .replace(/\.[^/.]+$/, ''),
+                    artist: currentSong.author,
+                    album: currentSong.album,
+                    artwork: [
+                        {
+                            src: currentCover,
+                        },
+                    ],
+                })
+            }
+        }
+    }, [currentSong, currentCover])
+
+    useEffect(() => {
         const filterGains = JSON.parse(filterGainsString)
         for (let i = 0; i < filterGains.length; i++) {
             if (filters[i]) {
@@ -854,7 +924,6 @@ function App() {
     }, [filterGainsString])
 
     useEffect(() => {
-        console.log('[preampGain]')
         gainNode.gain.setValueAtTime(preampGain, audioContext.currentTime)
     }, [preampGain])
 
@@ -900,11 +969,9 @@ function App() {
                         openSettings: openSettings,
                         repeat: repeat,
                         setRepeat: setRepeat,
-                        activeTracks: activeTracks,
-                        playlistIndices: playlistIndices,
                         shuffle: shuffle,
                         setShuffle: setShuffle,
-                        openFile: openFile,
+                        playNextPrev: playNextPrev,
                         play: play,
                         togglePlay: togglePlay,
                         volume: volume,

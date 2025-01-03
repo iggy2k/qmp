@@ -28,11 +28,9 @@ export function ControlsBar(controls: Controls) {
         openSettings,
         repeat,
         setRepeat,
-        activeTracks,
-        playlistIndices,
         shuffle,
         setShuffle,
-        openFile,
+        playNextPrev,
         play,
         togglePlay,
         volume,
@@ -46,6 +44,7 @@ export function ControlsBar(controls: Controls) {
         setPreampGain,
         preampGain,
     } = controls
+
     return (
         <div className="mx-1 mt-0 flex flex-row justify-between pr-2 text-ring">
             <div className="flex">
@@ -103,40 +102,22 @@ export function ControlsBar(controls: Controls) {
                     <LoopIcon
                         className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                         onMouseDown={() => {
-                            setRepeat(!repeat)
+                            setRepeat(false)
                         }}
                     />
                 ) : (
                     <LoopIcon
                         className="no-drag m-0.5 h-[24px] cursor-pointer text-ring/60 transition-colors duration-300 hover:text-muted-foreground"
                         onMouseDown={() => {
-                            setRepeat(!repeat)
+                            setRepeat(true)
+                            setShuffle(false)
                         }}
                     />
                 )}
                 <TrackPreviousIcon
                     className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
-                        const rand_idx = Math.floor(
-                            Math.random() * activeTracks.playing.length
-                        )
-                        shuffle
-                            ? openFile(
-                                  activeTracks.playing[rand_idx].file,
-                                  false,
-                                  rand_idx
-                              )
-                            : openFile(
-                                  activeTracks.playing[
-                                      playlistIndices.playing >= 1
-                                          ? playlistIndices.playing - 1
-                                          : activeTracks.playing.length - 1
-                                  ].file,
-                                  false,
-                                  playlistIndices.playing >= 1
-                                      ? playlistIndices.playing - 1
-                                      : activeTracks.playing.length - 1
-                              )
+                        playNextPrev(false)
                     }}
                 />
                 {play ? (
@@ -153,41 +134,23 @@ export function ControlsBar(controls: Controls) {
                 <TrackNextIcon
                     className="no-drag m-0.5 h-[24px] cursor-pointer transition-colors duration-300 hover:text-muted-foreground"
                     onClick={() => {
-                        const rand_idx = Math.floor(
-                            Math.random() * activeTracks.playing.length
-                        )
-                        console.log(
-                            'TrackNextIcon',
-                            rand_idx,
-                            activeTracks,
-                            activeTracks.playing.length
-                        )
-                        shuffle
-                            ? openFile(
-                                  activeTracks.playing[rand_idx].file,
-                                  false,
-                                  rand_idx
-                              )
-                            : openFile(
-                                  activeTracks.playing[
-                                      (playlistIndices.playing + 1) %
-                                          activeTracks.playing.length
-                                  ].file,
-                                  false,
-                                  (playlistIndices.playing + 1) %
-                                      activeTracks.playing.length
-                              )
+                        playNextPrev(true)
                     }}
                 />
                 {shuffle ? (
                     <ShuffleIcon
                         className="no-drag m-0.5 h-[24px] cursor-pointer text-ring transition-colors duration-300 hover:text-muted-foreground"
-                        onClick={() => setShuffle(false)}
+                        onClick={() => {
+                            setShuffle(false)
+                        }}
                     />
                 ) : (
                     <ShuffleIcon
                         className="no-drag m-0.5 h-[24px] cursor-pointer text-ring/60 transition-colors duration-300 hover:text-muted-foreground"
-                        onClick={() => setShuffle(true)}
+                        onClick={() => {
+                            setShuffle(true)
+                            setRepeat(false)
+                        }}
                     />
                 )}
             </div>
